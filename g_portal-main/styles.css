@@ -764,17 +764,29 @@ input:focus, select:focus, textarea:focus{
   .modal-card{
     max-width: 100%;
     width: 100%;
-    max-height: 95vh;
+    max-height: 92vh;
     border-radius: 20px 20px 0 0;
   }
 
   .modal-body{
     padding: 20px 18px;
+    max-height: calc(92vh - 180px);
+  }
+
+  .modal-foot{
+    position: sticky;
+    bottom: 0;
+    background: #fafafa;
   }
 
   .form-grid{
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  /* Input font size - zoom'u engelle */
+  input, select, textarea{
+    font-size: 16px !important;
   }
 
   /* Tablo responsive */
