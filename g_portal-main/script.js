@@ -403,22 +403,20 @@ function openModal(prefillPoint){
 
   const now = new Date();
 
+  // Tarih ve saat otomatik olarak gizli alanlara kaydediliyor
   const dateInput = document.getElementById('date');
   const dateHidden= document.getElementById('date_value');
-  dateInput.value = now.toISOString().slice(0,10);
-  dateHidden.value= dateInput.value;
-  dateInput.disabled = true;
-  dateInput.style.background = "#f5f5f5";
-
   const timeInput = document.getElementById('time');
   const timeHidden= document.getElementById('time_value');
+  
   const hh = String(now.getHours()).padStart(2,"0");
   const mm = String(now.getMinutes()).padStart(2,"0");
   const ss = String(now.getSeconds()).padStart(2,"0");
-  timeInput.value = `${hh}:${mm}:${ss}`;
-  timeHidden.value= timeInput.value;
-  timeInput.disabled = true;
-  timeInput.style.background = "#f5f5f5";
+  
+  if(dateInput) dateInput.value = now.toISOString().slice(0,10);
+  if(dateHidden) dateHidden.value = now.toISOString().slice(0,10);
+  if(timeInput) timeInput.value = `${hh}:${mm}:${ss}`;
+  if(timeHidden) timeHidden.value = `${hh}:${mm}:${ss}`;
 
   const userHidden = document.getElementById('user');
   const userText   = (document.getElementById('logged-user')?.textContent || '').replace(/^Kullanıcı:\s*/,'');

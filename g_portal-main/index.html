@@ -366,22 +366,16 @@
               <input id="unit" type="text" value="ppm" readonly style="background:#f5f5f5; cursor:not-allowed;">
             </div>
 
-            <div>
-              <label for="date">Tarih</label>
-              <input id="date" type="date" required />
-              <input type="hidden" id="date_value" name="date_value" />
-            </div>
-
-            <div>
-              <label for="time">Saat</label>
-              <input id="time" type="time" step="1" required />
-              <input type="hidden" id="time_value" name="time_value" />
-            </div>
-
             <div class="full">
               <label for="note">Açıklama</label>
-              <textarea id="note" rows="3" placeholder="İsteğe bağlı"></textarea>
+              <textarea id="note" rows="4" placeholder="İsteğe bağlı not ekleyebilirsiniz"></textarea>
             </div>
+
+            <!-- Gizli alanlar -->
+            <input type="hidden" id="date" />
+            <input type="hidden" id="date_value" />
+            <input type="hidden" id="time" />
+            <input type="hidden" id="time_value" />
           </div>
         </div>
         <div class="modal-foot">
