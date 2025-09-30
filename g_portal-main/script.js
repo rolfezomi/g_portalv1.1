@@ -190,13 +190,6 @@ function updateStatistics(){
     const todayCount = allRecords.filter(r => r.date === today).length;
     todayEl.textContent = todayCount;
   }
-  
-  // Kullanıcı adını başlığa ekle
-  const welcomeTitle = document.getElementById('welcome-title');
-  const username = localStorage.getItem('username');
-  if(welcomeTitle && username){
-    welcomeTitle.textContent = `Merhaba ${username}`;
-  }
 }
 
 // ====== SON KAYITLAR – storage & render ======
