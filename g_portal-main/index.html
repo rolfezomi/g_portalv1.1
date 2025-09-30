@@ -115,26 +115,73 @@
       <!-- Anasayfa -->
       <section id="page-home">
         <!-- Karşılama Kartı -->
-        <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:20px; padding:40px 32px; margin-bottom:28px; box-shadow:0 8px 32px rgba(27,94,32,0.25); position:relative; overflow:hidden;">
-          <div style="position:absolute; top:-50px; right:-50px; width:200px; height:200px; background:rgba(255,255,255,0.08); border-radius:50%;"></div>
-          <div style="position:absolute; bottom:-30px; left:-30px; width:150px; height:150px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
+        <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:20px; padding:48px 40px; margin-bottom:28px; box-shadow:0 12px 40px rgba(27,94,32,0.3); position:relative; overflow:hidden;">
+          <!-- Dekoratif arka plan -->
+          <div style="position:absolute; top:-80px; right:-80px; width:280px; height:280px; background:rgba(255,255,255,0.06); border-radius:50%; filter:blur(40px);"></div>
+          <div style="position:absolute; bottom:-60px; left:-60px; width:220px; height:220px; background:rgba(255,255,255,0.04); border-radius:50%; filter:blur(30px);"></div>
+          <div style="position:absolute; top:50%; right:10%; width:120px; height:120px; background:rgba(255,255,255,0.03); border-radius:50%; filter:blur(20px);"></div>
+          
           <div style="position:relative; z-index:1;">
-            <h1 style="margin:0 0 12px; color:#fff; font-size:32px; font-weight:900; letter-spacing:-0.5px;">Hoş Geldiniz! 👋</h1>
-            <p style="margin:0 0 20px; color:rgba(255,255,255,0.9); font-size:16px; line-height:1.6; max-width:600px;">
-              Su kalitesi kontrol sisteminize hoş geldiniz. Tüm ölçüm değerlerinizi kolayca takip edebilir, trend analizleri yapabilir ve raporlar oluşturabilirsiniz.
+            <div style="display:inline-flex; align-items:center; gap:12px; background:rgba(255,255,255,0.12); padding:8px 18px; border-radius:30px; margin-bottom:20px; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.18);">
+              <div style="width:8px; height:8px; background:#4ade80; border-radius:50%; box-shadow:0 0 8px #4ade80;"></div>
+              <span style="color:#fff; font-size:13px; font-weight:700; letter-spacing:0.3px;">SİSTEM AKTİF</span>
+            </div>
+            
+            <h1 style="margin:0 0 16px; color:#fff; font-size:36px; font-weight:900; letter-spacing:-1px; line-height:1.1;">
+              Hoş Geldiniz
+            </h1>
+            <p style="margin:0 0 32px; color:rgba(255,255,255,0.92); font-size:17px; line-height:1.7; max-width:680px; font-weight:500;">
+              Su kalitesi kontrol sisteminize hoş geldiniz. Tüm ölçüm değerlerinizi gerçek zamanlı takip edebilir, detaylı trend analizleri yapabilir ve profesyonel raporlar oluşturabilirsiniz.
             </p>
-            <div style="display:flex; gap:16px; flex-wrap:wrap;">
-              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:14px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
-                <div style="color:rgba(255,255,255,0.8); font-size:12px; font-weight:600; margin-bottom:4px;">Toplam Kayıt</div>
-                <div id="total-records" style="color:#fff; font-size:24px; font-weight:800;">0</div>
+            
+            <!-- İstatistik Kartları -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; max-width:800px;">
+              <!-- Toplam Kayıt -->
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:24px 20px; border-radius:16px; border:1px solid rgba(255,255,255,0.25); transition:all 0.3s ease; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)'">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                  <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:12px; display:grid; place-items:center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                  </div>
+                  <div style="color:rgba(255,255,255,0.85); font-size:13px; font-weight:700; letter-spacing:0.3px;">TOPLAM KAYIT</div>
+                </div>
+                <div id="total-records" style="color:#fff; font-size:32px; font-weight:900; letter-spacing:-1px; text-shadow:0 2px 8px rgba(0,0,0,0.2);">0</div>
+                <div style="color:rgba(255,255,255,0.7); font-size:12px; margin-top:4px; font-weight:600;">Tüm ölçümler</div>
               </div>
-              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:14px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
-                <div style="color:rgba(255,255,255,0.8); font-size:12px; font-weight:600; margin-bottom:4px;">Bugünkü Ölçüm</div>
-                <div id="today-records" style="color:#fff; font-size:24px; font-weight:800;">0</div>
+              
+              <!-- Bugünkü Ölçüm -->
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:24px 20px; border-radius:16px; border:1px solid rgba(255,255,255,0.25); transition:all 0.3s ease; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)'">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                  <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:12px; display:grid; place-items:center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </div>
+                  <div style="color:rgba(255,255,255,0.85); font-size:13px; font-weight:700; letter-spacing:0.3px;">BUGÜNKÜ ÖLÇÜM</div>
+                </div>
+                <div id="today-records" style="color:#fff; font-size:32px; font-weight:900; letter-spacing:-1px; text-shadow:0 2px 8px rgba(0,0,0,0.2);">0</div>
+                <div style="color:rgba(255,255,255,0.7); font-size:12px; margin-top:4px; font-weight:600;">Son 24 saat</div>
               </div>
-              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:14px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
-                <div style="color:rgba(255,255,255,0.8); font-size:12px; font-weight:600; margin-bottom:4px;">Aktif Kategori</div>
-                <div style="color:#fff; font-size:24px; font-weight:800;">5</div>
+              
+              <!-- Aktif Kategori -->
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:24px 20px; border-radius:16px; border:1px solid rgba(255,255,255,0.25); transition:all 0.3s ease; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)'">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                  <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:12px; display:grid; place-items:center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/>
+                      <rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/>
+                      <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  </div>
+                  <div style="color:rgba(255,255,255,0.85); font-size:13px; font-weight:700; letter-spacing:0.3px;">AKTİF KATEGORİ</div>
+                </div>
+                <div style="color:#fff; font-size:32px; font-weight:900; letter-spacing:-1px; text-shadow:0 2px 8px rgba(0,0,0,0.2);">5</div>
+                <div style="color:rgba(255,255,255,0.7); font-size:12px; margin-top:4px; font-weight:600;">Kontrol modülü</div>
               </div>
             </div>
           </div>
