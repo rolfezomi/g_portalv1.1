@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#1b5e20">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Glohe Portal</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="login-active">
+  <!-- ================= LOGIN ================= -->
+  <div id="login-screen" class="login-container">
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="width:80px; height:80px; margin:0 auto 20px; background:linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); border-radius:20px; display:grid; place-items:center; box-shadow:0 8px 24px rgba(27,94,32,0.3);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </div>
+      <h1>Glohe Portal</h1>
+      <p style="color:#666; font-size:14px; margin:8px 0 0;">Su Kalitesi Kontrol Sistemi</p>
+    </div>
+    <form id="login-form">
+      <label for="username">Kullanıcı Adı</label>
+      <input type="text" id="username" class="input-field" placeholder="Kullanıcı adınızı girin" required autocomplete="username" />
+      
+      <label for="password">Şifre</label>
+      <input type="password" id="password" class="input-field" placeholder="Şifrenizi girin" required autocomplete="current-password" />
+      
+      <button type="submit" class="submit-button">
+        <span>Giriş Yap</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </form>
+    <p id="message"></p>
+    <div style="margin-top:24px; padding-top:20px; border-top:1px solid #e8e8e8; text-align:center;">
+      <p style="color:#888; font-size:13px; margin:0;">© 2025 Glohe Portal. Tüm hakları saklıdır.</p>
+    </div>
+  </div>
+
+  <!-- ================= PORTAL (login sonrası) ================= -->
+  <div id="portal-screen" style="display:none;">
+    <!-- Sol Menü -->
+    <aside class="menu" aria-label="Ana menü">
+      <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menüyü aç/kapat">☰</button>
+      <ul>
+        <li>
+          <a href="#" onclick="showHomepage(); setActive(this); return false;" class="active" data-section-link="home" data-tooltip="Anasayfa">
+            <span class="icon-wrap"><img src="icons/home.png" alt="Anasayfa"></span>
+            <span>Anasayfa</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor" data-tooltip="Klor">
+            <span class="icon-wrap"><img src="icons/klor.png" alt="Klor"></span>
+            <span>Klor</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik" data-tooltip="Sertlik">
+            <span class="icon-wrap"><img src="icons/sertlik.png" alt="Sertlik"></span>
+            <span>Sertlik</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph" data-tooltip="Ph">
+            <span class="icon-wrap"><img src="icons/ph.png" alt="Ph"></span>
+            <span>Ph</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik" data-tooltip="İletkenlik">
+            <span class="icon-wrap"><img src="icons/iletkenlik.png" alt="İletkenlik"></span>
+            <span>İletkenlik</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="Mikro Biyoloji">
+            <span class="icon-wrap"><img src="icons/mikro.png" alt="Mikro Biyoloji"></span>
+            <span>Mikro Biyoloji</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Üst Şerit -->
+    <div class="header">
+      <div class="user-info">
+        <span id="current-time"></span>
+        <span id="logged-user"></span>
+        <img id="logout-button" src="icons/cikis-glohe.png" alt="Çıkış" title="Çıkış"
+             onclick="logout()" style="cursor:pointer;width:30px;height:30px;">
+      </div>
+    </div>
+
+    <!-- MOBİL ÜST SEKME ÇUBUĞU -->
+    <nav class="mobile-tabs" role="tablist" aria-label="Hızlı geçiş">
+      <button type="button" class="tab active" data-section="home" onclick="mobileTabTo(this)">Anasayfa</button>
+      <button type="button" class="tab" data-section="klor" onclick="mobileTabTo(this)">Klor</button>
+      <button type="button" class="tab" data-section="sertlik" onclick="mobileTabTo(this)">Sertlik</button>
+      <button type="button" class="tab" data-section="ph" onclick="mobileTabTo(this)">Ph</button>
+      <button type="button" class="tab" data-section="iletkenlik" onclick="mobileTabTo(this)">İletkenlik</button>
+      <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">Mikro</button>
+    </nav>
+
+    <!-- İçerik -->
+    <main class="content">
+      <!-- Anasayfa -->
+      <section id="page-home">
+        <!-- Karşılama Kartı -->
+        <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:20px; padding:40px 32px; margin-bottom:28px; box-shadow:0 8px 32px rgba(27,94,32,0.25); position:relative; overflow:hidden;">
+          <div style="position:absolute; top:-50px; right:-50px; width:200px; height:200px; background:rgba(255,255,255,0.08); border-radius:50%;"></div>
+          <div style="position:absolute; bottom:-30px; left:-30px; width:150px; height:150px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
+          <div style="position:relative; z-index:1;">
+            <h1 style="margin:0 0 12px; color:#fff; font-size:32px; font-weight:900; letter-spacing:-0.5px;">Hoş Geldiniz! 👋</h1>
+            <p style="margin:0 0 20px; color:rgba(255,255,255,0.9); font-size:16px; line-height:1.6; max-width:600px;">
+              Su kalitesi kontrol sisteminize hoş geldiniz. Tüm ölçüm değerlerinizi kolayca takip edebilir, trend analizleri yapabilir ve raporlar oluşturabilirsiniz.
+            </p>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:14px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+                <div style="color:rgba(255,255,255,0.8); font-size:12px; font-weight:600; margin-bottom:4px;">Toplam Kayıt</div>
+                <div id="total-records" style="color:#fff; font-size:24px; font-weight:800;">0</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:14px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+                <div style="color:rgba(255,255,255,0.8); font-size:12px; font-weight:600; margin-bottom:4px;">Bugünkü Ölçüm</div>
+                <div id="today-records" style="color:#fff; font-size:24px; font-weight:800;">0</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:14px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+                <div style="color:rgba(255,255,255,0.8); font-size:12px; font-weight:600; margin-bottom:4px;">Aktif Kategori</div>
+                <div style="color:#fff; font-size:24px; font-weight:800;">5</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="saved-values" class="saved-values">
+          <h3>Son Kaydedilen Değerler</h3>
+
+          <!-- Kayıt tablosu -->
+          <div style="overflow:auto;">
+            <table id="recent-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:8px 10px;">Kategori</th>
+                  <th style="text-align:left; padding:8px 10px;">Kontrol Noktası</th>
+                  <th style="text-align:left; padding:8px 10px;">Değer</th>
+                  <th style="text-align:left; padding:8px 10px;">Birim</th>
+                  <th style="text-align:left; padding:8px 10px;">Tarih</th>
+                  <th style="text-align:left; padding:8px 10px;">Saat</th>
+                  <th style="text-align:left; padding:8px 10px;">Kullanıcı</th>
+                  <th style="text-align:left; padding:8px 10px;">Açıklama</th>
+                </tr>
+              </thead>
+              <tbody id="recent-tbody">
+                <tr class="empty">
+                  <td colspan="8" style="padding:12px 10px; opacity:.7;">Henüz kayıt yok.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Trend Analizi -->
+          <div style="margin-top:24px;">
+            <div class="toolbar" style="margin-bottom:12px;">
+              <h3 style="margin:0; color:#1b5e20; font-size:18px;">📈 Trend Analizi</h3>
+              <div>
+                <select id="trend-category" class="input" style="max-width:220px;">
+                  <option value="klor">Klor</option>
+                  <option value="sertlik">Sertlik</option>
+                  <option value="ph">Ph</option>
+                  <option value="iletkenlik">İletkenlik</option>
+                  <option value="mikro">Mikro Biyoloji</option>
+                </select>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e6e6e6;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+              <canvas id="trendChart" style="height:320px;"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Klor -->
+      <section id="page-klor" style="display:none;">
+        <div class="toolbar">
+          <h2>Klor Kontrol Noktaları</h2>
+          <div class="right">
+            <input class="input" id="search" type="search" placeholder="Kontrol noktası ara..."/>
+          </div>
+        </div>
+
+        <div class="control-points">
+          <div class="grid" id="klor-grid">
+            <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
+            <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
+            <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
+            <div class="box" data-point="Kontrol Noktası 4">Kontrol Noktası 4</div>
+            <div class="box" data-point="Kontrol Noktası 5">Kontrol Noktası 5</div>
+            <div class="box" data-point="Kontrol Noktası 6">Kontrol Noktası 6</div>
+            <div class="box" data-point="Kontrol Noktası 7">Kontrol Noktası 7</div>
+            <div class="box" data-point="Kontrol Noktası 8">Kontrol Noktası 8</div>
+            <div class="box" data-point="Kontrol Noktası 9">Kontrol Noktası 9</div>
+            <div class="box" data-point="Kontrol Noktası 10">Kontrol Noktası 10</div>
+            <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
+            <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
+            <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sertlik -->
+      <section id="page-sertlik" style="display:none;">
+        <div class="toolbar">
+          <h2>Sertlik Kontrol Noktaları</h2>
+          <div class="right">
+            <input class="input" id="search-sertlik" type="search" placeholder="Kontrol noktası ara..."/>
+          </div>
+        </div>
+        <div class="control-points">
+          <div class="grid" id="sertlik-grid">
+            <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
+            <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
+            <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
+            <div class="box" data-point="Kontrol Noktası 4">Kontrol Noktası 4</div>
+            <div class="box" data-point="Kontrol Noktası 5">Kontrol Noktası 5</div>
+            <div class="box" data-point="Kontrol Noktası 6">Kontrol Noktası 6</div>
+            <div class="box" data-point="Kontrol Noktası 7">Kontrol Noktası 7</div>
+            <div class="box" data-point="Kontrol Noktası 8">Kontrol Noktası 8</div>
+            <div class="box" data-point="Kontrol Noktası 9">Kontrol Noktası 9</div>
+            <div class="box" data-point="Kontrol Noktası 10">Kontrol Noktası 10</div>
+            <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
+            <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
+            <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ph -->
+      <section id="page-ph" style="display:none;">
+        <div class="toolbar">
+          <h2>Ph Kontrol Noktaları</h2>
+          <div class="right">
+            <input class="input" id="search-ph" type="search" placeholder="Kontrol noktası ara..."/>
+          </div>
+        </div>
+        <div class="control-points">
+          <div class="grid" id="ph-grid">
+            <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
+            <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
+            <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
+            <div class="box" data-point="Kontrol Noktası 4">Kontrol Noktası 4</div>
+            <div class="box" data-point="Kontrol Noktası 5">Kontrol Noktası 5</div>
+            <div class="box" data-point="Kontrol Noktası 6">Kontrol Noktası 6</div>
+            <div class="box" data-point="Kontrol Noktası 7">Kontrol Noktası 7</div>
+            <div class="box" data-point="Kontrol Noktası 8">Kontrol Noktası 8</div>
+            <div class="box" data-point="Kontrol Noktası 9">Kontrol Noktası 9</div>
+            <div class="box" data-point="Kontrol Noktası 10">Kontrol Noktası 10</div>
+            <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
+            <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
+            <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- İletkenlik -->
+      <section id="page-iletkenlik" style="display:none;">
+        <div class="toolbar">
+          <h2>İletkenlik Kontrol Noktaları</h2>
+          <div class="right">
+            <input class="input" id="search-iletkenlik" type="search" placeholder="Kontrol noktası ara..."/>
+          </div>
+        </div>
+        <div class="control-points">
+          <div class="grid" id="iletkenlik-grid">
+            <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
+            <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
+            <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
+            <div class="box" data-point="Kontrol Noktası 4">Kontrol Noktası 4</div>
+            <div class="box" data-point="Kontrol Noktası 5">Kontrol Noktası 5</div>
+            <div class="box" data-point="Kontrol Noktası 6">Kontrol Noktası 6</div>
+            <div class="box" data-point="Kontrol Noktası 7">Kontrol Noktası 7</div>
+            <div class="box" data-point="Kontrol Noktası 8">Kontrol Noktası 8</div>
+            <div class="box" data-point="Kontrol Noktası 9">Kontrol Noktası 9</div>
+            <div class="box" data-point="Kontrol Noktası 10">Kontrol Noktası 10</div>
+            <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
+            <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
+            <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mikro Biyoloji -->
+      <section id="page-mikro" style="display:none;">
+        <div class="toolbar">
+          <h2>Mikro Biyoloji Kontrol Noktaları</h2>
+          <div class="right">
+            <input class="input" type="search" placeholder="Kontrol noktası ara..."/>
+          </div>
+        </div>
+        <div class="control-points">
+          <div class="grid">
+            <div class="box">Kontrol Noktası 1</div>
+            <div class="box">Kontrol Noktası 2</div>
+            <div class="box">Kontrol Noktası 3</div>
+            <div class="box">Kontrol Noktası 4</div>
+            <div class="box">Kontrol Noktası 5</div>
+            <div class="box">Kontrol Noktası 6</div>
+            <div class="box">Kontrol Noktası 7</div>
+            <div class="box">Kontrol Noktası 8</div>
+            <div class="box">Kontrol Noktası 9</div>
+            <div class="box">Kontrol Noktası 10</div>
+            <div class="box">Kontrol Noktası 11</div>
+            <div class="box">Kontrol Noktası 12</div>
+            <div class="box">Kontrol Noktası 13</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal + Overlay + Toast -->
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="entry-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title" id="modalTitle">Klor Ölçüm Kaydı</h3>
+        <button class="btn btn-ghost" id="btn-close-modal" aria-label="Kapat">Kapat</button>
+      </div>
+      <form id="entry-form">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div>
+              <label for="point">Kontrol Noktası</label>
+              <select id="point" required>
+                <option value="">Seçiniz...</option>
+                <option>Kontrol Noktası 1</option>
+                <option>Kontrol Noktası 2</option>
+                <option>Kontrol Noktası 3</option>
+                <option>Kontrol Noktası 4</option>
+                <option>Kontrol Noktası 5</option>
+                <option>Kontrol Noktası 6</option>
+                <option>Kontrol Noktası 7</option>
+                <option>Kontrol Noktası 8</option>
+                <option>Kontrol Noktası 9</option>
+                <option>Kontrol Noktası 10</option>
+                <option>Kontrol Noktası 11</option>
+                <option>Kontrol Noktası 12</option>
+                <option>Kontrol Noktası 13</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="value">Ölçüm Değeri</label>
+              <input id="value" type="number" step="0.001" placeholder="Örn: 0.50" required/>
+            </div>
+
+            <div>
+              <label for="unit">Birim</label>
+              <input id="unit" type="text" value="ppm" readonly style="background:#f5f5f5; cursor:not-allowed;">
+            </div>
+
+            <div>
+              <label for="date">Tarih</label>
+              <input id="date" type="date" required />
+              <input type="hidden" id="date_value" name="date_value" />
+            </div>
+
+            <div>
+              <label for="time">Saat</label>
+              <input id="time" type="time" step="1" required />
+              <input type="hidden" id="time_value" name="time_value" />
+            </div>
+
+            <div class="full">
+              <label for="note">Açıklama</label>
+              <textarea id="note" rows="3" placeholder="İsteğe bağlı"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-ghost" id="btn-cancel">Vazgeç</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+
+        <!-- Kullanıcı (gizli) -->
+        <input type="hidden" id="user" name="user" />
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast">Kayıt başarıyla kaydedildi.</div>
+
+  <script src="script.js"></script>
+</body>
+</html>
