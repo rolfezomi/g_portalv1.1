@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Sertlik Kontrol Noktaları</title>
     <link rel="stylesheet" href="styles.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- Üst Bar -->
     <div class="header">
         <div class="user-info">
             <span id="current-time"></span>
@@ -18,7 +18,6 @@
         </div>
     </div>
 
-    <!-- Sol Menü -->
     <aside class="menu">
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         <ul>
@@ -30,7 +29,6 @@
         </ul>
     </aside>
 
-    <!-- İçerik -->
     <div class="content">
         <div class="toolbar">
             <div class="left">
@@ -61,13 +59,12 @@
         </div>
     </div>
 
-    <!-- Modal & Overlay -->
     <div class="overlay" id="overlay"></div>
-    <div class="modal" id="entry-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" id="entry-modal">
         <div class="modal-card">
             <div class="modal-head">
-                <h3 class="modal-title" id="modalTitle">Sertlik Ölçüm Kaydı</h3>
-                <button class="btn btn-ghost" id="btn-close-modal" aria-label="Kapat">Kapat</button>
+                <h3 class="modal-title">Sertlik Ölçüm Kaydı</h3>
+                <button class="btn btn-ghost" id="btn-close-modal">Kapat</button>
             </div>
             <form id="entry-form">
                 <div class="modal-body">
@@ -106,20 +103,14 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label for="date">Tarih</label>
-                            <input id="date" type="date" required/>
-                        </div>
-
-                        <div>
-                            <label for="time">Saat</label>
-                            <input id="time" type="time" required/>
-                        </div>
-
                         <div class="full">
                             <label for="note">Açıklama</label>
                             <textarea id="note" rows="3" placeholder="İsteğe bağlı"></textarea>
                         </div>
+                        
+                        <input type="hidden" id="date" />
+                        <input type="hidden" id="time" />
+                        <input type="hidden" id="user" />
                     </div>
                 </div>
                 <div class="modal-foot">
@@ -130,30 +121,57 @@
         </div>
     </div>
 
-    <!-- Toast -->
-    <div class="toast success" id="toast">Kayıt başarıyla kaydedildi.</div>
+    <div class="toast" id="toast">Kayıt başarıyla kaydedildi.</div>
 
-    <!-- Basit JS (sayfa içi) -->
-    <script src="auth.js"></script>
     <script>
-        // Saat gösterimi (demo)
-        const timeEl = document.getElementById('current-time');
-        function tick() {
-            const d = new Date();
-            timeEl.textContent = d.toLocaleString('tr-TR');
-        }
-        setInterval(tick, 1000); tick();
+        const supabaseClient = window.supabase.createClient(
+            'https://mignlffeyougoefuyayr.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0'
+        );
 
-        // Menü toggle (placeholder)
+        function checkAuth() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const username = localStorage.getItem('username');
+            if (!isLoggedIn) {
+                window.location.href = 'index.html';
+                return false;
+            }
+            const userEl = document.getElementById('logged-user');
+            if (userEl && username) userEl.textContent = username;
+            updateTime();
+            setInterval(updateTime, 1000);
+            return true;
+        }
+
+        function updateTime() {
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                timeEl.textContent = new Date().toLocaleTimeString('tr-TR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        function showHomepage() {
+            window.location.href = 'index.html';
+        }
+
         function toggleMenu() {
-            // Gerekirse genişlet/daralt eklenebilir
-            alert('Menü gizle/göster davranışı burada uygulanabilir.');
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile) {
+                document.body.classList.toggle('mobile-menu-open');
+            } else {
+                document.body.classList.toggle('menu-collapsed');
+            }
         }
 
-        // Sayfadan beklenen global fonksiyonlar
-        function showHomepage(){ window.location.href = 'index.html'; }
-
-        // Arama: kutucukları filtrele
         const search = document.getElementById('search');
         const boxes = Array.from(document.querySelectorAll('.box'));
         search.addEventListener('input', () => {
@@ -164,25 +182,31 @@
             });
         });
 
-        // Modal kontrol
         const overlay = document.getElementById('overlay');
         const modal = document.getElementById('entry-modal');
         const btnOpen = document.getElementById('btn-open-modal');
         const btnClose = document.getElementById('btn-close-modal');
         const btnCancel = document.getElementById('btn-cancel');
+        const toast = document.getElementById('toast');
 
         function openModal(prefillPoint) {
-            if (prefillPoint) {
-                document.getElementById('point').value = prefillPoint;
-            }
-            overlay.style.display = 'block';
-            modal.style.display = 'flex';
-            // Varsayılan tarih/saat
+            if (prefillPoint) document.getElementById('point').value = prefillPoint;
+            
             const now = new Date();
             document.getElementById('date').value = now.toISOString().slice(0,10);
-            document.getElementById('time').value = now.toTimeString().slice(0,5);
+            const hh = String(now.getHours()).padStart(2,"0");
+            const mm = String(now.getMinutes()).padStart(2,"0");
+            const ss = String(now.getSeconds()).padStart(2,"0");
+            document.getElementById('time').value = `${hh}:${mm}:${ss}`;
+            
+            const userText = (document.getElementById('logged-user')?.textContent || '');
+            document.getElementById('user').value = userText || 'Bilinmiyor';
+
+            overlay.style.display = 'block';
+            modal.style.display = 'flex';
             document.getElementById('value').focus();
         }
+
         function closeModal() {
             overlay.style.display = 'none';
             modal.style.display = 'none';
@@ -194,46 +218,55 @@
         btnCancel.addEventListener('click', closeModal);
         overlay.addEventListener('click', closeModal);
 
-        // Kutuya tıklayınca o kontrol noktası seçili gelsin
-        boxes.forEach(b => b.addEventListener('click', () => {
-            openModal(b.dataset.point);
-        }));
+        boxes.forEach(b => b.addEventListener('click', () => openModal(b.dataset.point)));
 
-        // Form kaydetme (demo) — burada backend'e POST atabilirsin
         const form = document.getElementById('entry-form');
-        const toast = document.getElementById('toast');
-
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Basit doğrulama
-            const point = document.getElementById('point').value;
-            const value = document.getElementById('value').value;
-            const unit  = document.getElementById('unit').value;
-            const date  = document.getElementById('date').value;
-            const time  = document.getElementById('time').value;
+            const entry = {
+                category: 'Sertlik',
+                point: document.getElementById('point').value,
+                value: parseFloat(document.getElementById('value').value),
+                unit: document.getElementById('unit').value,
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                user: document.getElementById('user').value,
+                note: document.getElementById('note').value
+            };
 
-            if (!point || !value || !unit || !date || !time) {
-                alert('Lütfen zorunlu alanları doldurunuz.');
-                return;
-            }
-
-            // Sertlik değer kontrolü
-            const hardnessValue = parseFloat(value);
+            const hardnessValue = entry.value;
             if (hardnessValue < 0) {
                 alert('Sertlik değeri 0\'dan büyük olmalıdır.');
                 return;
             }
 
-            closeModal();
-            showToast('Kayıt başarıyla kaydedildi.');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('measurements')
+                    .insert([entry])
+                    .select();
+                
+                if (error) {
+                    console.error('Kayıt hatası:', error);
+                    toast.textContent = 'Kayıt başarısız: ' + error.message;
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                    return;
+                }
+                
+                console.log('Kayıt başarılı:', data);
+                closeModal();
+                toast.textContent = 'Kayıt başarıyla kaydedildi.';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            } catch (err) {
+                console.error('Beklenmeyen hata:', err);
+                alert('Bir hata oluştu');
+            }
         });
 
-        function showToast(msg) {
-            toast.textContent = msg || 'İşlem başarılı.';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>

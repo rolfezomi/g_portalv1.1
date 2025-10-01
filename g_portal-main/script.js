@@ -1,3 +1,11 @@
+// ====== SUPABASE BAĞLANTISI ======
+const supabaseClient = window.supabase.createClient(
+  'https://mignlffeyougoefuyayr.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0'
+);
+
+console.log('Supabase client hazır');
+
 // ====== OTURUM KONTROLÜ ======
 function checkSession() {
   const isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -18,8 +26,8 @@ function checkSession() {
   return false;
 }
 
-// Sayfa yüklendiğinde oturum kontrolü
-window.addEventListener('DOMContentLoaded', () => {
+// Sayfa yüklendiğinde oturum kontrolü ve veri yükleme
+window.addEventListener('DOMContentLoaded', async () => {
   const isLoggedIn = localStorage.getItem('isLoggedIn');
   const loginScreen = document.getElementById('login-screen');
   const portalScreen = document.getElementById('portal-screen');
@@ -36,7 +44,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     
     showHomepage();
-    renderRecent();
+    await loadRecent(); // Supabase'den verileri yükle
     updateTrendFromStorage();
   }
 });
@@ -95,6 +103,7 @@ if (loginForm){
     if (loggedUserEl) loggedUserEl.textContent = user;
 
     showHomepage();
+    loadRecent();
   });
 }
 
@@ -138,11 +147,19 @@ function showSection(key){
     if(el) el.style.display = (s===key)?'':'none';
   });
 
-  // Her kategori için init
-  if(key==='klor') initKlorPage();
-  if(key==='sertlik') initSertlikPage();
-  if(key==='ph') initPhPage();
-  if(key==='iletkenlik') initIletkenlikPage();
+  // Init fonksiyonlarını section görünür olduktan SONRA çağır
+  if(key==='klor') {
+    setTimeout(() => initKlorPage(), 0);
+  }
+  if(key==='sertlik') {
+    setTimeout(() => initSertlikPage(), 0);
+  }
+  if(key==='ph') {
+    setTimeout(() => initPhPage(), 0);
+  }
+  if(key==='iletkenlik') {
+    setTimeout(() => initIletkenlikPage(), 0);
+  }
 
   if (document.body.classList.contains('mobile-menu-open')){
     document.body.classList.remove('mobile-menu-open');
@@ -155,7 +172,6 @@ function showSection(key){
     link.classList.add('active');
   }
   
-  // Anasayfada istatistikleri güncelle
   if(key==='home') updateStatistics();
 }
 
@@ -178,8 +194,17 @@ function mobileTabTo(btn){
 window.mobileTabTo = mobileTabTo;
 
 // ====== İSTATİSTİKLER ======
-function updateStatistics(){
-  const allRecords = getRecent();
+async function updateStatistics(){
+  const { data, error } = await supabaseClient
+    .from('measurements')
+    .select('*');
+  
+  if (error) {
+    console.error('İstatistik yükleme hatası:', error);
+    return;
+  }
+  
+  const allRecords = data || [];
   const totalEl = document.getElementById('total-records');
   const todayEl = document.getElementById('today-records');
   
@@ -192,30 +217,69 @@ function updateStatistics(){
   }
 }
 
-// ====== SON KAYITLAR – storage & render ======
-const STORAGE_KEY = 'recent_entries_v1';
+// ====== VERİ İŞLEMLERİ - SUPABASE ======
+let cachedRecords = [];
+
+async function loadRecent(){
+  try {
+    const { data, error } = await supabaseClient
+      .from('measurements')
+      .select('*')
+      .limit(200);
+    
+    if (error) {
+      console.error('Veri yükleme hatası:', error);
+      return;
+    }
+    
+    cachedRecords = data || [];
+    // Manuel sıralama - tarih ve saate göre
+    cachedRecords.sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) return dateCompare;
+      return b.time.localeCompare(a.time);
+    });
+    
+    console.log('Yüklenen kayıt sayısı:', cachedRecords.length);
+    renderRecent();
+    updateTrendFromStorage();
+  } catch (err) {
+    console.error('Beklenmeyen hata:', err);
+  }
+}
 
 function getRecent(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch(_){ return []; }
+  return cachedRecords;
 }
-function setRecent(arr){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-}
-function addRecent(entry){
-  const arr = getRecent();
-  arr.unshift(entry);
-  if(arr.length > 200) arr.pop();
-  setRecent(arr);
-  renderRecent();
-  updateTrendFromStorage();
-  updateStatistics();
+
+async function addRecent(entry){
+  try {
+    const { data, error } = await supabaseClient
+      .from('measurements')
+      .insert([entry])
+      .select();
+    
+    if (error) {
+      console.error('Kayıt hatası:', error);
+      showToast('Kayıt başarısız: ' + error.message);
+      return;
+    }
+    
+    console.log('Kayıt başarılı:', data);
+    showToast('Kayıt başarıyla kaydedildi.');
+    
+    await loadRecent();
+    updateStatistics();
+  } catch (err) {
+    console.error('Beklenmeyen hata:', err);
+    showToast('Bir hata oluştu');
+  }
 }
 
 function renderRecent(){
   const tbody = document.getElementById('recent-tbody');
   if(!tbody) return;
-  const rows = getRecent().slice(0, 5); // Sadece son 5 kayıt
+  const rows = cachedRecords.slice(0, 5);
 
   tbody.innerHTML = '';
   if(!rows.length){
@@ -289,7 +353,11 @@ function initSertlikPage(){
     });
   }
 
-  boxes.forEach(b=> b.addEventListener('click', ()=> openModal(b.dataset.point)));
+  boxes.forEach(b=> {
+    b.addEventListener('click', ()=> openModal(b.dataset.point));
+  });
+  
+  console.log('Sertlik sayfası init edildi, kutu sayısı:', boxes.length);
 }
 
 // ====== PH SAYFASI ======
@@ -311,7 +379,11 @@ function initPhPage(){
     });
   }
 
-  boxes.forEach(b=> b.addEventListener('click', ()=> openModal(b.dataset.point)));
+  boxes.forEach(b=> {
+    b.addEventListener('click', ()=> openModal(b.dataset.point));
+  });
+  
+  console.log('Ph sayfası init edildi, kutu sayısı:', boxes.length);
 }
 
 // ====== İLETKENLİK SAYFASI ======
@@ -333,7 +405,11 @@ function initIletkenlikPage(){
     });
   }
 
-  boxes.forEach(b=> b.addEventListener('click', ()=> openModal(b.dataset.point)));
+  boxes.forEach(b=> {
+    b.addEventListener('click', ()=> openModal(b.dataset.point));
+  });
+  
+  console.log('İletkenlik sayfası init edildi, kutu sayısı:', boxes.length);
 }
 
 // ====== MODAL & TOAST ======
@@ -347,7 +423,6 @@ const form     = document.getElementById('entry-form');
 function openModal(prefillPoint){
   if(prefillPoint) document.getElementById('point').value = prefillPoint;
 
-  // Modal başlığını kategoriye göre ayarla
   const modalTitle = document.getElementById('modalTitle');
   const unitInput = document.getElementById('unit');
   const valueInput = document.getElementById('value');
@@ -362,7 +437,6 @@ function openModal(prefillPoint){
   
   if(modalTitle) modalTitle.textContent = categoryTitles[currentSection] || 'Ölçüm Kaydı';
   
-  // Birim ve değer alanlarını kategoriye göre ayarla
   if(currentSection === 'klor'){
     unitInput.value = 'ppm';
     unitInput.readOnly = true;
@@ -402,21 +476,15 @@ function openModal(prefillPoint){
   }
 
   const now = new Date();
-
-  // Tarih ve saat otomatik olarak gizli alanlara kaydediliyor
   const dateInput = document.getElementById('date');
-  const dateHidden= document.getElementById('date_value');
   const timeInput = document.getElementById('time');
-  const timeHidden= document.getElementById('time_value');
   
   const hh = String(now.getHours()).padStart(2,"0");
   const mm = String(now.getMinutes()).padStart(2,"0");
   const ss = String(now.getSeconds()).padStart(2,"0");
   
   if(dateInput) dateInput.value = now.toISOString().slice(0,10);
-  if(dateHidden) dateHidden.value = now.toISOString().slice(0,10);
   if(timeInput) timeInput.value = `${hh}:${mm}:${ss}`;
-  if(timeHidden) timeHidden.value = `${hh}:${mm}:${ss}`;
 
   const userHidden = document.getElementById('user');
   const userText   = (document.getElementById('logged-user')?.textContent || '').replace(/^Kullanıcı:\s*/,'');
@@ -443,10 +511,10 @@ if(form){
 
     const payload = {
       point : document.getElementById('point').value,
-      value : document.getElementById('value').value,
+      value : parseFloat(document.getElementById('value').value),
       unit  : document.getElementById('unit').value,
-      date  : document.getElementById('date_value').value,
-      time  : document.getElementById('time_value').value,
+      date  : document.getElementById('date').value,
+      time  : document.getElementById('time').value,
       note  : document.getElementById('note').value,
       user  : document.getElementById('user').value
     };
@@ -455,6 +523,7 @@ if(form){
       home:'Anasayfa', klor:'Klor', sertlik:'Sertlik', ph:'Ph',
       iletkenlik:'İletkenlik', mikro:'Mikro Biyoloji'
     };
+    
     const entry = {
       category: categoryMap[currentSection] || currentSection,
       point: payload.point,
@@ -466,9 +535,8 @@ if(form){
       note : payload.note
     };
 
-    addRecent(entry);
+    await addRecent(entry);
     closeModal();
-    showToast('Kayıt başarıyla kaydedildi.');
   });
 }
 
@@ -515,7 +583,6 @@ function drawTrend(categoryKey){
 
   if(trendChart){ trendChart.destroy(); }
 
-  // Renk paletleri kategorilere göre
   const colorMap = {
     klor: { 
       gradient: ['rgba(46, 125, 50, 0.8)', 'rgba(27, 94, 32, 1)'],
@@ -551,7 +618,6 @@ function drawTrend(categoryKey){
 
   const colors = colorMap[categoryKey] || colorMap.klor;
 
-  // Gradient oluştur
   const ctx = trendCanvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
   gradient.addColorStop(0, colors.gradient[0]);
@@ -576,11 +642,7 @@ function drawTrend(categoryKey){
         pointHoverBackgroundColor: colors.pointHover,
         pointHoverBorderColor: '#fff',
         pointHoverBorderWidth: 3,
-        fill: true,
-        shadowOffsetX: 0,
-        shadowOffsetY: 4,
-        shadowBlur: 8,
-        shadowColor: 'rgba(0, 0, 0, 0.15)'
+        fill: true
       }]
     },
     options: {
@@ -602,11 +664,7 @@ function drawTrend(categoryKey){
             minRotation: 0,
             autoSkip: true, 
             autoSkipPadding: 20,
-            font: {
-              size: 11,
-              family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-              weight: '600'
-            },
+            font: { size: 11, weight: '600' },
             color: '#666'
           }
         },
@@ -617,11 +675,7 @@ function drawTrend(categoryKey){
             drawBorder: false
           },
           ticks: {
-            font: {
-              size: 12,
-              family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-              weight: '700'
-            },
+            font: { size: 12, weight: '700' },
             color: '#444',
             padding: 8
           }
@@ -634,11 +688,7 @@ function drawTrend(categoryKey){
           align: 'start',
           labels: {
             boxWidth: 0,
-            font: {
-              size: 14,
-              family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-              weight: '800'
-            },
+            font: { size: 14, weight: '800' },
             color: colors.border,
             padding: 16
           }
@@ -648,15 +698,8 @@ function drawTrend(categoryKey){
           backgroundColor: 'rgba(0, 0, 0, 0.85)',
           titleColor: '#fff',
           bodyColor: '#fff',
-          titleFont: {
-            size: 13,
-            weight: '700',
-            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif'
-          },
-          bodyFont: {
-            size: 12,
-            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif'
-          },
+          titleFont: { size: 13, weight: '700' },
+          bodyFont: { size: 12 },
           padding: 14,
           cornerRadius: 10,
           displayColors: false,
@@ -666,21 +709,21 @@ function drawTrend(categoryKey){
             title: (ctx) => {
               const idx = ctx[0].dataIndex;
               const r = buildTrendData(categoryKey)[idx];
-              return `📅 ${r.date} • ${r.time}`;
+              return `${r.date} - ${r.time}`;
             },
             label: (ctx) => {
               const idx = ctx.dataIndex;
               const r = buildTrendData(categoryKey)[idx];
               return [
-                `📍 ${r.point}`,
-                `📊 ${r.value}${r.unit ? ' ' + r.unit : ''}`,
-                `👤 ${r.user}`
+                `Nokta: ${r.point}`,
+                `Değer: ${r.value}${r.unit ? ' ' + r.unit : ''}`,
+                `Kullanıcı: ${r.user}`
               ];
             },
             afterLabel: (ctx) => {
               const idx = ctx.dataIndex;
               const r = buildTrendData(categoryKey)[idx];
-              if (r.note) return `💬 ${r.note}`;
+              if (r.note) return `Not: ${r.note}`;
               return '';
             }
           }

@@ -8,11 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Glohe Portal</title>
   <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body class="login-active">
-  <!-- ================= LOGIN ================= -->
   <div id="login-screen" class="login-container">
     <div style="text-align:center; margin-bottom:32px;">
       <div style="width:80px; height:80px; margin:0 auto 20px; background:linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); border-radius:20px; display:grid; place-items:center; box-shadow:0 8px 24px rgba(27,94,32,0.3);">
@@ -27,10 +27,8 @@
     <form id="login-form">
       <label for="username">Kullanıcı Adı</label>
       <input type="text" id="username" class="input-field" placeholder="Kullanıcı adınızı girin" required autocomplete="username" />
-      
       <label for="password">Şifre</label>
       <input type="password" id="password" class="input-field" placeholder="Şifrenizi girin" required autocomplete="current-password" />
-      
       <button type="submit" class="submit-button">
         <span>Giriş Yap</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -45,62 +43,27 @@
     </div>
   </div>
 
-  <!-- ================= PORTAL (login sonrası) ================= -->
   <div id="portal-screen" style="display:none;">
-    <!-- Sol Menü -->
     <aside class="menu" aria-label="Ana menü">
       <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menüyü aç/kapat">☰</button>
       <ul>
-        <li>
-          <a href="#" onclick="showHomepage(); setActive(this); return false;" class="active" data-section-link="home" data-tooltip="Anasayfa">
-            <span class="icon-wrap"><img src="icons/home.png" alt="Anasayfa"></span>
-            <span>Anasayfa</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor" data-tooltip="Klor">
-            <span class="icon-wrap"><img src="icons/klor.png" alt="Klor"></span>
-            <span>Klor</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik" data-tooltip="Sertlik">
-            <span class="icon-wrap"><img src="icons/sertlik.png" alt="Sertlik"></span>
-            <span>Sertlik</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph" data-tooltip="Ph">
-            <span class="icon-wrap"><img src="icons/ph.png" alt="Ph"></span>
-            <span>Ph</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik" data-tooltip="İletkenlik">
-            <span class="icon-wrap"><img src="icons/iletkenlik.png" alt="İletkenlik"></span>
-            <span>İletkenlik</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="Mikro Biyoloji">
-            <span class="icon-wrap"><img src="icons/mikro.png" alt="Mikro Biyoloji"></span>
-            <span>Mikro Biyoloji</span>
-          </a>
-        </li>
+        <li><a href="#" onclick="showHomepage(); setActive(this); return false;" class="active" data-section-link="home" data-tooltip="Anasayfa"><span class="icon-wrap"><img src="icons/home.png" alt="Anasayfa"></span><span>Anasayfa</span></a></li>
+        <li><a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor" data-tooltip="Klor"><span class="icon-wrap"><img src="icons/klor.png" alt="Klor"></span><span>Klor</span></a></li>
+        <li><a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik" data-tooltip="Sertlik"><span class="icon-wrap"><img src="icons/sertlik.png" alt="Sertlik"></span><span>Sertlik</span></a></li>
+        <li><a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph" data-tooltip="Ph"><span class="icon-wrap"><img src="icons/ph.png" alt="Ph"></span><span>Ph</span></a></li>
+        <li><a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik" data-tooltip="İletkenlik"><span class="icon-wrap"><img src="icons/iletkenlik.png" alt="İletkenlik"></span><span>İletkenlik</span></a></li>
+        <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="Mikro Biyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="Mikro Biyoloji"></span><span>Mikro Biyoloji</span></a></li>
       </ul>
     </aside>
 
-    <!-- Üst Şerit -->
     <div class="header">
       <div class="user-info">
         <span id="current-time"></span>
         <span id="logged-user"></span>
-        <img id="logout-button" src="icons/cikis-glohe.png" alt="Çıkış" title="Çıkış"
-             onclick="logout()" style="cursor:pointer;width:30px;height:30px;">
+        <img id="logout-button" src="icons/cikis-glohe.png" alt="Çıkış" title="Çıkış" onclick="logout()" style="cursor:pointer;width:30px;height:30px;">
       </div>
     </div>
 
-    <!-- MOBİL ÜST SEKME ÇUBUĞU -->
     <nav class="mobile-tabs" role="tablist" aria-label="Hızlı geçiş">
       <button type="button" class="tab active" data-section="home" onclick="mobileTabTo(this)">Anasayfa</button>
       <button type="button" class="tab" data-section="klor" onclick="mobileTabTo(this)">Klor</button>
@@ -110,80 +73,50 @@
       <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">Mikro</button>
     </nav>
 
-    <!-- İçerik -->
     <main class="content">
-      <!-- Anasayfa -->
       <section id="page-home">
-        <!-- Karşılama Kartı -->
         <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:20px; padding:32px 28px; margin-bottom:28px; box-shadow:0 12px 40px rgba(27,94,32,0.3); position:relative; overflow:hidden;">
-          <!-- Dekoratif arka plan -->
           <div style="position:absolute; top:-80px; right:-80px; width:280px; height:280px; background:rgba(255,255,255,0.06); border-radius:50%; filter:blur(40px);"></div>
           <div style="position:absolute; bottom:-60px; left:-60px; width:220px; height:220px; background:rgba(255,255,255,0.04); border-radius:50%; filter:blur(30px);"></div>
-          
           <div style="position:relative; z-index:1;">
             <div style="display:inline-flex; align-items:center; gap:12px; background:rgba(255,255,255,0.12); padding:8px 18px; border-radius:30px; margin-bottom:20px; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.18);">
               <div style="width:8px; height:8px; background:#4ade80; border-radius:50%; box-shadow:0 0 8px #4ade80;"></div>
               <span style="color:#fff; font-size:13px; font-weight:700; letter-spacing:0.3px;">SİSTEM AKTİF</span>
             </div>
-            
-            <h1 style="margin:0 0 24px; color:#fff; font-size:32px; font-weight:900; letter-spacing:-1px; line-height:1.1;">
-              Hoş Geldiniz
-            </h1>
-            
-            <!-- İstatistik Kartları -->
+            <h1 style="margin:0 0 24px; color:#fff; font-size:32px; font-weight:900; letter-spacing:-1px; line-height:1.1;">Hoş Geldiniz</h1>
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
-              <!-- Toplam Kayıt -->
-              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:20px 16px; border-radius:16px; border:1px solid rgba(255,255,255,0.25); transition:all 0.3s ease; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)'">
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:20px 16px; border-radius:16px; border:1px solid rgba(255,255,255,0.25);">
                 <div style="display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
                   <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:12px; display:grid; place-items:center;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
                   </div>
                 </div>
-                <div style="color:rgba(255,255,255,0.85); font-size:11px; font-weight:700; letter-spacing:0.3px; text-align:center; margin-bottom:8px;">TOPLAM KAYIT</div>
-                <div id="total-records" style="color:#fff; font-size:28px; font-weight:900; letter-spacing:-1px; text-shadow:0 2px 8px rgba(0,0,0,0.2); text-align:center;">0</div>
+                <div style="color:rgba(255,255,255,0.85); font-size:11px; font-weight:700; text-align:center; margin-bottom:8px;">TOPLAM KAYIT</div>
+                <div id="total-records" style="color:#fff; font-size:28px; font-weight:900; text-align:center;">0</div>
               </div>
-              
-              <!-- Bugünkü Ölçüm -->
-              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:20px 16px; border-radius:16px; border:1px solid rgba(255,255,255,0.25); transition:all 0.3s ease; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)'">
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:20px 16px; border-radius:16px; border:1px solid rgba(255,255,255,0.25);">
                 <div style="display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
                   <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:12px; display:grid; place-items:center;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="16" y1="2" x2="16" y2="6"/>
-                      <line x1="8" y1="2" x2="8" y2="6"/>
-                      <line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   </div>
                 </div>
-                <div style="color:rgba(255,255,255,0.85); font-size:11px; font-weight:700; letter-spacing:0.3px; text-align:center; margin-bottom:8px;">BUGÜNKÜ ÖLÇÜM</div>
-                <div id="today-records" style="color:#fff; font-size:28px; font-weight:900; letter-spacing:-1px; text-shadow:0 2px 8px rgba(0,0,0,0.2); text-align:center;">0</div>
+                <div style="color:rgba(255,255,255,0.85); font-size:11px; font-weight:700; text-align:center; margin-bottom:8px;">BUGÜNKÜ ÖLÇÜM</div>
+                <div id="today-records" style="color:#fff; font-size:28px; font-weight:900; text-align:center;">0</div>
               </div>
-              
-              <!-- Aktif Kategori -->
-              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:20px 16px; border-radius:16px; border:1px solid rgba(255,255,255,0.25); transition:all 0.3s ease; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)'">
+              <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); padding:20px 16px; border-radius:16px; border:1px solid rgba(255,255,255,0.25);">
                 <div style="display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
                   <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:12px; display:grid; place-items:center;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="7" height="7"/>
-                      <rect x="14" y="3" width="7" height="7"/>
-                      <rect x="14" y="14" width="7" height="7"/>
-                      <rect x="3" y="14" width="7" height="7"/>
-                    </svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                   </div>
                 </div>
-                <div style="color:rgba(255,255,255,0.85); font-size:11px; font-weight:700; letter-spacing:0.3px; text-align:center; margin-bottom:8px;">AKTİF KATEGORİ</div>
-                <div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:-1px; text-shadow:0 2px 8px rgba(0,0,0,0.2); text-align:center;">5</div>
+                <div style="color:rgba(255,255,255,0.85); font-size:11px; font-weight:700; text-align:center; margin-bottom:8px;">AKTİF KATEGORİ</div>
+                <div style="color:#fff; font-size:28px; font-weight:900; text-align:center;">5</div>
               </div>
             </div>
           </div>
         </div>
-
         <div id="saved-values" class="saved-values">
           <h3>Son Kaydedilen Değerler</h3>
-
-          <!-- Kayıt tablosu -->
           <div style="overflow:auto;">
             <table id="recent-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;">
               <thead>
@@ -199,14 +132,10 @@
                 </tr>
               </thead>
               <tbody id="recent-tbody">
-                <tr class="empty">
-                  <td colspan="8" style="padding:12px 10px; opacity:.7;">Henüz kayıt yok.</td>
-                </tr>
+                <tr class="empty"><td colspan="8" style="padding:12px 10px; opacity:.7;">Henüz kayıt yok.</td></tr>
               </tbody>
             </table>
           </div>
-
-          <!-- Trend Analizi -->
           <div style="margin-top:24px;">
             <div class="toolbar" style="margin-bottom:12px;">
               <h3 style="margin:0; color:#1b5e20; font-size:18px;">📈 Trend Analizi</h3>
@@ -227,15 +156,11 @@
         </div>
       </section>
 
-      <!-- Klor -->
       <section id="page-klor" style="display:none;">
         <div class="toolbar">
           <h2>Klor Kontrol Noktaları</h2>
-          <div class="right">
-            <input class="input" id="search" type="search" placeholder="Kontrol noktası ara..."/>
-          </div>
+          <div class="right"><input class="input" id="search" type="search" placeholder="Kontrol noktası ara..."/></div>
         </div>
-
         <div class="control-points">
           <div class="grid" id="klor-grid">
             <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
@@ -255,13 +180,10 @@
         </div>
       </section>
 
-      <!-- Sertlik -->
       <section id="page-sertlik" style="display:none;">
         <div class="toolbar">
           <h2>Sertlik Kontrol Noktaları</h2>
-          <div class="right">
-            <input class="input" id="search-sertlik" type="search" placeholder="Kontrol noktası ara..."/>
-          </div>
+          <div class="right"><input class="input" id="search-sertlik" type="search" placeholder="Kontrol noktası ara..."/></div>
         </div>
         <div class="control-points">
           <div class="grid" id="sertlik-grid">
@@ -282,13 +204,10 @@
         </div>
       </section>
 
-      <!-- Ph -->
       <section id="page-ph" style="display:none;">
         <div class="toolbar">
           <h2>Ph Kontrol Noktaları</h2>
-          <div class="right">
-            <input class="input" id="search-ph" type="search" placeholder="Kontrol noktası ara..."/>
-          </div>
+          <div class="right"><input class="input" id="search-ph" type="search" placeholder="Kontrol noktası ara..."/></div>
         </div>
         <div class="control-points">
           <div class="grid" id="ph-grid">
@@ -309,13 +228,10 @@
         </div>
       </section>
 
-      <!-- İletkenlik -->
       <section id="page-iletkenlik" style="display:none;">
         <div class="toolbar">
           <h2>İletkenlik Kontrol Noktaları</h2>
-          <div class="right">
-            <input class="input" id="search-iletkenlik" type="search" placeholder="Kontrol noktası ara..."/>
-          </div>
+          <div class="right"><input class="input" id="search-iletkenlik" type="search" placeholder="Kontrol noktası ara..."/></div>
         </div>
         <div class="control-points">
           <div class="grid" id="iletkenlik-grid">
@@ -336,100 +252,45 @@
         </div>
       </section>
 
-      <!-- Mikro Biyoloji -->
       <section id="page-mikro" style="display:none;">
-        <div class="toolbar">
-          <h2>Mikro Biyoloji Kontrol Noktaları</h2>
-          <div class="right">
-            <input class="input" type="search" placeholder="Kontrol noktası ara..."/>
-          </div>
-        </div>
-        <div class="control-points">
-          <div class="grid">
-            <div class="box">Kontrol Noktası 1</div>
-            <div class="box">Kontrol Noktası 2</div>
-            <div class="box">Kontrol Noktası 3</div>
-            <div class="box">Kontrol Noktası 4</div>
-            <div class="box">Kontrol Noktası 5</div>
-            <div class="box">Kontrol Noktası 6</div>
-            <div class="box">Kontrol Noktası 7</div>
-            <div class="box">Kontrol Noktası 8</div>
-            <div class="box">Kontrol Noktası 9</div>
-            <div class="box">Kontrol Noktası 10</div>
-            <div class="box">Kontrol Noktası 11</div>
-            <div class="box">Kontrol Noktası 12</div>
-            <div class="box">Kontrol Noktası 13</div>
-          </div>
-        </div>
+        <div class="toolbar"><h2>Mikro Biyoloji Kontrol Noktaları</h2></div>
       </section>
     </main>
   </div>
 
-  <!-- Modal + Overlay + Toast -->
   <div class="overlay" id="overlay"></div>
-  <div class="modal" id="entry-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="entry-modal">
     <div class="modal-card">
       <div class="modal-head">
-        <h3 class="modal-title" id="modalTitle">Klor Ölçüm Kaydı</h3>
-        <button class="btn btn-ghost" id="btn-close-modal" aria-label="Kapat">Kapat</button>
+        <h3 class="modal-title" id="modalTitle">Ölçüm Kaydı</h3>
+        <button class="btn btn-ghost" id="btn-close-modal">Kapat</button>
       </div>
       <form id="entry-form">
         <div class="modal-body">
           <div class="form-grid">
-            <div>
-              <label for="point">Kontrol Noktası</label>
-              <select id="point" required>
-                <option value="">Seçiniz...</option>
-                <option>Kontrol Noktası 1</option>
-                <option>Kontrol Noktası 2</option>
-                <option>Kontrol Noktası 3</option>
-                <option>Kontrol Noktası 4</option>
-                <option>Kontrol Noktası 5</option>
-                <option>Kontrol Noktası 6</option>
-                <option>Kontrol Noktası 7</option>
-                <option>Kontrol Noktası 8</option>
-                <option>Kontrol Noktası 9</option>
-                <option>Kontrol Noktası 10</option>
-                <option>Kontrol Noktası 11</option>
-                <option>Kontrol Noktası 12</option>
-                <option>Kontrol Noktası 13</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="value">Ölçüm Değeri</label>
-              <input id="value" type="number" step="0.001" placeholder="Örn: 0.50" required/>
-            </div>
-
-            <div>
-              <label for="unit">Birim</label>
-              <input id="unit" type="text" value="ppm" readonly style="background:#f5f5f5; cursor:not-allowed;">
-            </div>
-
-            <div class="full">
-              <label for="note">Açıklama</label>
-              <textarea id="note" rows="4" placeholder="İsteğe bağlı not ekleyebilirsiniz"></textarea>
-            </div>
-
-            <!-- Gizli alanlar -->
+            <div><label for="point">Kontrol Noktası</label><select id="point" required><option value="">Seçiniz...</option><option>Kontrol Noktası 1</option><option>Kontrol Noktası 2</option><option>Kontrol Noktası 3</option><option>Kontrol Noktası 4</option><option>Kontrol Noktası 5</option><option>Kontrol Noktası 6</option><option>Kontrol Noktası 7</option><option>Kontrol Noktası 8</option><option>Kontrol Noktası 9</option><option>Kontrol Noktası 10</option><option>Kontrol Noktası 11</option><option>Kontrol Noktası 12</option><option>Kontrol Noktası 13</option></select></div>
+            <div><label for="value">Ölçüm Değeri</label><input id="value" type="number" step="0.001" required/></div>
+            <div><label for="unit">Birim</label><input id="unit" type="text" value="ppm" readonly style="background:#f5f5f5;"/></div>
+            <div class="full"><label for="note">Açıklama</label><textarea id="note" rows="4"></textarea></div>
             <input type="hidden" id="date" />
-            <input type="hidden" id="date_value" />
             <input type="hidden" id="time" />
-            <input type="hidden" id="time_value" />
+            <input type="hidden" id="user" />
           </div>
         </div>
         <div class="modal-foot">
           <button type="button" class="btn btn-ghost" id="btn-cancel">Vazgeç</button>
           <button type="submit" class="btn btn-primary">Kaydet</button>
         </div>
-
-        <!-- Kullanıcı (gizli) -->
-        <input type="hidden" id="user" name="user" />
       </form>
     </div>
   </div>
   <div class="toast" id="toast">Kayıt başarıyla kaydedildi.</div>
-
+  <script>
+    const SUPABASE_URL = 'https://mignlffeyougoefuyayr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('Supabase bağlantısı kuruldu');
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
