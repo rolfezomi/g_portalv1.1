@@ -1,0 +1,37 @@
+[build]
+  # Build komutu (statik site için gerekli değil)
+  command = "echo 'No build needed'"
+  # Publish edilecek klasör
+  publish = "."
+  # Functions klasörü
+  functions = "netlify/functions"
+
+[dev]
+  # Local development
+  command = "npx netlify dev"
+  port = 8888
+
+# Environment variables (Netlify Dashboard'dan eklenecek)
+# SUPABASE_URL
+# SUPABASE_ANON_KEY
+# SUPABASE_SERVICE_ROLE_KEY
+
+# Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Redirects for SPA (optional)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}

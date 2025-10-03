@@ -64,16 +64,27 @@ function takeOverValueInput() {
 }
 // --- /DECIMAL INPUT FIX ---
 
+// --- TR number parser (eklenen yardımcı) ---
+function parseTRNumber(val) {
+  if (typeof val === 'number') return val;
+  if (val == null) return NaN;
+  const s = String(val).trim();
+  if (!s) return NaN;
+  // Binlik noktalarını kaldır, ondalık virgülü noktaya çevir
+  const normalized = s.replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+  return Number(normalized);
+}
+// --- /TR number parser ---
+
 // ====== SUPABASE ======
-const supabaseClient = window.supabase.createClient(
-  'https://mignlffeyougoefuyayr.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0'
-);
+// index.html'den gelen supabase client'ı kullan
+const supabaseClient = window.supabaseClient;
 
 let cachedRecords = [];
 let currentSection = 'home';
 let trendChart = null;
 let currentUserEmail = '';
+let currentUserRole = 'full'; // 'admin', 'full', 'restricted'
 const ADMIN_EMAIL = 'ugur.onar@glohe.com';
 
 // ====== INIT ======
@@ -92,8 +103,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     const userEl = document.getElementById('logged-user');
     if (userEl && username) userEl.textContent = username;
 
+    // Kullanıcı rolünü al
+    await loadUserRole(username);
+
     // Admin ise logs menüsünü göster
-    if (username === ADMIN_EMAIL) {
+    if (currentUserRole === 'admin') {
       showAdminMenu();
     }
 
@@ -165,8 +179,11 @@ if (loginForm) {
       const userEl = document.getElementById('logged-user');
       if (userEl) userEl.textContent = email;
 
+      // Kullanıcı rolünü al
+      await loadUserRole(email);
+
       // Admin ise logs menüsünü göster
-      if (email === ADMIN_EMAIL) {
+      if (currentUserRole === 'admin') {
         showAdminMenu();
       }
 
@@ -188,6 +205,29 @@ async function logout() {
   await supabaseClient.auth.signOut();
   localStorage.clear();
   location.reload();
+}
+
+// ====== KULLANICI ROL SİSTEMİ ======
+async function loadUserRole(email) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('email', email)
+      .single();
+
+    if (error || !data) {
+      // Varsayılan olarak 'full' yetkisi ver
+      currentUserRole = 'full';
+      console.log('Kullanıcı rolü bulunamadı, varsayılan: full');
+    } else {
+      currentUserRole = data.role;
+      console.log('Kullanıcı rolü:', currentUserRole);
+    }
+  } catch (err) {
+    currentUserRole = 'full';
+    console.error('Rol yükleme hatası:', err);
+  }
 }
 
 // ====== LOG SİSTEMİ ======
@@ -218,6 +258,15 @@ function showAdminMenu() {
     </a>
   `;
   menu.appendChild(logsItem);
+
+  const usersItem = document.createElement('li');
+  usersItem.innerHTML = `
+    <a href="#" onclick="showSection('users'); setActive(this); return false;" data-section-link="users" data-tooltip="Kullanıcı Yönetimi">
+      <span class="icon-wrap">👥</span>
+      <span>Kullanıcı Yönetimi</span>
+    </a>
+  `;
+  menu.appendChild(usersItem);
 }
 
 // ====== NAVİGASYON ======
@@ -240,7 +289,7 @@ function showHomepage() {
 function showSection(key) {
   currentSection = key;
 
-  ['home', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'logs'].forEach(s => {
+  ['home', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'logs', 'users'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });
@@ -250,7 +299,8 @@ function showSection(key) {
     sertlik: initSertlikPage,
     ph: initPhPage,
     iletkenlik: initIletkenlikPage,
-    logs: initLogsPage
+    logs: initLogsPage,
+    users: initUsersPage
   };
 
   if (initFuncs[key]) setTimeout(initFuncs[key], 0);
@@ -323,10 +373,24 @@ async function loadRecent() {
 function renderRecent() {
   const tbody = document.getElementById('recent-tbody');
   if (!tbody) return;
-  
+
+  // Kısıtlı kullanıcılar için tabloyu ve Excel butonunu gizle
+  const savedValuesDiv = document.getElementById('saved-values');
+  const excelBtn = document.getElementById('excel-export-btn');
+
+  if (currentUserRole === 'restricted') {
+    if (savedValuesDiv) savedValuesDiv.style.display = 'none';
+    if (excelBtn) excelBtn.style.display = 'none';
+    return;
+  }
+
+  // Admin ve Full kullanıcılar için göster
+  if (savedValuesDiv) savedValuesDiv.style.display = '';
+  if (excelBtn) excelBtn.style.display = 'inline-flex';
+
   const rows = cachedRecords.slice(0, 5);
   tbody.innerHTML = '';
-  
+
   if (!rows.length) {
     tbody.innerHTML = '<tr class="empty"><td colspan="8" style="padding:12px 10px; opacity:.7;">Henüz kayıt yok.</td></tr>';
     return;
@@ -336,10 +400,26 @@ function renderRecent() {
     const tr = document.createElement('tr');
     tr.style.cssText = 'background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); border-radius:10px; overflow:hidden;';
     tr.style.animation = `fadeInRow 0.3s ease ${i * 0.05}s both`;
+
+    // Değer için ondalık formatlama
+    let displayValue = '-';
+    if (r.value != null && r.value !== '') {
+      let numValue = parseTRNumber(r.value); // <— parseFloat yerine TR parse
+      if (!isNaN(numValue)) {
+        // Virgülden sonra en fazla 3 basamak olacak şekilde kes
+        numValue = Math.trunc(numValue * 1000) / 1000;
+
+        displayValue = numValue.toLocaleString('tr-TR', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 3
+        });
+      }
+    }
+
     tr.innerHTML = `
       <td style="padding:10px 12px; font-weight:700; color:#1b5e20;">${r.category}</td>
       <td style="padding:10px 12px;">${r.point || '-'}</td>
-      <td style="padding:10px 12px; font-weight:600;">${r.value || '-'}</td>
+      <td style="padding:10px 12px; font-weight:600;">${displayValue}</td>
       <td style="padding:10px 12px;">${r.unit || '-'}</td>
       <td style="padding:10px 12px;">${r.date || '-'}</td>
       <td style="padding:10px 12px;">${r.time || '-'}</td>
@@ -467,6 +547,150 @@ async function initLogsPage() {
   }
 }
 
+// ====== KULLANICI YÖNETİMİ SAYFASI ======
+async function initUsersPage() {
+  const usersContainer = document.getElementById('users-table-container');
+  if (!usersContainer) return;
+
+  try {
+    // Backend API'den kullanıcı listesini al
+    const { data: session } = await supabaseClient.auth.getSession();
+    if (!session?.session?.access_token) {
+      usersContainer.innerHTML = '<p style="color:#d32f2f; padding:20px;">Oturum bulunamadı. Lütfen yeniden giriş yapın.</p>';
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/users`, {
+      headers: {
+        'Authorization': `Bearer ${session.session.access_token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      usersContainer.innerHTML = `<p style="color:#d32f2f; padding:20px;">Kullanıcılar yüklenemedi: ${errorData.error || response.statusText}</p>`;
+      return;
+    }
+
+    const { users: authUsers } = await response.json();
+
+    if (!authUsers || authUsers.length === 0) {
+      usersContainer.innerHTML = '<p style="opacity:0.6; padding:20px;">Henüz kullanıcı kaydı yok.</p>';
+      return;
+    }
+
+    let html = `
+      <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px 10px;">Email</th>
+            <th style="text-align:left; padding:8px 10px;">Kayıt Tarihi</th>
+            <th style="text-align:left; padding:8px 10px;">Son Giriş</th>
+            <th style="text-align:left; padding:8px 10px;">Rol</th>
+            <th style="text-align:left; padding:8px 10px;">İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    authUsers.forEach((user, i) => {
+      const email = user.email;
+      const createdDate = new Date(user.created_at);
+      const createdStr = createdDate.toLocaleDateString('tr-TR') + ' ' + createdDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+      const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
+      const lastSignInStr = lastSignIn
+        ? lastSignIn.toLocaleDateString('tr-TR') + ' ' + lastSignIn.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+        : '-';
+
+      const currentRole = user.role || 'full';
+      const roleId = user.role_id || null;
+
+      const roleOptions = ['admin', 'full', 'restricted'].map(role =>
+        `<option value="${role}" ${currentRole === role ? 'selected' : ''}>${getRoleLabel(role)}</option>`
+      ).join('');
+
+      html += `
+        <tr style="background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); border-radius:10px; animation:fadeInRow 0.3s ease ${i * 0.03}s both;">
+          <td style="padding:10px 12px; font-weight:600; color:#1b5e20;">${email}</td>
+          <td style="padding:10px 12px; font-size:13px;">${createdStr}</td>
+          <td style="padding:10px 12px; font-size:13px;">${lastSignInStr}</td>
+          <td style="padding:10px 12px;">
+            <select id="role-${email.replace(/[@.]/g, '_')}" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+              ${roleOptions}
+            </select>
+          </td>
+          <td style="padding:10px 12px;">
+            <button onclick="updateUserRoleByEmail('${email}', ${roleId})" class="btn btn-primary" style="padding:6px 12px; font-size:13px;">Güncelle</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += '</tbody></table>';
+    usersContainer.innerHTML = html;
+  } catch (err) {
+    console.error('Kullanıcı yükleme hatası:', err);
+    usersContainer.innerHTML = '<p style="color:#d32f2f; padding:20px;">Beklenmeyen hata oluştu: ' + err.message + '</p>';
+  }
+}
+
+function getRoleLabel(role) {
+  const labels = {
+    'admin': 'Admin (Tam Yetki + Kullanıcı Yönetimi)',
+    'full': 'Tam Yetki',
+    'restricted': 'Kısıtlı (Son Değerler ve Grafikler Gizli)'
+  };
+  return labels[role] || role;
+}
+
+async function updateUserRoleByEmail(email, existingRoleId) {
+  const selectEl = document.getElementById(`role-${email.replace(/[@.]/g, '_')}`);
+  if (!selectEl) return;
+
+  const newRole = selectEl.value;
+
+  try {
+    // Backend API'den kullanıcı session'ını al
+    const { data: session } = await supabaseClient.auth.getSession();
+    if (!session?.session?.access_token) {
+      showToast('Oturum bulunamadı. Lütfen yeniden giriş yapın.');
+      return;
+    }
+
+    // Backend API ile rol güncelle
+    const response = await fetch(`${API_URL}/update-role`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.session.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        role: newRole,
+        roleId: existingRoleId
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      showToast('Rol güncellenemedi: ' + (result.error || response.statusText));
+      return;
+    }
+
+    showToast(result.message || `${email} kullanıcısının rolü güncellendi`);
+
+    // Sayfayı yenile
+    setTimeout(() => initUsersPage(), 1000);
+  } catch (err) {
+    console.error('Beklenmeyen hata:', err);
+    showToast('Rol güncellenirken hata oluştu.');
+  }
+}
+
+window.updateUserRoleByEmail = updateUserRoleByEmail;
+
 // ====== MODAL ======
 const overlay = document.getElementById('overlay');
 const modal = document.getElementById('entry-modal');
@@ -504,62 +728,61 @@ function openModal(prefillPoint) {
   valueInput.max = config.max || '';
 
   // 1) Nokta tuşunu caret bozulmadan virgüle çevir
-document.addEventListener('beforeinput', (e) => {
-  const el = e.target;
-  if (!el || el.nodeName !== 'INPUT') return;
-  if (!el.matches('#value')) return; // yalnızca id="value" olan input
+  document.addEventListener('beforeinput', (e) => {
+    const el = e.target;
+    if (!el || el.nodeName !== 'INPUT') return;
+    if (!el.matches('#value')) return; // yalnızca id="value" olan input
 
-  if (e.inputType === 'insertText' && e.data === '.') {
-    e.preventDefault();
-    const { selectionStart, selectionEnd } = el;
-    el.setRangeText(',', selectionStart, selectionEnd, 'end');
-  }
-}, true); // capture=true: dinamik içerik + IME uyumu
-
-// 2) Temizlik ve caret koruma
-document.addEventListener('input', (e) => {
-  const el = e.target;
-  if (!el || el.nodeName !== 'INPUT') return;
-  if (!el.matches('#value')) return;
-
-  let caret = el.selectionStart;
-  let v = el.value;
-
-  // Fazla virgülleri kaldır (ilk virgül hariç)
-  const firstComma = v.indexOf(',');
-  if (firstComma !== -1) {
-    const left = v.slice(0, firstComma + 1);
-    const right = v.slice(firstComma + 1);
-    const commasInRight = (right.match(/,/g) || []).length;
-    if (commasInRight > 0) {
-      const commasBeforeCaret =
-        (v.slice(firstComma + 1, caret).match(/,/g) || []).length;
-      v = left + right.replace(/,/g, '');
-      if (caret > firstComma + 1) caret -= commasBeforeCaret;
+    if (e.inputType === 'insertText' && e.data === '.') {
+      e.preventDefault();
+      const { selectionStart, selectionEnd } = el;
+      el.setRangeText(',', selectionStart, selectionEnd, 'end');
     }
-  }
+  }, true); // capture=true: dinamik içerik + IME uyumu
 
-  // Virgülden sonra max 3 basamak
-  const commaPos = v.indexOf(',');
-  if (commaPos !== -1) {
-    const decimals = v.slice(commaPos + 1);
-    if (decimals.length > 3) {
-      v = v.slice(0, commaPos + 1) + decimals.slice(0, 3);
-      if (caret > commaPos + 1 + 3) caret = commaPos + 1 + 3;
+  // 2) Temizlik ve caret koruma
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (!el || el.nodeName !== 'INPUT') return;
+    if (!el.matches('#value')) return;
+
+    let caret = el.selectionStart;
+    let v = el.value;
+
+    // Fazla virgülleri kaldır (ilk virgül hariç)
+    const firstComma = v.indexOf(',');
+    if (firstComma !== -1) {
+      const left = v.slice(0, firstComma + 1);
+      const right = v.slice(firstComma + 1);
+      const commasInRight = (right.match(/,/g) || []).length;
+      if (commasInRight > 0) {
+        const commasBeforeCaret =
+          (v.slice(firstComma + 1, caret).match(/,/g) || []).length;
+        v = left + right.replace(/,/g, '');
+        if (caret > firstComma + 1) caret -= commasBeforeCaret;
+      }
     }
-  }
 
-  // Yapıştırma vb. durumlarda nokta -> virgül
-  if (v.includes('.')) v = v.replace(/\./g, ',');
+    // Virgülden sonra max 3 basamak
+    const commaPos = v.indexOf(',');
+    if (commaPos !== -1) {
+      const decimals = v.slice(commaPos + 1);
+      if (decimals.length > 3) {
+        v = v.slice(0, commaPos + 1) + decimals.slice(0, 3);
+        if (caret > commaPos + 1 + 3) caret = commaPos + 1 + 3;
+      }
+    }
 
-  if (el.value !== v) {
-    el.value = v;
-    requestAnimationFrame(() => {
-      el.setSelectionRange(caret, caret);
-    });
-  }
-});
+    // Yapıştırma vb. durumlarda nokta -> virgül
+    if (v.includes('.')) v = v.replace(/\./g, ',');
 
+    if (el.value !== v) {
+      el.value = v;
+      requestAnimationFrame(() => {
+        el.setSelectionRange(caret, caret);
+      });
+    }
+  });
 
   const now = new Date();
   document.getElementById('date').value = now.toISOString().slice(0, 10);
@@ -593,7 +816,7 @@ if (form) {
     const entry = {
       category: categoryMap[currentSection] || currentSection,
       point: document.getElementById('point').value,
-      value: parseFloat(document.getElementById('value').value),
+      value: parseTRNumber(document.getElementById('value').value), // <— parseFloat yerine TR parse
       unit: document.getElementById('unit').value,
       date: document.getElementById('date').value,
       time: document.getElementById('time').value,
@@ -635,7 +858,7 @@ function buildTrendData(categoryKey) {
     .filter(r => r.category === name && r.value != null && r.value !== '')
     .map(r => ({
       label: `${r.date} ${r.time}`,
-      value: parseFloat(r.value),
+      value: parseTRNumber(r.value), // <— parseFloat yerine TR parse
       unit: r.unit || '',
       user: r.user || '',
       date: r.date,
@@ -761,13 +984,19 @@ function initMobileMenuScrim() {
 
 // ====== EXCEL EXPORT ======
 async function exportToExcel() {
+  // Kısıtlı kullanıcılar Excel indiremez
+  if (currentUserRole === 'restricted') {
+    showToast('Bu işlem için yetkiniz bulunmamaktadır.');
+    return;
+  }
+
   try {
     const { data, error } = await supabaseClient
       .from('measurements')
       .select('*')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
-    
+
     if (error) return showToast('Veri yüklenemedi: ' + error.message);
     if (!data || !data.length) return showToast('Dışa aktarılacak veri bulunamadı.');
     
@@ -829,3 +1058,4 @@ function downloadCSV(content, fileName) {
 }
 
 window.exportToExcel = exportToExcel;
+// --- DECIMAL INPUT FIX (eklenen yardımcı) ---

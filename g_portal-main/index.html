@@ -119,7 +119,7 @@
         <div id="saved-values" class="saved-values">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <h3 style="margin: 0;">Son Kaydedilen Değerler</h3>
-            <button class="btn btn-primary" onclick="exportToExcel()" style="display: inline-flex; align-items: center; gap: 8px;">
+            <button id="excel-export-btn" class="btn btn-primary" onclick="exportToExcel()" style="display: inline-flex; align-items: center; gap: 8px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -277,6 +277,20 @@
           </div>
         </div>
       </section>
+
+      <section id="page-users" style="display:none;">
+        <div class="toolbar">
+          <h2>👥 Kullanıcı Yönetimi</h2>
+        </div>
+        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08);">
+          <div style="margin-bottom:20px;">
+            <p style="color:#666; font-size:14px;">Kullanıcıların portal erişim yetkilerini yönetin. <strong>Restricted</strong> kullanıcılar anasayfada son değerleri ve grafikleri göremez.</p>
+          </div>
+          <div id="users-table-container">
+            <p style="opacity:0.6; text-align:center; padding:40px;">Kullanıcılar yükleniyor...</p>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -308,10 +322,19 @@
   </div>
   <div class="toast" id="toast">Kayıt başarıyla kaydedildi.</div>
   <script>
+    // Backend API URL'i
+    // Production'da Netlify Functions kullanılacak
+    const API_URL = window.location.hostname === 'localhost'
+      ? 'http://localhost:8888/.netlify/functions'  // Local development
+      : '/.netlify/functions';  // Production (Netlify)
+
     const SUPABASE_URL = 'https://mignlffeyougoefuyayr.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('Supabase bağlantısı kuruldu');
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0';
+
+    // Global supabase client oluştur
+    const { createClient } = window.supabase;
+    window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase bağlantısı kuruldu', window.supabaseClient);
   </script>
   <script src="script.js"></script>
 </body>
