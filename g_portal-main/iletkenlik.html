@@ -190,20 +190,53 @@
 
         function openModal(prefillPoint) {
             if (prefillPoint) document.getElementById('point').value = prefillPoint;
-            
+
             const now = new Date();
             document.getElementById('date').value = now.toISOString().slice(0,10);
             const hh = String(now.getHours()).padStart(2,"0");
             const mm = String(now.getMinutes()).padStart(2,"0");
             const ss = String(now.getSeconds()).padStart(2,"0");
             document.getElementById('time').value = `${hh}:${mm}:${ss}`;
-            
+
             const userText = (document.getElementById('logged-user')?.textContent || '');
             document.getElementById('user').value = userText || 'Bilinmiyor';
 
+            // Nokta girişini engelle, virgül kullan ve virgülden sonra max 3 basamak
+            const valueInput = document.getElementById('value');
+            valueInput.addEventListener('input', function(e) {
+                const cursorPos = this.selectionStart;
+                const oldValue = this.value;
+                let value = oldValue;
+
+                // Noktayı virgülle değiştir
+                value = value.replace(/\./g, ',');
+
+                // Birden fazla virgül varsa sadece ilkini tut
+                const parts = value.split(',');
+                if (parts.length > 2) {
+                    value = parts[0] + ',' + parts.slice(1).join('');
+                }
+
+                // Virgülden sonra max 3 karakter
+                if (value.includes(',')) {
+                    const [before, after] = value.split(',');
+                    if (after && after.length > 3) {
+                        value = before + ',' + after.substring(0, 3);
+                    }
+                }
+
+                // Sadece değer değiştiyse güncelle
+                if (this.value !== value) {
+                    this.value = value;
+                    // Cursor pozisyonunu koru veya düzelt
+                    const newCursorPos = Math.min(cursorPos, value.length);
+                    this.setSelectionRange(newCursorPos, newCursorPos);
+                }
+            });
+
             overlay.style.display = 'block';
             modal.style.display = 'flex';
-            document.getElementById('value').focus();
+            valueInput.focus();
         }
 
         function closeModal() {

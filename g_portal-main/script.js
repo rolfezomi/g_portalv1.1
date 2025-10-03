@@ -1,3 +1,69 @@
+// --- DECIMAL INPUT FIX (global helpers) ---
+const __initedDecimalInputs = new WeakSet();
+
+function initDecimalValueInput(el) {
+  if (!el || __initedDecimalInputs.has(el)) return;
+  __initedDecimalInputs.add(el);
+
+  // Force text mode to avoid caret reset issues on number inputs
+  el.setAttribute('type', 'text');
+  el.setAttribute('inputmode', 'decimal');
+  el.setAttribute('autocomplete', 'off');
+
+  // Convert dot to comma without breaking caret (beforeinput + setRangeText)
+  el.addEventListener('beforeinput', (e) => {
+    if (e.inputType === 'insertText' && e.data === '.') {
+      e.preventDefault();
+      const { selectionStart, selectionEnd } = el;
+      el.setRangeText(',', selectionStart, selectionEnd, 'end');
+    }
+  }, true);
+
+  // Sanitize and keep caret position stable
+  el.addEventListener('input', () => {
+    let caret = el.selectionStart;
+    let v = el.value;
+
+    // Replace any dots with commas (paste, etc.)
+    if (v.includes('.')) v = v.replace(/\./g, ',');
+
+    // Keep only first comma
+    const firstComma = v.indexOf(',');
+    if (firstComma !== -1) {
+      const left = v.slice(0, firstComma + 1);
+      const right = v.slice(firstComma + 1);
+      const commasBeforeCaret = (v.slice(firstComma + 1, caret).match(/,/g) || []).length;
+      v = left + right.replace(/,/g, '');
+      if (caret > firstComma + 1) caret -= commasBeforeCaret;
+    }
+
+    // Max 3 digits after comma
+    const commaPos = v.indexOf(',');
+    if (commaPos !== -1) {
+      const decimals = v.slice(commaPos + 1);
+      if (decimals.length > 3) {
+        v = v.slice(0, commaPos + 1) + decimals.slice(0, 3);
+        if (caret > commaPos + 1 + 3) caret = commaPos + 1 + 3;
+      }
+    }
+
+    if (el.value !== v) {
+      el.value = v;
+      requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+    }
+  });
+}
+
+// Clone-and-replace to drop existing listeners, then init our sanitized behavior
+function takeOverValueInput() {
+  const el = document.getElementById('value');
+  if (!el) return;
+  const clone = el.cloneNode(true);
+  el.parentNode.replaceChild(clone, el);
+  initDecimalValueInput(clone);
+}
+// --- /DECIMAL INPUT FIX ---
+
 // ====== SUPABASE ======
 const supabaseClient = window.supabase.createClient(
   'https://mignlffeyougoefuyayr.supabase.co',
@@ -410,13 +476,15 @@ const form = document.getElementById('entry-form');
 
 const categoryConfig = {
   klor: { title: 'Klor Ölçüm Kaydı', unit: 'ppm', placeholder: 'Örn: 0.50', step: '0.001', min: '0' },
-  sertlik: { title: 'Sertlik Ölçüm Kaydı', unit: 'mg/L CaCO₃', placeholder: 'Örn: 180.0', step: '0.1', min: '0' },
+  sertlik: { title: 'Sertlik Ölçüm Kaydı', unit: '°dH(Alman Sertliği)', placeholder: 'Örn: 180.0', step: '0.1', min: '0' },
   ph: { title: 'Ph Ölçüm Kaydı', unit: 'pH', placeholder: 'Örn: 7.0', step: '0.1', min: '0', max: '14' },
   iletkenlik: { title: 'İletkenlik Ölçüm Kaydı', unit: 'µS/cm', placeholder: 'Örn: 250.0', step: '0.1', min: '0' },
   mikro: { title: 'Mikro Biyoloji Kaydı', unit: '', placeholder: '', step: '0.1', min: '0' }
 };
 
 function openModal(prefillPoint) {
+  try { if (typeof takeOverValueInput === 'function') takeOverValueInput(); } catch(_) {}
+
   if (prefillPoint) document.getElementById('point').value = prefillPoint;
   
   const config = categoryConfig[currentSection] || categoryConfig.klor;
@@ -434,7 +502,65 @@ function openModal(prefillPoint) {
   valueInput.step = config.step;
   valueInput.min = config.min;
   valueInput.max = config.max || '';
-  
+
+  // 1) Nokta tuşunu caret bozulmadan virgüle çevir
+document.addEventListener('beforeinput', (e) => {
+  const el = e.target;
+  if (!el || el.nodeName !== 'INPUT') return;
+  if (!el.matches('#value')) return; // yalnızca id="value" olan input
+
+  if (e.inputType === 'insertText' && e.data === '.') {
+    e.preventDefault();
+    const { selectionStart, selectionEnd } = el;
+    el.setRangeText(',', selectionStart, selectionEnd, 'end');
+  }
+}, true); // capture=true: dinamik içerik + IME uyumu
+
+// 2) Temizlik ve caret koruma
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (!el || el.nodeName !== 'INPUT') return;
+  if (!el.matches('#value')) return;
+
+  let caret = el.selectionStart;
+  let v = el.value;
+
+  // Fazla virgülleri kaldır (ilk virgül hariç)
+  const firstComma = v.indexOf(',');
+  if (firstComma !== -1) {
+    const left = v.slice(0, firstComma + 1);
+    const right = v.slice(firstComma + 1);
+    const commasInRight = (right.match(/,/g) || []).length;
+    if (commasInRight > 0) {
+      const commasBeforeCaret =
+        (v.slice(firstComma + 1, caret).match(/,/g) || []).length;
+      v = left + right.replace(/,/g, '');
+      if (caret > firstComma + 1) caret -= commasBeforeCaret;
+    }
+  }
+
+  // Virgülden sonra max 3 basamak
+  const commaPos = v.indexOf(',');
+  if (commaPos !== -1) {
+    const decimals = v.slice(commaPos + 1);
+    if (decimals.length > 3) {
+      v = v.slice(0, commaPos + 1) + decimals.slice(0, 3);
+      if (caret > commaPos + 1 + 3) caret = commaPos + 1 + 3;
+    }
+  }
+
+  // Yapıştırma vb. durumlarda nokta -> virgül
+  if (v.includes('.')) v = v.replace(/\./g, ',');
+
+  if (el.value !== v) {
+    el.value = v;
+    requestAnimationFrame(() => {
+      el.setSelectionRange(caret, caret);
+    });
+  }
+});
+
+
   const now = new Date();
   document.getElementById('date').value = now.toISOString().slice(0, 10);
   document.getElementById('time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
