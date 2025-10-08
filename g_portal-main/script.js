@@ -299,6 +299,7 @@ function showSection(key) {
     sertlik: initSertlikPage,
     ph: initPhPage,
     iletkenlik: initIletkenlikPage,
+    mikro: initMikroPage,
     logs: initLogsPage,
     users: initUsersPage
   };
@@ -460,15 +461,15 @@ async function addRecent(entry) {
 }
 
 // ====== KATEGORİ SAYFALARI ======
-const pageInits = { klor: false, sertlik: false, ph: false, iletkenlik: false };
+const pageInits = { klor: false, sertlik: false, ph: false, iletkenlik: false, mikro: false };
 
 function initCategoryPage(category, searchId, gridId) {
   if (pageInits[category]) return;
   pageInits[category] = true;
-  
+
   const search = document.getElementById(searchId);
   const boxes = Array.from(document.querySelectorAll(`#${gridId} .box`));
-  
+
   if (search) {
     search.addEventListener('input', () => {
       const q = search.value.toLowerCase().trim();
@@ -477,14 +478,82 @@ function initCategoryPage(category, searchId, gridId) {
       });
     });
   }
-  
-  boxes.forEach(b => b.addEventListener('click', () => openModal(b.dataset.point)));
+
+  boxes.forEach(b => b.addEventListener('click', () => openModal(b.dataset.point, true))); // readonly=true
 }
 
 function initKlorPage() { initCategoryPage('klor', 'search', 'klor-grid'); }
 function initSertlikPage() { initCategoryPage('sertlik', 'search-sertlik', 'sertlik-grid'); }
 function initPhPage() { initCategoryPage('ph', 'search-ph', 'ph-grid'); }
 function initIletkenlikPage() { initCategoryPage('iletkenlik', 'search-iletkenlik', 'iletkenlik-grid'); }
+
+let selectedCompactDryPoint = '';
+
+function initMikroPage() {
+  if (pageInits.mikro) return;
+  pageInits.mikro = true;
+
+  // Ana view'a dön
+  document.getElementById('mikro-main-view').style.display = '';
+  document.getElementById('mikro-compact-dry-view').style.display = 'none';
+  document.getElementById('mikro-compact-dry-tests-view').style.display = 'none';
+  document.getElementById('mikro-petri-view').style.display = 'none';
+}
+
+// Mikrobiyoloji alt menülerini göster
+function showMikroSubMenu(type) {
+  document.getElementById('mikro-main-view').style.display = 'none';
+  document.getElementById('mikro-compact-dry-tests-view').style.display = 'none';
+
+  if (type === 'compact-dry') {
+    document.getElementById('mikro-compact-dry-view').style.display = '';
+    document.getElementById('mikro-petri-view').style.display = 'none';
+  } else if (type === 'petri') {
+    document.getElementById('mikro-compact-dry-view').style.display = 'none';
+    document.getElementById('mikro-petri-view').style.display = '';
+  }
+}
+
+// Mikrobiyoloji ana menüye dön
+function backToMikroMain() {
+  document.getElementById('mikro-main-view').style.display = '';
+  document.getElementById('mikro-compact-dry-view').style.display = 'none';
+  document.getElementById('mikro-compact-dry-tests-view').style.display = 'none';
+  document.getElementById('mikro-petri-view').style.display = 'none';
+}
+
+// Compact Dry kontrol noktası seçildiğinde test seçim ekranını göster
+function showCompactDryTests(point) {
+  selectedCompactDryPoint = point;
+  document.getElementById('compact-dry-test-title').textContent = `Compact Dry - Kontrol Noktası ${point} - Test Seçimi`;
+  document.getElementById('mikro-compact-dry-view').style.display = 'none';
+  document.getElementById('mikro-compact-dry-tests-view').style.display = '';
+}
+
+// Compact Dry test seçiminden kontrol noktalarına geri dön
+function backToCompactDryPoints() {
+  document.getElementById('mikro-compact-dry-view').style.display = '';
+  document.getElementById('mikro-compact-dry-tests-view').style.display = 'none';
+}
+
+// Compact Dry test seçildiğinde modal aç
+function openCompactDryModal(testType) {
+  const pointInfo = `Compact Dry - Kontrol Noktası ${selectedCompactDryPoint} - ${testType}`;
+  openModal(pointInfo, true); // readonly=true
+}
+
+// Petri (R2A Agar) için doğrudan modal aç
+function openPetriModal(point) {
+  const pointInfo = `Petri (R2A Agar) - Kontrol Noktası ${point}`;
+  openModal(pointInfo, true); // readonly=true
+}
+
+window.showMikroSubMenu = showMikroSubMenu;
+window.backToMikroMain = backToMikroMain;
+window.showCompactDryTests = showCompactDryTests;
+window.backToCompactDryPoints = backToCompactDryPoints;
+window.openCompactDryModal = openCompactDryModal;
+window.openPetriModal = openPetriModal;
 
 // ====== LOGS SAYFASI ======
 async function initLogsPage() {
@@ -706,18 +775,31 @@ const categoryConfig = {
   mikro: { title: 'Mikro Biyoloji Kaydı', unit: '', placeholder: '', step: '0.1', min: '0' }
 };
 
-function openModal(prefillPoint) {
+function openModal(prefillPoint, readonly = false) {
   try { if (typeof takeOverValueInput === 'function') takeOverValueInput(); } catch(_) {}
 
-  if (prefillPoint) document.getElementById('point').value = prefillPoint;
-  
+  const pointInput = document.getElementById('point');
+
+  if (prefillPoint) {
+    pointInput.value = prefillPoint;
+  }
+
+  // Readonly parametresi true ise kontrol noktası alanını değiştirilemez yap
+  if (readonly) {
+    pointInput.readOnly = true;
+    pointInput.style.cssText = 'background:#f5f5f5; cursor:not-allowed;';
+  } else {
+    pointInput.readOnly = false;
+    pointInput.style.cssText = '';
+  }
+
   const config = categoryConfig[currentSection] || categoryConfig.klor;
   const modalTitle = document.getElementById('modalTitle');
   const unitInput = document.getElementById('unit');
   const valueInput = document.getElementById('value');
-  
+
   if (modalTitle) modalTitle.textContent = config.title;
-  
+
   unitInput.value = config.unit;
   unitInput.readOnly = true;
   unitInput.style.cssText = 'background:#f5f5f5; cursor:not-allowed;';

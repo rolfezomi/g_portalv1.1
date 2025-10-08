@@ -174,19 +174,13 @@
         </div>
         <div class="control-points">
           <div class="grid" id="klor-grid">
+            <div class="box" data-point="Kontrol Noktası 0">Kontrol Noktası 0</div>
             <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
             <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
             <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
             <div class="box" data-point="Kontrol Noktası 4">Kontrol Noktası 4</div>
-            <div class="box" data-point="Kontrol Noktası 5">Kontrol Noktası 5</div>
-            <div class="box" data-point="Kontrol Noktası 6">Kontrol Noktası 6</div>
-            <div class="box" data-point="Kontrol Noktası 7">Kontrol Noktası 7</div>
-            <div class="box" data-point="Kontrol Noktası 8">Kontrol Noktası 8</div>
-            <div class="box" data-point="Kontrol Noktası 9">Kontrol Noktası 9</div>
-            <div class="box" data-point="Kontrol Noktası 10">Kontrol Noktası 10</div>
-            <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
-            <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
-            <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+            <div class="box" data-point="IBC Kontrol Noktası">IBC Kontrol Noktası</div>
+            <div class="box" data-point="Kaynamış Su Kontrol Noktası">Kaynamış Su Kontrol Noktası</div>
           </div>
         </div>
       </section>
@@ -198,6 +192,7 @@
         </div>
         <div class="control-points">
           <div class="grid" id="sertlik-grid">
+            <div class="box" data-point="Kontrol Noktası 0">Kontrol Noktası 0</div>
             <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
             <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
             <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
@@ -211,6 +206,9 @@
             <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
             <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
             <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+            <div class="box" data-point="Kontrol Noktası 14">Kontrol Noktası 14</div>
+            <div class="box" data-point="IBC Kontrol Noktası">IBC Kontrol Noktası</div>
+            <div class="box" data-point="Kaynamış Su Kontrol Noktası">Kaynamış Su Kontrol Noktası</div>
           </div>
         </div>
       </section>
@@ -222,6 +220,7 @@
         </div>
         <div class="control-points">
           <div class="grid" id="ph-grid">
+            <div class="box" data-point="Kontrol Noktası 0">Kontrol Noktası 0</div>
             <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
             <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
             <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
@@ -235,6 +234,9 @@
             <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
             <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
             <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+            <div class="box" data-point="Kontrol Noktası 14">Kontrol Noktası 14</div>
+            <div class="box" data-point="IBC Kontrol Noktası">IBC Kontrol Noktası</div>
+            <div class="box" data-point="Kaynamış Su Kontrol Noktası">Kaynamış Su Kontrol Noktası</div>
           </div>
         </div>
       </section>
@@ -246,6 +248,7 @@
         </div>
         <div class="control-points">
           <div class="grid" id="iletkenlik-grid">
+            <div class="box" data-point="Kontrol Noktası 0">Kontrol Noktası 0</div>
             <div class="box" data-point="Kontrol Noktası 1">Kontrol Noktası 1</div>
             <div class="box" data-point="Kontrol Noktası 2">Kontrol Noktası 2</div>
             <div class="box" data-point="Kontrol Noktası 3">Kontrol Noktası 3</div>
@@ -259,12 +262,97 @@
             <div class="box" data-point="Kontrol Noktası 11">Kontrol Noktası 11</div>
             <div class="box" data-point="Kontrol Noktası 12">Kontrol Noktası 12</div>
             <div class="box" data-point="Kontrol Noktası 13">Kontrol Noktası 13</div>
+            <div class="box" data-point="Kontrol Noktası 14">Kontrol Noktası 14</div>
+            <div class="box" data-point="IBC Kontrol Noktası">IBC Kontrol Noktası</div>
+            <div class="box" data-point="Kaynamış Su Kontrol Noktası">Kaynamış Su Kontrol Noktası</div>
           </div>
         </div>
       </section>
 
       <section id="page-mikro" style="display:none;">
-        <div class="toolbar"><h2>MikroBiyoloji Kontrol Noktaları</h2></div>
+        <div id="mikro-main-view">
+          <div class="toolbar"><h2>MikroBiyoloji Kontrol Noktaları</h2></div>
+          <div class="control-points">
+            <div class="grid">
+              <div class="box" onclick="showMikroSubMenu('compact-dry')">Compact Dry</div>
+              <div class="box" onclick="showMikroSubMenu('petri')">Petri</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="mikro-compact-dry-view" style="display:none;">
+          <div class="toolbar">
+            <h2>Compact Dry - Kontrol Noktaları</h2>
+            <div class="right">
+              <button class="btn btn-ghost" onclick="backToMikroMain()">← Geri</button>
+            </div>
+          </div>
+          <div class="control-points">
+            <div class="grid" id="compact-dry-grid">
+              <div class="box" onclick="showCompactDryTests('0')">Kontrol Noktası 0</div>
+              <div class="box" onclick="showCompactDryTests('1')">Kontrol Noktası 1</div>
+              <div class="box" onclick="showCompactDryTests('2')">Kontrol Noktası 2</div>
+              <div class="box" onclick="showCompactDryTests('3')">Kontrol Noktası 3</div>
+              <div class="box" onclick="showCompactDryTests('4')">Kontrol Noktası 4</div>
+              <div class="box" onclick="showCompactDryTests('5')">Kontrol Noktası 5</div>
+              <div class="box" onclick="showCompactDryTests('6')">Kontrol Noktası 6</div>
+              <div class="box" onclick="showCompactDryTests('7')">Kontrol Noktası 7</div>
+              <div class="box" onclick="showCompactDryTests('8')">Kontrol Noktası 8</div>
+              <div class="box" onclick="showCompactDryTests('9')">Kontrol Noktası 9</div>
+              <div class="box" onclick="showCompactDryTests('10')">Kontrol Noktası 10</div>
+              <div class="box" onclick="showCompactDryTests('11')">Kontrol Noktası 11</div>
+              <div class="box" onclick="showCompactDryTests('12')">Kontrol Noktası 12</div>
+              <div class="box" onclick="showCompactDryTests('13')">Kontrol Noktası 13</div>
+              <div class="box" onclick="showCompactDryTests('14')">Kontrol Noktası 14</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="mikro-compact-dry-tests-view" style="display:none;">
+          <div class="toolbar">
+            <h2 id="compact-dry-test-title">Compact Dry - Test Seçimi</h2>
+            <div class="right">
+              <button class="btn btn-ghost" onclick="backToCompactDryPoints()">← Geri</button>
+            </div>
+          </div>
+          <div class="control-points">
+            <div class="grid">
+              <div class="box" onclick="openCompactDryModal('AQ')">AQ</div>
+              <div class="box" onclick="openCompactDryModal('EC')">EC</div>
+              <div class="box" onclick="openCompactDryModal('PA')">PA</div>
+              <div class="box" onclick="openCompactDryModal('CF')">CF</div>
+              <div class="box" onclick="openCompactDryModal('YMR')">YMR</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="mikro-petri-view" style="display:none;">
+          <div class="toolbar">
+            <h2>Petri (R2A Agar) - Kontrol Noktaları</h2>
+            <div class="right">
+              <button class="btn btn-ghost" onclick="backToMikroMain()">← Geri</button>
+            </div>
+          </div>
+          <div class="control-points">
+            <div class="grid" id="petri-grid">
+              <div class="box" onclick="openPetriModal('0')">Kontrol Noktası 0</div>
+              <div class="box" onclick="openPetriModal('1')">Kontrol Noktası 1</div>
+              <div class="box" onclick="openPetriModal('2')">Kontrol Noktası 2</div>
+              <div class="box" onclick="openPetriModal('3')">Kontrol Noktası 3</div>
+              <div class="box" onclick="openPetriModal('4')">Kontrol Noktası 4</div>
+              <div class="box" onclick="openPetriModal('5')">Kontrol Noktası 5</div>
+              <div class="box" onclick="openPetriModal('6')">Kontrol Noktası 6</div>
+              <div class="box" onclick="openPetriModal('7')">Kontrol Noktası 7</div>
+              <div class="box" onclick="openPetriModal('8')">Kontrol Noktası 8</div>
+              <div class="box" onclick="openPetriModal('9')">Kontrol Noktası 9</div>
+              <div class="box" onclick="openPetriModal('10')">Kontrol Noktası 10</div>
+              <div class="box" onclick="openPetriModal('11')">Kontrol Noktası 11</div>
+              <div class="box" onclick="openPetriModal('12')">Kontrol Noktası 12</div>
+              <div class="box" onclick="openPetriModal('13')">Kontrol Noktası 13</div>
+              <div class="box" onclick="openPetriModal('14')">Kontrol Noktası 14</div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="page-logs" style="display:none;">
@@ -304,7 +392,7 @@
       <form id="entry-form">
         <div class="modal-body">
           <div class="form-grid">
-            <div><label for="point">Kontrol Noktası</label><select id="point" required><option value="">Seçiniz...</option><option>Kontrol Noktası 1</option><option>Kontrol Noktası 2</option><option>Kontrol Noktası 3</option><option>Kontrol Noktası 4</option><option>Kontrol Noktası 5</option><option>Kontrol Noktası 6</option><option>Kontrol Noktası 7</option><option>Kontrol Noktası 8</option><option>Kontrol Noktası 9</option><option>Kontrol Noktası 10</option><option>Kontrol Noktası 11</option><option>Kontrol Noktası 12</option><option>Kontrol Noktası 13</option></select></div>
+            <div><label for="point">Kontrol Noktası</label><input id="point" type="text" required placeholder="Kontrol noktası giriniz"/></div>
             <div><label for="value">Ölçüm Değeri</label><input id="value" type="number" step="0.001" required/></div>
             <div><label for="unit">Birim</label><input id="unit" type="text" value="ppm" readonly style="background:#f5f5f5;"/></div>
             <div class="full"><label for="note">Açıklama</label><textarea id="note" rows="4"></textarea></div>
