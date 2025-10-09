@@ -106,9 +106,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Kullanıcı rolünü al
     await loadUserRole(username);
 
-    // Admin ise logs menüsünü göster
+    // Rol bazlı menü gösterimi
     if (currentUserRole === 'admin') {
-      showAdminMenu();
+      showFullAccessMenu(); // Trend Analizi
+      showAdminMenu(); // Logs + User Management
+    } else if (currentUserRole === 'full') {
+      showFullAccessMenu(); // Sadece Trend Analizi
     }
 
     showHomepage();
@@ -182,9 +185,12 @@ if (loginForm) {
       // Kullanıcı rolünü al
       await loadUserRole(email);
 
-      // Admin ise logs menüsünü göster
+      // Rol bazlı menü gösterimi
       if (currentUserRole === 'admin') {
-        showAdminMenu();
+        showFullAccessMenu(); // Trend Analizi
+        showAdminMenu(); // Logs + User Management
+      } else if (currentUserRole === 'full') {
+        showFullAccessMenu(); // Sadece Trend Analizi
       }
 
       await logActivity('LOGIN', 'Auth', { email });
@@ -269,6 +275,32 @@ function showAdminMenu() {
   menu.appendChild(usersItem);
 }
 
+function showFullAccessMenu() {
+  const menu = document.querySelector('.menu ul');
+  if (!menu) return;
+
+  const trendsItem = document.createElement('li');
+  trendsItem.innerHTML = `
+    <a href="#" onclick="showSection('trends'); setActive(this); return false;" data-section-link="trends" data-tooltip="Trend Analizi">
+      <span class="icon-wrap">📊</span>
+      <span>Trend Analizi</span>
+    </a>
+  `;
+  menu.appendChild(trendsItem);
+
+  // Mobile tabs'a da ekle
+  const mobileTabs = document.getElementById('mobile-tabs');
+  if (mobileTabs) {
+    const trendsTab = document.createElement('button');
+    trendsTab.type = 'button';
+    trendsTab.className = 'tab';
+    trendsTab.setAttribute('data-section', 'trends');
+    trendsTab.setAttribute('onclick', 'mobileTabTo(this)');
+    trendsTab.textContent = 'Trendler';
+    mobileTabs.appendChild(trendsTab);
+  }
+}
+
 // ====== NAVİGASYON ======
 function setActive(a) {
   document.querySelectorAll('.menu a').forEach(el => el.classList.remove('active'));
@@ -287,9 +319,20 @@ function showHomepage() {
 }
 
 function showSection(key) {
+  // Sayfa erişim kontrolü
+  if (key === 'trends' && currentUserRole === 'restricted') {
+    showToast('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+    return;
+  }
+
+  if ((key === 'logs' || key === 'users') && currentUserRole !== 'admin') {
+    showToast('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+    return;
+  }
+
   currentSection = key;
 
-  ['home', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'logs', 'users'].forEach(s => {
+  ['home', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'logs', 'users', 'trends'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });
@@ -301,7 +344,8 @@ function showSection(key) {
     iletkenlik: initIletkenlikPage,
     mikro: initMikroPage,
     logs: initLogsPage,
-    users: initUsersPage
+    users: initUsersPage,
+    trends: initTrendsPage
   };
 
   if (initFuncs[key]) setTimeout(initFuncs[key], 0);
@@ -433,16 +477,24 @@ function renderRecent() {
 
 async function addRecent(entry) {
   try {
+    // ID alanını kaldır (Supabase otomatik oluşturmalı)
+    const { id, ...entryWithoutId } = entry;
+
+    console.log('Kaydedilecek veri:', entryWithoutId);
+
     const { data, error } = await supabaseClient
       .from('measurements')
-      .insert([entry])
+      .insert([entryWithoutId])
       .select();
 
     if (error) {
       console.error('Kayıt hatası:', error);
-      await logActivity('MEASUREMENT_ERROR', entry.category, { error: error.message, entry });
-      return showToast('Kayıt başarısız: ' + error.message);
+      console.error('Gönderilen veri:', entryWithoutId);
+      await logActivity('MEASUREMENT_ERROR', entry.category, { error: error.message, entry: entryWithoutId });
+      return showToast('Kayıt başarısız: ' + (error.message || 'Bilinmeyen hata'));
     }
+
+    console.log('Kayıt başarılı:', data);
 
     await logActivity('MEASUREMENT_ADD', entry.category, {
       point: entry.point,
@@ -456,7 +508,7 @@ async function addRecent(entry) {
   } catch (err) {
     console.error('Beklenmeyen hata:', err);
     await logActivity('MEASUREMENT_ERROR', entry.category, { error: err.message, entry });
-    showToast('Bir hata oluştu');
+    showToast('Bir hata oluştu: ' + err.message);
   }
 }
 
@@ -1140,4 +1192,293 @@ function downloadCSV(content, fileName) {
 }
 
 window.exportToExcel = exportToExcel;
+
+// ====== TREND ANALİZİ SAYFASI ======
+let trendsChart = null;
+const pageInitsExtended = { trends: false };
+
+function initTrendsPage() {
+  if (pageInitsExtended.trends) return;
+  pageInitsExtended.trends = true;
+
+  // Log sayfa ziyareti
+  logActivity('PAGE_VIEW', 'Trends', { page: 'trends' });
+
+  // Kategori değişikliğinde kontrol noktalarını güncelle
+  const categorySelect = document.getElementById('trends-category');
+  if (categorySelect) {
+    categorySelect.addEventListener('change', updateTrendsControlPoints);
+    updateTrendsControlPoints(); // İlk yükleme
+  }
+
+  // Varsayılan tarih aralığını ayarla (son 30 gün)
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 30);
+
+  const startInput = document.getElementById('trends-start-date');
+  const endInput = document.getElementById('trends-end-date');
+
+  if (startInput) startInput.value = startDate.toISOString().slice(0, 10);
+  if (endInput) endInput.value = endDate.toISOString().slice(0, 10);
+}
+
+function updateTrendsControlPoints() {
+  const categorySelect = document.getElementById('trends-category');
+  const pointSelect = document.getElementById('trends-point');
+
+  if (!categorySelect || !pointSelect) return;
+
+  const category = categorySelect.value;
+  const categoryName = categoryKeyToName[category];
+
+  // Seçili kategoriye ait tüm benzersiz kontrol noktalarını bul
+  const points = [...new Set(
+    cachedRecords
+      .filter(r => r.category === categoryName)
+      .map(r => r.point)
+      .filter(p => p)
+  )].sort();
+
+  // Dropdown'u güncelle
+  pointSelect.innerHTML = '<option value="">Tümü</option>';
+  points.forEach(point => {
+    const option = document.createElement('option');
+    option.value = point;
+    option.textContent = point;
+    pointSelect.appendChild(option);
+  });
+}
+
+function updateTrendsAnalysis() {
+  const categorySelect = document.getElementById('trends-category');
+  const pointSelect = document.getElementById('trends-point');
+  const startDateInput = document.getElementById('trends-start-date');
+  const endDateInput = document.getElementById('trends-end-date');
+
+  if (!categorySelect || !pointSelect) return;
+
+  const category = categorySelect.value;
+  const selectedPoint = pointSelect.value;
+  const startDate = startDateInput?.value || '';
+  const endDate = endDateInput?.value || '';
+  const categoryName = categoryKeyToName[category];
+
+  // Log analiz güncelleme
+  logActivity('TRENDS_ANALYSIS', 'Trends', {
+    category,
+    point: selectedPoint || 'Tümü',
+    dateRange: `${startDate} - ${endDate}`
+  });
+
+  // Veriyi filtrele
+  let filteredData = cachedRecords.filter(r => {
+    if (r.category !== categoryName) return false;
+    if (selectedPoint && r.point !== selectedPoint) return false;
+    if (startDate && r.date < startDate) return false;
+    if (endDate && r.date > endDate) return false;
+    return r.value != null && r.value !== '';
+  });
+
+  // Tarihe göre sırala
+  filteredData = filteredData.sort((a, b) => {
+    const dateComp = a.date.localeCompare(b.date);
+    return dateComp !== 0 ? dateComp : a.time.localeCompare(b.time);
+  });
+
+  // İstatistikleri hesapla ve göster
+  updateTrendsStats(filteredData);
+
+  // Grafik çiz
+  drawTrendsChart(filteredData, category);
+
+  // Tabloyu güncelle
+  renderTrendsTable(filteredData);
+}
+
+function updateTrendsStats(data) {
+  const totalEl = document.getElementById('trends-stat-total');
+  const avgEl = document.getElementById('trends-stat-avg');
+  const maxEl = document.getElementById('trends-stat-max');
+  const minEl = document.getElementById('trends-stat-min');
+
+  if (!totalEl || !avgEl || !maxEl || !minEl) return;
+
+  if (!data || data.length === 0) {
+    totalEl.textContent = '0';
+    avgEl.textContent = '-';
+    maxEl.textContent = '-';
+    minEl.textContent = '-';
+    return;
+  }
+
+  const values = data.map(r => parseTRNumber(r.value)).filter(v => !isNaN(v));
+
+  if (values.length === 0) {
+    totalEl.textContent = data.length;
+    avgEl.textContent = '-';
+    maxEl.textContent = '-';
+    minEl.textContent = '-';
+    return;
+  }
+
+  const sum = values.reduce((a, b) => a + b, 0);
+  const avg = sum / values.length;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+
+  totalEl.textContent = data.length;
+  avgEl.textContent = avg.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  maxEl.textContent = max.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  minEl.textContent = min.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+}
+
+function drawTrendsChart(data, categoryKey) {
+  const canvas = document.getElementById('trendsChart');
+  if (!canvas) return;
+
+  if (trendsChart) trendsChart.destroy();
+
+  if (!data || data.length === 0) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#999';
+    ctx.textAlign = 'center';
+    ctx.fillText('Seçilen filtrelere uygun veri bulunamadı', canvas.width / 2, canvas.height / 2);
+    return;
+  }
+
+  const colors = colorMap[categoryKey] || colorMap.klor;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, colors.gradient[0]);
+  gradient.addColorStop(1, colors.gradient[1]);
+
+  const chartData = data.map(r => ({
+    x: `${r.date} ${r.time}`,
+    y: parseTRNumber(r.value),
+    point: r.point,
+    unit: r.unit,
+    user: r.user,
+    note: r.note
+  })).filter(d => !isNaN(d.y));
+
+  trendsChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: chartData.map(d => d.x),
+      datasets: [{
+        label: `${categoryKeyToName[categoryKey]} Trend Analizi`,
+        data: chartData.map(d => d.y),
+        borderColor: colors.border,
+        backgroundColor: gradient,
+        borderWidth: 3,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointBackgroundColor: colors.point,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: colors.pointHover,
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          grid: { display: true, color: 'rgba(0,0,0,0.05)' },
+          ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, font: { size: 10 }, color: '#666' }
+        },
+        y: {
+          beginAtZero: false,
+          grid: { color: 'rgba(0,0,0,0.08)' },
+          ticks: { font: { size: 11, weight: '600' }, color: '#444' }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { font: { size: 13, weight: '700' }, color: colors.border, padding: 12 }
+        },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          titleFont: { size: 12, weight: '700' },
+          bodyFont: { size: 11 },
+          padding: 12,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: (ctx) => chartData[ctx[0].dataIndex].x,
+            label: (ctx) => {
+              const d = chartData[ctx.dataIndex];
+              return [
+                `Nokta: ${d.point || '-'}`,
+                `Değer: ${d.y}${d.unit ? ' ' + d.unit : ''}`,
+                `Kullanıcı: ${d.user || '-'}`
+              ];
+            },
+            afterLabel: (ctx) => {
+              const d = chartData[ctx.dataIndex];
+              return d.note ? `Not: ${d.note}` : '';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderTrendsTable(data) {
+  const tbody = document.getElementById('trends-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr class="empty"><td colspan="7" style="padding:12px 10px; opacity:.7;">Seçilen filtrelere uygun veri bulunamadı.</td></tr>';
+    return;
+  }
+
+  data.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.style.cssText = 'background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); border-radius:10px;';
+    tr.style.animation = `fadeInRow 0.3s ease ${i * 0.02}s both`;
+
+    let displayValue = '-';
+    if (r.value != null && r.value !== '') {
+      let numValue = parseTRNumber(r.value);
+      if (!isNaN(numValue)) {
+        numValue = Math.trunc(numValue * 1000) / 1000;
+        displayValue = numValue.toLocaleString('tr-TR', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 3
+        });
+      }
+    }
+
+    tr.innerHTML = `
+      <td style="padding:10px 12px;">${r.date || '-'}</td>
+      <td style="padding:10px 12px;">${r.time || '-'}</td>
+      <td style="padding:10px 12px; font-weight:600; color:#1b5e20;">${r.point || '-'}</td>
+      <td style="padding:10px 12px; font-weight:700;">${displayValue}</td>
+      <td style="padding:10px 12px;">${r.unit || '-'}</td>
+      <td style="padding:10px 12px;">${r.user || '-'}</td>
+      <td style="padding:10px 12px; font-size:13px; opacity:0.8;">${r.note || '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.updateTrendsAnalysis = updateTrendsAnalysis;
+
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---

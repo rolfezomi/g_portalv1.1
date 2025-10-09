@@ -65,7 +65,7 @@
       </div>
     </div>
 
-    <nav class="mobile-tabs" role="tablist" aria-label="Hızlı geçiş">
+    <nav class="mobile-tabs" role="tablist" aria-label="Hızlı geçiş" id="mobile-tabs">
       <button type="button" class="tab active" data-section="home" onclick="mobileTabTo(this)">Anasayfa</button>
       <button type="button" class="tab" data-section="klor" onclick="mobileTabTo(this)">Klor</button>
       <button type="button" class="tab" data-section="sertlik" onclick="mobileTabTo(this)">Sertlik</button>
@@ -376,6 +376,93 @@
           </div>
           <div id="users-table-container">
             <p style="opacity:0.6; text-align:center; padding:40px;">Kullanıcılar yükleniyor...</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-trends" style="display:none;">
+        <div class="toolbar">
+          <h2>📊 Detaylı Trend Analizi</h2>
+        </div>
+        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin-bottom:20px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:20px;">
+            <div>
+              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Kategori</label>
+              <select id="trends-category" class="input" style="width:100%;">
+                <option value="klor">Klor</option>
+                <option value="sertlik">Sertlik</option>
+                <option value="ph">Ph</option>
+                <option value="iletkenlik">İletkenlik</option>
+                <option value="mikro">MikroBiyoloji</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Kontrol Noktası</label>
+              <select id="trends-point" class="input" style="width:100%;">
+                <option value="">Tümü</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Başlangıç Tarihi</label>
+              <input type="date" id="trends-start-date" class="input" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Bitiş Tarihi</label>
+              <input type="date" id="trends-end-date" class="input" style="width:100%;" />
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <button class="btn btn-primary" onclick="updateTrendsAnalysis()" style="padding:10px 24px;">
+              <span>Analizi Güncelle</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="trends-stats" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px;">
+          <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(27,94,32,0.3);">
+            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">TOPLAM ÖLÇÜM</div>
+            <div id="trends-stat-total" style="font-size:32px; font-weight:900;">0</div>
+          </div>
+          <div style="background:linear-gradient(135deg, #1976d2 0%, #2196f3 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(25,118,210,0.3);">
+            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">ORTALAMA</div>
+            <div id="trends-stat-avg" style="font-size:32px; font-weight:900;">-</div>
+          </div>
+          <div style="background:linear-gradient(135deg, #d32f2f 0%, #f44336 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(211,47,47,0.3);">
+            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">MAKSIMUM</div>
+            <div id="trends-stat-max" style="font-size:32px; font-weight:900;">-</div>
+          </div>
+          <div style="background:linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(123,31,162,0.3);">
+            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">MINIMUM</div>
+            <div id="trends-stat-min" style="font-size:32px; font-weight:900;">-</div>
+          </div>
+        </div>
+
+        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin-bottom:24px;">
+          <h3 style="margin:0 0 20px; color:#1b5e20;">Trend Grafiği</h3>
+          <div style="position:relative; height:400px;">
+            <canvas id="trendsChart"></canvas>
+          </div>
+        </div>
+
+        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08);">
+          <h3 style="margin:0 0 16px; color:#1b5e20;">Detaylı Veri Tablosu</h3>
+          <div style="overflow:auto;">
+            <table id="trends-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:8px 10px;">Tarih</th>
+                  <th style="text-align:left; padding:8px 10px;">Saat</th>
+                  <th style="text-align:left; padding:8px 10px;">Kontrol Noktası</th>
+                  <th style="text-align:left; padding:8px 10px;">Değer</th>
+                  <th style="text-align:left; padding:8px 10px;">Birim</th>
+                  <th style="text-align:left; padding:8px 10px;">Kullanıcı</th>
+                  <th style="text-align:left; padding:8px 10px;">Açıklama</th>
+                </tr>
+              </thead>
+              <tbody id="trends-tbody">
+                <tr class="empty"><td colspan="7" style="padding:12px 10px; opacity:.7;">Filtre seçip "Analizi Güncelle" butonuna tıklayın.</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
