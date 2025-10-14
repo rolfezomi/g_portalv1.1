@@ -1645,6 +1645,17 @@ function updateTrendsStats(data) {
     return;
   }
 
+  // "Tümü" kategorisi ve "Tüm Noktalar" seçiliyse alternatif istatistikler göster
+  const categorySelect = document.getElementById('trends-category');
+  const pointSelect = document.getElementById('trends-point');
+  const showAlternativeStats = categorySelect?.value === 'all' && (!pointSelect?.value || pointSelect?.value === '');
+
+  if (showAlternativeStats) {
+    showOverviewStats(data, totalEl, avgEl, maxEl, minEl, stdEl);
+    return;
+  }
+
+  // Normal sayısal istatistikler
   const values = data.map(r => parseTRNumber(r.value)).filter(v => !isNaN(v));
 
   if (values.length === 0) {
@@ -1670,6 +1681,104 @@ function updateTrendsStats(data) {
   maxEl.textContent = max.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   minEl.textContent = min.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   stdEl.textContent = std.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+}
+
+function showOverviewStats(data, totalEl, avgEl, maxEl, minEl, stdEl) {
+  // Toplam analiz sayısı
+  totalEl.textContent = data.length;
+
+  // Kontrol noktalarına göre grupla
+  const pointCounts = {};
+  data.forEach(r => {
+    const point = r.point || 'Bilinmiyor';
+    pointCounts[point] = (pointCounts[point] || 0) + 1;
+  });
+
+  // Kategorilere göre grupla
+  const categoryCounts = {};
+  data.forEach(r => {
+    const category = r.category || 'Bilinmiyor';
+    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+  });
+
+  // Kullanıcılara göre grupla
+  const userCounts = {};
+  data.forEach(r => {
+    const user = r.user || 'Bilinmiyor';
+    userCounts[user] = (userCounts[user] || 0) + 1;
+  });
+
+  // En çok analiz yapılan nokta
+  const sortedPoints = Object.entries(pointCounts).sort((a, b) => b[1] - a[1]);
+  const topPoint = sortedPoints[0];
+  avgEl.textContent = topPoint ? `${topPoint[0]} (${topPoint[1]})` : '-';
+
+  // En az analiz yapılan nokta
+  const bottomPoint = sortedPoints[sortedPoints.length - 1];
+  maxEl.textContent = bottomPoint ? `${bottomPoint[0]} (${bottomPoint[1]})` : '-';
+
+  // En çok analiz yapılan kategori
+  const sortedCategories = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]);
+  const topCategory = sortedCategories[0];
+  minEl.textContent = topCategory ? `${topCategory[0]} (${topCategory[1]})` : '-';
+
+  // Aktif kullanıcı sayısı
+  const activeUsers = Object.keys(userCounts).length;
+  stdEl.textContent = activeUsers.toString();
+
+  // Kart başlıklarını güncelle
+  updateStatCardLabels(true);
+}
+
+function updateStatCardLabels(isOverview) {
+  const statCards = document.querySelectorAll('.stat-card');
+  if (!statCards || statCards.length < 5) return;
+
+  if (isOverview) {
+    // İkon ve label güncellemeleri
+    statCards[0].querySelector('.stat-icon').textContent = '📊';
+    statCards[0].querySelector('.stat-label').textContent = 'TOPLAM ANALİZ';
+
+    statCards[1].querySelector('.stat-icon').textContent = '🏆';
+    statCards[1].querySelector('.stat-label').textContent = 'EN ÇOK ANALİZ YAPILAN';
+
+    statCards[2].querySelector('.stat-icon').textContent = '⚠️';
+    statCards[2].querySelector('.stat-label').textContent = 'EN AZ ANALİZ YAPILAN';
+
+    statCards[3].querySelector('.stat-icon').textContent = '🎯';
+    statCards[3].querySelector('.stat-label').textContent = 'EN AKTİF KATEGORİ';
+
+    statCards[4].querySelector('.stat-icon').textContent = '👥';
+    statCards[4].querySelector('.stat-label').textContent = 'AKTİF KULLANICI';
+
+    // Tooltip kaldır
+    statCards[4].removeAttribute('title');
+    statCards[4].style.cursor = 'default';
+    const helpIcon = statCards[4].querySelector('div[style*="position: absolute"]');
+    if (helpIcon) helpIcon.style.display = 'none';
+  } else {
+    // Orijinal ikonlar ve labellar
+    statCards[0].querySelector('.stat-icon').textContent = '📊';
+    statCards[0].querySelector('.stat-label').textContent = 'TOPLAM ÖLÇÜM';
+
+    statCards[1].querySelector('.stat-icon').textContent = '📈';
+    statCards[1].querySelector('.stat-label').textContent = 'ORTALAMA';
+
+    statCards[2].querySelector('.stat-icon').textContent = '⬆️';
+    statCards[2].querySelector('.stat-label').textContent = 'MAKSİMUM';
+
+    statCards[3].querySelector('.stat-icon').textContent = '⬇️';
+    statCards[3].querySelector('.stat-label').textContent = 'MİNİMUM';
+
+    statCards[4].querySelector('.stat-icon').textContent = '📉';
+    statCards[4].querySelector('.stat-label').textContent = 'STANDART SAPMA';
+
+    // Tooltip geri ekle
+    statCards[4].setAttribute('title', 'Standart Sapma: Verilerin ortalamadan ne kadar uzaklaştığını ölçer. Formül: σ = √(Σ(x - μ)² / n)');
+    statCards[4].style.cursor = 'help';
+    const helpIcon = statCards[4].querySelector('div[style*="position: absolute"]');
+    if (helpIcon) helpIcon.style.display = '';
+  }
 }
 
 function drawTrendsChart(data, categoryKey) {
