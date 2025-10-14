@@ -1316,10 +1316,16 @@ function buildTrendData(categoryKey) {
       if (r.category === name && r.value != null && r.value !== '') return true;
       // KazanMikser kategorisinden, sadece ilgili birime sahip veriler
       if (r.category === 'KazanMikser' && r.value != null && r.value !== '') {
-        // pH için sadece pH birimli veriler (boş veya pH içeren)
-        if (categoryKey === 'ph' && (!r.unit || r.unit === '' || r.unit.toLowerCase().includes('ph'))) return true;
-        // İletkenlik için µS/cm birimli veriler
-        if (categoryKey === 'iletkenlik' && r.unit && r.unit.includes('µS/cm')) return true;
+        // pH için: birim boş, "pH", "ph" veya "PH" olanlar
+        if (categoryKey === 'ph') {
+          const unit = (r.unit || '').toLowerCase().trim();
+          return unit === '' || unit === 'ph' || unit.includes('ph');
+        }
+        // İletkenlik için: µS/cm veya us/cm içeren birimler
+        if (categoryKey === 'iletkenlik') {
+          const unit = (r.unit || '').toLowerCase();
+          return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
+        }
       }
       return false;
     });
@@ -1582,11 +1588,17 @@ function updateTrendsControlPoints() {
             // Kendi kategorisinden noktalar
             if (r.category === categoryName) return true;
             // KazanMikser kategorisinden noktalar
-            if (r.category === 'KazanMikser') {
-              // pH için sadece pH birimli veriler
-              if (category === 'ph' && (!r.unit || r.unit === '' || r.unit.toLowerCase().includes('ph'))) return true;
-              // İletkenlik için µS/cm birimli veriler
-              if (category === 'iletkenlik' && r.unit && r.unit.includes('µS/cm')) return true;
+            if (r.category === 'KazanMikser' && r.value != null && r.value !== '') {
+              // pH için: birim boş, "pH", "ph" veya "PH" olanlar
+              if (category === 'ph') {
+                const unit = (r.unit || '').toLowerCase().trim();
+                return unit === '' || unit === 'ph' || unit.includes('ph');
+              }
+              // İletkenlik için: µS/cm veya us/cm içeren birimler
+              if (category === 'iletkenlik') {
+                const unit = (r.unit || '').toLowerCase();
+                return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
+              }
             }
             return false;
           })
@@ -1663,10 +1675,16 @@ function updateTrendsAnalysis() {
         // KazanMikser kategorisinden veriler
         if (r.category === 'KazanMikser') {
           if (selectedPoint && r.point !== selectedPoint) return false;
-          // pH için sadece pH birimli veriler
-          if (category === 'ph' && (!r.unit || r.unit === '' || r.unit.toLowerCase().includes('ph'))) return true;
-          // İletkenlik için µS/cm birimli veriler
-          if (category === 'iletkenlik' && r.unit && r.unit.includes('µS/cm')) return true;
+          // pH için: birim boş, "pH", "ph" veya "PH" olanlar
+          if (category === 'ph') {
+            const unit = (r.unit || '').toLowerCase().trim();
+            return unit === '' || unit === 'ph' || unit.includes('ph');
+          }
+          // İletkenlik için: µS/cm veya us/cm içeren birimler
+          if (category === 'iletkenlik') {
+            const unit = (r.unit || '').toLowerCase();
+            return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
+          }
         }
 
         return false;
