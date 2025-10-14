@@ -426,7 +426,7 @@ function showSection(key) {
 
   currentSection = key;
 
-  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'admin-panel', 'logs', 'users', 'trends'].forEach(s => {
+  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'admin-panel', 'logs', 'users', 'trends'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });
@@ -437,6 +437,7 @@ function showSection(key) {
     ph: initPhPage,
     iletkenlik: initIletkenlikPage,
     mikro: initMikroPage,
+    'kazan-mikser': initKazanMikserPage,
     logs: initLogsPage,
     users: initUsersPage,
     trends: initTrendsPage
@@ -1290,8 +1291,9 @@ function showToast(msg) {
 
 // ====== TREND GRAFİĞİ ======
 const categoryKeyToName = {
-  klor: 'Klor', sertlik: 'Sertlik', ph: 'Ph', 
-  iletkenlik: 'İletkenlik', mikro: 'Mikro Biyoloji'
+  klor: 'Klor', sertlik: 'Sertlik', ph: 'Ph',
+  iletkenlik: 'İletkenlik', mikro: 'Mikro Biyoloji',
+  kazanmikser: 'KazanMikser'
 };
 
 const colorMap = {
@@ -1299,7 +1301,8 @@ const colorMap = {
   sertlik: { gradient: ['rgba(33,150,243,0.8)', 'rgba(25,118,210,1)'], border: '#1976d2', point: '#2196f3', pointHover: '#0d47a1' },
   ph: { gradient: ['rgba(156,39,176,0.8)', 'rgba(123,31,162,1)'], border: '#7b1fa2', point: '#9c27b0', pointHover: '#4a148c' },
   iletkenlik: { gradient: ['rgba(255,152,0,0.8)', 'rgba(245,124,0,1)'], border: '#f57c00', point: '#ff9800', pointHover: '#e65100' },
-  mikro: { gradient: ['rgba(233,30,99,0.8)', 'rgba(194,24,91,1)'], border: '#c2185b', point: '#e91e63', pointHover: '#880e4f' }
+  mikro: { gradient: ['rgba(233,30,99,0.8)', 'rgba(194,24,91,1)'], border: '#c2185b', point: '#e91e63', pointHover: '#880e4f' },
+  kazanmikser: { gradient: ['rgba(96,125,139,0.8)', 'rgba(69,90,100,1)'], border: '#455a64', point: '#607d8b', pointHover: '#263238' }
 };
 
 function buildTrendData(categoryKey) {
@@ -2114,5 +2117,116 @@ window.applyQuickFilter = applyQuickFilter;
 window.resetTrendsFilters = resetTrendsFilters;
 window.exportTrendsChart = exportTrendsChart;
 window.exportTrendsData = exportTrendsData;
+
+// ====== KAZAN VE MİKSER ANALİZLERİ ======
+let selectedKazanMikserPoint = '';
+
+function initKazanMikserPage() {
+  // Kazan-Mikser kartlarına tıklama olayı ekle
+  const kazanMikserGrid = document.getElementById('kazan-mikser-grid');
+  if (!kazanMikserGrid) return;
+
+  const boxes = kazanMikserGrid.querySelectorAll('.box');
+  boxes.forEach(box => {
+    box.addEventListener('click', function() {
+      const point = this.getAttribute('data-point');
+      selectedKazanMikserPoint = point;
+      openKazanMikserTestModal(point);
+    });
+  });
+
+  // Log sayfa ziyareti
+  logActivity('PAGE_VIEW', 'KazanMikser', { page: 'kazan-mikser' });
+}
+
+function openKazanMikserTestModal(point) {
+  const modal = document.getElementById('kazan-mikser-test-modal');
+  const title = document.getElementById('kazanMikserTestTitle');
+
+  if (!modal || !title) return;
+
+  title.textContent = `${point} - Analiz Tipi Seçimi`;
+  modal.style.display = 'flex';
+
+  logActivity('MODAL_OPEN', 'KazanMikser', { point, action: 'test_selection' });
+}
+
+function closeKazanMikserTestModal() {
+  const modal = document.getElementById('kazan-mikser-test-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openKazanMikserEntryModal(testType) {
+  // Test tipi seçim modalini kapat
+  closeKazanMikserTestModal();
+
+  // Entry modalini aç
+  const modal = document.getElementById('entry-modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const pointInput = document.getElementById('point');
+  const valueInput = document.getElementById('value');
+  const unitInput = document.getElementById('unit');
+  const noteInput = document.getElementById('note');
+  const dateInput = document.getElementById('date');
+  const timeInput = document.getElementById('time');
+  const userInput = document.getElementById('user');
+
+  if (!modal) return;
+
+  // Başlık ve alanları ayarla
+  modalTitle.textContent = `${selectedKazanMikserPoint} - ${testType} Ölçümü`;
+  pointInput.value = selectedKazanMikserPoint;
+  pointInput.readOnly = true;
+  valueInput.value = '';
+  valueInput.focus();
+  noteInput.value = '';
+
+  // Birim ayarla
+  if (testType === 'pH') {
+    unitInput.value = 'pH';
+  } else if (testType === 'İletkenlik') {
+    unitInput.value = 'µS/cm';
+  }
+
+  // Tarih ve saat
+  const now = new Date();
+  dateInput.value = now.toISOString().slice(0, 10);
+  timeInput.value = now.toTimeString().slice(0, 5);
+  userInput.value = currentUserEmail || 'Bilinmiyor';
+
+  // Kategoriyi gizli alana kaydet
+  const form = document.getElementById('entry-form');
+  let categoryInput = form.querySelector('#category-hidden');
+  if (!categoryInput) {
+    categoryInput = document.createElement('input');
+    categoryInput.type = 'hidden';
+    categoryInput.id = 'category-hidden';
+    form.appendChild(categoryInput);
+  }
+  categoryInput.value = 'KazanMikser';
+
+  // Test tipini gizli alana kaydet
+  let testTypeInput = form.querySelector('#test-type-hidden');
+  if (!testTypeInput) {
+    testTypeInput = document.createElement('input');
+    testTypeInput.type = 'hidden';
+    testTypeInput.id = 'test-type-hidden';
+    form.appendChild(testTypeInput);
+  }
+  testTypeInput.value = testType;
+
+  modal.style.display = 'flex';
+
+  logActivity('MODAL_OPEN', 'KazanMikser', {
+    point: selectedKazanMikserPoint,
+    testType,
+    action: 'data_entry'
+  });
+}
+
+// Global scope'a fonksiyonları ekle
+window.openKazanMikserTestModal = openKazanMikserTestModal;
+window.closeKazanMikserTestModal = closeKazanMikserTestModal;
+window.openKazanMikserEntryModal = openKazanMikserEntryModal;
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
