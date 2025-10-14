@@ -999,7 +999,8 @@ async function initUsersPage() {
       const createdTime = createdDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
       const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
-      const lastSignInStr = lastSignIn ? lastSignIn.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '-';
+      const lastSignInDate = lastSignIn ? lastSignIn.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+      const lastSignInTime = lastSignIn ? lastSignIn.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '';
 
       const currentRole = user.role || 'full';
       const roleId = user.role_id || null;
@@ -1033,7 +1034,10 @@ async function initUsersPage() {
           <div class="user-card-body">
             <div class="user-stat">
               <span class="stat-label">Son Giriş</span>
-              <span class="stat-value">${lastSignInStr}</span>
+              <span class="stat-value">
+                ${lastSignInDate}
+                ${lastSignInTime ? `<span style="color:#666; font-size:12px; margin-left:6px;">⏰ ${lastSignInTime}</span>` : ''}
+              </span>
             </div>
 
             <div class="user-role-section">
