@@ -1621,6 +1621,8 @@ function updateTrendsAnalysis() {
     if (chartContainer) chartContainer.style.display = '';
     // Grafik çiz
     drawTrendsChart(filteredData, category);
+    // Normal istatistikler için label'ları güncelle
+    updateStatCardLabels(false);
   }
 
   // Tabloyu güncelle
