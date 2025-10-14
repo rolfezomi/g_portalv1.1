@@ -1621,8 +1621,6 @@ function updateTrendsAnalysis() {
     if (chartContainer) chartContainer.style.display = '';
     // Grafik çiz
     drawTrendsChart(filteredData, category);
-    // Normal istatistikler için label'ları güncelle
-    updateStatCardLabels(false);
   }
 
   // Tabloyu güncelle
@@ -1656,6 +1654,9 @@ function updateTrendsStats(data) {
     showOverviewStats(data, totalEl, avgEl, maxEl, minEl, stdEl);
     return;
   }
+
+  // Normal istatistikler için label'ları güncelle
+  updateStatCardLabels(false);
 
   // Normal sayısal istatistikler
   const values = data.map(r => parseTRNumber(r.value)).filter(v => !isNaN(v));
