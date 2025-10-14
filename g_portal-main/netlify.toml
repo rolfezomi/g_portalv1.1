@@ -1,7 +1,9 @@
 [build]
+  # Base directory - dosyaların bulunduğu klasör
+  base = "g_portal-main"
   # Build komutu (statik site için gerekli değil)
   command = "echo 'No build needed'"
-  # Publish edilecek klasör
+  # Publish edilecek klasör (base directory'ye göre relative)
   publish = "."
   # Functions klasörü
   functions = "netlify/functions"
