@@ -313,6 +313,35 @@ function toggleMenu() {
   document.body.classList.toggle(isMobile ? 'mobile-menu-open' : 'menu-collapsed');
 }
 
+function toggleSuAnaliziMenu() {
+  const submenu = document.getElementById('su-analizi-submenu');
+  const arrow = document.querySelector('.menu-parent .menu-arrow');
+
+  if (submenu) {
+    const isOpen = submenu.style.display !== 'none';
+    submenu.style.display = isOpen ? 'none' : 'block';
+    if (arrow) {
+      arrow.textContent = isOpen ? '▼' : '▲';
+    }
+  }
+}
+
+function toggleMobileSuAnaliziMenu() {
+  const submenu = document.getElementById('mobile-su-analizi-submenu');
+  const arrow = document.querySelector('.menu-arrow-mobile');
+
+  if (submenu) {
+    const isOpen = submenu.style.display !== 'none';
+    submenu.style.display = isOpen ? 'none' : 'block';
+    if (arrow) {
+      arrow.textContent = isOpen ? '▼' : '▲';
+    }
+  }
+}
+
+window.toggleSuAnaliziMenu = toggleSuAnaliziMenu;
+window.toggleMobileSuAnaliziMenu = toggleMobileSuAnaliziMenu;
+
 function showHomepage() {
   showSection('home');
   updateStatistics();
