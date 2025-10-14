@@ -720,46 +720,139 @@ async function initLogsPage() {
     }
 
     if (!data || data.length === 0) {
-      logsContainer.innerHTML = '<p style="opacity:0.6; padding:20px;">Henüz log kaydı yok.</p>';
+      logsContainer.innerHTML = '<p style="opacity:0.6; padding:20px; text-align:center;">Henüz log kaydı yok.</p>';
       return;
     }
 
-    let html = `
-      <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-        <thead>
-          <tr>
-            <th style="text-align:left; padding:8px 10px;">Tarih/Saat</th>
-            <th style="text-align:left; padding:8px 10px;">Kullanıcı</th>
-            <th style="text-align:left; padding:8px 10px;">İşlem</th>
-            <th style="text-align:left; padding:8px 10px;">Kategori</th>
-            <th style="text-align:left; padding:8px 10px;">Detaylar</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
+    // Log tiplerini belirle ve kategorize et
+    const getLogType = (action) => {
+      if (action === 'LOGIN' || action === 'LOGOUT') return 'auth';
+      if (action === 'MEASUREMENT_ADD' || action === 'MEASUREMENT_ERROR') return 'data';
+      if (action === 'PAGE_VIEW' || action === 'TRENDS_ANALYSIS') return 'view';
+      return 'other';
+    };
+
+    const getLogConfig = (type) => {
+      const configs = {
+        auth: {
+          icon: '🔐',
+          color: '#2196f3',
+          bgColor: '#e3f2fd',
+          borderColor: '#90caf9',
+          label: 'Oturum'
+        },
+        data: {
+          icon: '📊',
+          color: '#4caf50',
+          bgColor: '#e8f5e9',
+          borderColor: '#a5d6a7',
+          label: 'Veri Kaydı'
+        },
+        view: {
+          icon: '👁️',
+          color: '#ff9800',
+          bgColor: '#fff3e0',
+          borderColor: '#ffcc80',
+          label: 'Görüntüleme'
+        },
+        other: {
+          icon: '⚙️',
+          color: '#9e9e9e',
+          bgColor: '#f5f5f5',
+          borderColor: '#e0e0e0',
+          label: 'Diğer'
+        }
+      };
+      return configs[type] || configs.other;
+    };
+
+    const formatActionText = (action) => {
+      const actionMap = {
+        'LOGIN': 'Giriş Yaptı',
+        'LOGOUT': 'Çıkış Yaptı',
+        'MEASUREMENT_ADD': 'Ölçüm Ekledi',
+        'MEASUREMENT_ERROR': 'Ölçüm Hatası',
+        'PAGE_VIEW': 'Sayfa Görüntüledi',
+        'TRENDS_ANALYSIS': 'Trend Analizi Yaptı'
+      };
+      return actionMap[action] || action;
+    };
+
+    const formatDetails = (details, action) => {
+      if (!details || Object.keys(details).length === 0) return null;
+
+      let formatted = [];
+
+      if (action === 'MEASUREMENT_ADD') {
+        if (details.point) formatted.push(`📍 ${details.point}`);
+        if (details.value !== undefined) formatted.push(`📈 ${details.value}${details.unit ? ' ' + details.unit : ''}`);
+      } else if (action === 'TRENDS_ANALYSIS') {
+        if (details.category) formatted.push(`📊 ${details.category}`);
+        if (details.point) formatted.push(`📍 ${details.point}`);
+        if (details.dateRange) formatted.push(`📅 ${details.dateRange}`);
+      } else if (action === 'PAGE_VIEW') {
+        if (details.page) formatted.push(`📄 ${details.page}`);
+      }
+
+      return formatted.length > 0 ? formatted : null;
+    };
+
+    // Kart bazlı mobil uyumlu tasarım
+    let html = '<div class="logs-grid">';
 
     data.forEach((log, i) => {
       const date = new Date(log.created_at);
-      const dateStr = date.toLocaleDateString('tr-TR');
-      const timeStr = date.toLocaleTimeString('tr-TR');
-      const details = log.details ? JSON.stringify(log.details, null, 2) : '-';
+      const dateStr = date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const logType = getLogType(log.action);
+      const config = getLogConfig(logType);
+      const actionText = formatActionText(log.action);
+      const detailsList = formatDetails(log.details, log.action);
 
       html += `
-        <tr style="background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); border-radius:10px; animation:fadeInRow 0.3s ease ${i * 0.03}s both;">
-          <td style="padding:10px 12px; font-size:13px;">${dateStr} ${timeStr}</td>
-          <td style="padding:10px 12px; font-weight:600; color:#1b5e20;">${log.user_email}</td>
-          <td style="padding:10px 12px; font-weight:700;">${log.action}</td>
-          <td style="padding:10px 12px;">${log.category || '-'}</td>
-          <td style="padding:10px 12px; font-size:12px; font-family:monospace; max-width:300px; overflow:auto;">${details}</td>
-        </tr>
+        <div class="log-card log-card-${logType}" style="animation:fadeInRow 0.3s ease ${i * 0.02}s both;">
+          <div class="log-card-header">
+            <div class="log-icon" style="background:${config.bgColor}; border-color:${config.borderColor};">
+              <span style="font-size:24px;">${config.icon}</span>
+            </div>
+            <div class="log-info-header">
+              <div class="log-type-badge" style="background:${config.bgColor}; color:${config.color}; border-color:${config.borderColor};">
+                ${config.label}
+              </div>
+              <div class="log-action">${actionText}</div>
+              <div class="log-time">📅 ${dateStr} • ⏰ ${timeStr}</div>
+            </div>
+          </div>
+
+          <div class="log-card-body">
+            <div class="log-user">
+              <span class="log-user-label">Kullanıcı:</span>
+              <span class="log-user-value">${log.user_email}</span>
+            </div>
+
+            ${log.category && log.category !== 'Auth' ? `
+              <div class="log-category">
+                <span class="log-category-label">Kategori:</span>
+                <span class="log-category-value">${log.category}</span>
+              </div>
+            ` : ''}
+
+            ${detailsList ? `
+              <div class="log-details">
+                ${detailsList.map(detail => `<div class="log-detail-item">${detail}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
       `;
     });
 
-    html += '</tbody></table>';
+    html += '</div>';
     logsContainer.innerHTML = html;
   } catch (err) {
     console.error('Logs yükleme hatası:', err);
-    logsContainer.innerHTML = '<p style="color:#d32f2f; padding:20px;">Beklenmeyen hata oluştu.</p>';
+    logsContainer.innerHTML = '<p style="color:#d32f2f; padding:20px; text-align:center;">Beklenmeyen hata oluştu: ' + err.message + '</p>';
   }
 }
 
