@@ -1307,11 +1307,31 @@ const colorMap = {
 
 function buildTrendData(categoryKey) {
   const name = categoryKeyToName[categoryKey];
-  return cachedRecords
-    .filter(r => r.category === name && r.value != null && r.value !== '')
+
+  // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden verileri al
+  let filteredRecords;
+  if (categoryKey === 'ph' || categoryKey === 'iletkenlik') {
+    filteredRecords = cachedRecords.filter(r => {
+      // Kendi kategorisinden veriler
+      if (r.category === name && r.value != null && r.value !== '') return true;
+      // KazanMikser kategorisinden, sadece ilgili birime sahip veriler
+      if (r.category === 'KazanMikser' && r.value != null && r.value !== '') {
+        // pH için sadece pH birimli veriler (boş veya pH içeren)
+        if (categoryKey === 'ph' && (!r.unit || r.unit === '' || r.unit.toLowerCase().includes('ph'))) return true;
+        // İletkenlik için µS/cm birimli veriler
+        if (categoryKey === 'iletkenlik' && r.unit && r.unit.includes('µS/cm')) return true;
+      }
+      return false;
+    });
+  } else {
+    // Diğer kategoriler için sadece kendi verilerini al
+    filteredRecords = cachedRecords.filter(r => r.category === name && r.value != null && r.value !== '');
+  }
+
+  return filteredRecords
     .map(r => ({
       label: `${r.date} ${r.time}`,
-      value: parseTRNumber(r.value), // <— parseFloat yerine TR parse
+      value: parseTRNumber(r.value),
       unit: r.unit || '',
       user: r.user || '',
       date: r.date,
@@ -1553,12 +1573,35 @@ function updateTrendsControlPoints() {
     )].sort();
   } else {
     const categoryName = categoryKeyToName[category];
-    points = [...new Set(
-      cachedRecords
-        .filter(r => r.category === categoryName)
-        .map(r => r.point)
-        .filter(p => p)
-    )].sort();
+
+    // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden kontrol noktalarını al
+    if (category === 'ph' || category === 'iletkenlik') {
+      points = [...new Set(
+        cachedRecords
+          .filter(r => {
+            // Kendi kategorisinden noktalar
+            if (r.category === categoryName) return true;
+            // KazanMikser kategorisinden noktalar
+            if (r.category === 'KazanMikser') {
+              // pH için sadece pH birimli veriler
+              if (category === 'ph' && (!r.unit || r.unit === '' || r.unit.toLowerCase().includes('ph'))) return true;
+              // İletkenlik için µS/cm birimli veriler
+              if (category === 'iletkenlik' && r.unit && r.unit.includes('µS/cm')) return true;
+            }
+            return false;
+          })
+          .map(r => r.point)
+          .filter(p => p)
+      )].sort();
+    } else {
+      // Diğer kategoriler için sadece kendi kontrol noktalarını al
+      points = [...new Set(
+        cachedRecords
+          .filter(r => r.category === categoryName)
+          .map(r => r.point)
+          .filter(p => p)
+      )].sort();
+    }
   }
 
   // Dropdown'u güncelle
@@ -1602,13 +1645,42 @@ function updateTrendsAnalysis() {
     });
   } else {
     const categoryName = categoryKeyToName[category];
-    filteredData = cachedRecords.filter(r => {
-      if (r.category !== categoryName) return false;
-      if (selectedPoint && r.point !== selectedPoint) return false;
-      if (startDate && r.date < startDate) return false;
-      if (endDate && r.date > endDate) return false;
-      return r.value != null && r.value !== '';
-    });
+
+    // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden verileri al
+    if (category === 'ph' || category === 'iletkenlik') {
+      filteredData = cachedRecords.filter(r => {
+        // Tarih filtresi
+        if (startDate && r.date < startDate) return false;
+        if (endDate && r.date > endDate) return false;
+        if (r.value == null || r.value === '') return false;
+
+        // Kendi kategorisinden veriler
+        if (r.category === categoryName) {
+          if (selectedPoint && r.point !== selectedPoint) return false;
+          return true;
+        }
+
+        // KazanMikser kategorisinden veriler
+        if (r.category === 'KazanMikser') {
+          if (selectedPoint && r.point !== selectedPoint) return false;
+          // pH için sadece pH birimli veriler
+          if (category === 'ph' && (!r.unit || r.unit === '' || r.unit.toLowerCase().includes('ph'))) return true;
+          // İletkenlik için µS/cm birimli veriler
+          if (category === 'iletkenlik' && r.unit && r.unit.includes('µS/cm')) return true;
+        }
+
+        return false;
+      });
+    } else {
+      // Diğer kategoriler için sadece kendi verilerini al
+      filteredData = cachedRecords.filter(r => {
+        if (r.category !== categoryName) return false;
+        if (selectedPoint && r.point !== selectedPoint) return false;
+        if (startDate && r.date < startDate) return false;
+        if (endDate && r.date > endDate) return false;
+        return r.value != null && r.value !== '';
+      });
+    }
   }
 
   // Tarihe göre sırala
