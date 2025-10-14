@@ -2126,7 +2126,8 @@ function initKazanMikserPage() {
   const kazanMikserGrid = document.getElementById('kazan-mikser-grid');
   if (!kazanMikserGrid) return;
 
-  const boxes = kazanMikserGrid.querySelectorAll('.box');
+  // Hem eski .box hem de yeni .kazan-mikser-card sınıflarını destekle
+  const boxes = kazanMikserGrid.querySelectorAll('.box, .kazan-mikser-card');
   boxes.forEach(box => {
     box.addEventListener('click', function() {
       const point = this.getAttribute('data-point');
