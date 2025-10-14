@@ -330,8 +330,29 @@ function toggleSuAnaliziMenu(event) {
   }
 }
 
-// Global scope'a fonksiyonu ekle
+// Su Analizi tıklama handler'ı - daraltılmış/açık menü için
+function handleSuAnaliziClick(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const isCollapsed = document.body.classList.contains('menu-collapsed');
+
+  // Menü daraltılmışsa Su Analizi sayfasını aç
+  if (isCollapsed) {
+    showSection('su-analizi');
+    setActive(event.target.closest('a'));
+  }
+  // Menü açıksa alt menüyü toggle et
+  else {
+    toggleSuAnaliziMenu(event);
+  }
+}
+
+// Global scope'a fonksiyonları ekle
 window.toggleSuAnaliziMenu = toggleSuAnaliziMenu;
+window.handleSuAnaliziClick = handleSuAnaliziClick;
 
 function showHomepage() {
   showSection('home');
