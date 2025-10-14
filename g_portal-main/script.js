@@ -703,6 +703,16 @@ window.openCompactDryModal = openCompactDryModal;
 window.openPetriModal = openPetriModal;
 
 // ====== LOGS SAYFASI ======
+let allLogsData = []; // Tüm logları sakla
+
+// Log tiplerini belirle ve kategorize et
+function getLogType(action) {
+  if (action === 'LOGIN' || action === 'LOGOUT') return 'auth';
+  if (action === 'MEASUREMENT_ADD' || action === 'MEASUREMENT_ERROR') return 'data';
+  if (action === 'PAGE_VIEW' || action === 'TRENDS_ANALYSIS') return 'view';
+  return 'other';
+}
+
 async function initLogsPage() {
   const logsContainer = document.getElementById('logs-table-container');
   if (!logsContainer) return;
@@ -724,13 +734,104 @@ async function initLogsPage() {
       return;
     }
 
-    // Log tiplerini belirle ve kategorize et
-    const getLogType = (action) => {
-      if (action === 'LOGIN' || action === 'LOGOUT') return 'auth';
-      if (action === 'MEASUREMENT_ADD' || action === 'MEASUREMENT_ERROR') return 'data';
-      if (action === 'PAGE_VIEW' || action === 'TRENDS_ANALYSIS') return 'view';
-      return 'other';
-    };
+    // Tüm logları sakla
+    allLogsData = data;
+
+    // Kullanıcı dropdown'unu doldur
+    populateUserFilter(data);
+
+    // Logları render et
+    renderLogs(data);
+  } catch (err) {
+    console.error('Logs yükleme hatası:', err);
+    logsContainer.innerHTML = '<p style="color:#d32f2f; padding:20px; text-align:center;">Beklenmeyen hata oluştu: ' + err.message + '</p>';
+  }
+}
+
+function populateUserFilter(logs) {
+  const userSelect = document.getElementById('log-filter-user');
+  if (!userSelect) return;
+
+  // Benzersiz kullanıcıları topla
+  const users = [...new Set(logs.map(log => log.user_email).filter(email => email))].sort();
+
+  // Dropdown'u temizle ve doldur
+  userSelect.innerHTML = '<option value="">Tüm Kullanıcılar</option>';
+  users.forEach(user => {
+    const option = document.createElement('option');
+    option.value = user;
+    option.textContent = user;
+    userSelect.appendChild(option);
+  });
+}
+
+function applyLogFilters() {
+  const filterType = document.getElementById('log-filter-type')?.value || '';
+  const filterUser = document.getElementById('log-filter-user')?.value || '';
+  const filterStartDate = document.getElementById('log-filter-start-date')?.value || '';
+  const filterEndDate = document.getElementById('log-filter-end-date')?.value || '';
+
+  // Filtreleme uygula
+  let filteredData = allLogsData.filter(log => {
+    // Tip filtresi
+    if (filterType) {
+      const logType = getLogType(log.action);
+      if (logType !== filterType) return false;
+    }
+
+    // Kullanıcı filtresi
+    if (filterUser && log.user_email !== filterUser) return false;
+
+    // Tarih filtresi
+    if (filterStartDate || filterEndDate) {
+      const logDate = new Date(log.created_at).toISOString().slice(0, 10);
+      if (filterStartDate && logDate < filterStartDate) return false;
+      if (filterEndDate && logDate > filterEndDate) return false;
+    }
+
+    return true;
+  });
+
+  // Filtrelenmiş logları render et
+  renderLogs(filteredData);
+
+  // İstatistik göster
+  const statsDiv = document.getElementById('log-filter-stats');
+  const statsText = document.getElementById('log-filter-result-text');
+  if (statsDiv && statsText) {
+    statsDiv.style.display = '';
+    statsText.textContent = `${filteredData.length} adet log bulundu (Toplam: ${allLogsData.length})`;
+  }
+}
+
+function clearLogFilters() {
+  // Filtreleri temizle
+  const filterType = document.getElementById('log-filter-type');
+  const filterUser = document.getElementById('log-filter-user');
+  const filterStartDate = document.getElementById('log-filter-start-date');
+  const filterEndDate = document.getElementById('log-filter-end-date');
+
+  if (filterType) filterType.value = '';
+  if (filterUser) filterUser.value = '';
+  if (filterStartDate) filterStartDate.value = '';
+  if (filterEndDate) filterEndDate.value = '';
+
+  // İstatistiği gizle
+  const statsDiv = document.getElementById('log-filter-stats');
+  if (statsDiv) statsDiv.style.display = 'none';
+
+  // Tüm logları göster
+  renderLogs(allLogsData);
+}
+
+function renderLogs(data) {
+  const logsContainer = document.getElementById('logs-table-container');
+  if (!logsContainer) return;
+
+  if (!data || data.length === 0) {
+    logsContainer.innerHTML = '<p style="opacity:0.6; padding:20px; text-align:center;">Seçilen filtrelere uygun log bulunamadı.</p>';
+    return;
+  }
 
     const getLogConfig = (type) => {
       const configs = {
@@ -850,11 +951,11 @@ async function initLogsPage() {
 
     html += '</div>';
     logsContainer.innerHTML = html;
-  } catch (err) {
-    console.error('Logs yükleme hatası:', err);
-    logsContainer.innerHTML = '<p style="color:#d32f2f; padding:20px; text-align:center;">Beklenmeyen hata oluştu: ' + err.message + '</p>';
-  }
 }
+
+// Global scope'a filtre fonksiyonlarını ekle
+window.applyLogFilters = applyLogFilters;
+window.clearLogFilters = clearLogFilters;
 
 // ====== KULLANICI YÖNETİMİ SAYFASI ======
 async function initUsersPage() {

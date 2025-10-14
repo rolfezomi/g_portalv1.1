@@ -425,6 +425,61 @@
         <div class="toolbar">
           <h2>📋 Sistem Logları</h2>
         </div>
+
+        <!-- Filtre Bölümü -->
+        <div style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin-bottom:16px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; align-items:end;">
+            <div>
+              <label style="display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#444;">Log Tipi</label>
+              <select id="log-filter-type" class="input" style="width:100%;">
+                <option value="">Tümü</option>
+                <option value="auth">🔐 Oturum</option>
+                <option value="data">📊 Veri Kaydı</option>
+                <option value="view">👁️ Görüntüleme</option>
+                <option value="other">⚙️ Diğer</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#444;">Kullanıcı</label>
+              <select id="log-filter-user" class="input" style="width:100%;">
+                <option value="">Tüm Kullanıcılar</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#444;">Başlangıç Tarihi</label>
+              <input type="date" id="log-filter-start-date" class="input" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#444;">Bitiş Tarihi</label>
+              <input type="date" id="log-filter-end-date" class="input" style="width:100%;" />
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-primary" onclick="applyLogFilters()" style="flex:1; white-space:nowrap;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Filtrele
+              </button>
+              <button class="btn btn-ghost" onclick="clearLogFilters()" style="white-space:nowrap;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Temizle
+              </button>
+            </div>
+          </div>
+          <div id="log-filter-stats" style="margin-top:14px; padding-top:14px; border-top:1px solid #f0f0f0; display:none;">
+            <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#666;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span id="log-filter-result-text"></span>
+            </div>
+          </div>
+        </div>
+
         <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08);">
           <div id="logs-table-container">
             <p style="opacity:0.6; text-align:center; padding:40px;">Loglar yükleniyor...</p>
