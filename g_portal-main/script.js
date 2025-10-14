@@ -256,23 +256,37 @@ function showAdminMenu() {
   const menu = document.querySelector('.menu ul');
   if (!menu) return;
 
-  const logsItem = document.createElement('li');
-  logsItem.innerHTML = `
-    <a href="#" onclick="showSection('logs'); setActive(this); return false;" data-section-link="logs" data-tooltip="Sistem Logları">
-      <span class="icon-wrap">📋</span>
-      <span>Sistem Logları</span>
+  const adminPanelItem = document.createElement('li');
+  adminPanelItem.className = 'menu-group';
+  adminPanelItem.innerHTML = `
+    <a href="#" onclick="handleAdminPanelClick(event); return false;" class="menu-parent" data-section-link="admin-panel" data-tooltip="Admin Panel">
+      <span class="icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </span>
+      <span>Admin Panel</span>
+      <span class="menu-arrow">▼</span>
     </a>
+    <ul class="submenu" id="admin-panel-submenu">
+      <li><a href="#" onclick="showSection('logs'); setActive(this); return false;" data-section-link="logs"><span class="icon-wrap">📋</span><span>Sistem Logları</span></a></li>
+      <li><a href="#" onclick="showSection('users'); setActive(this); return false;" data-section-link="users"><span class="icon-wrap">👥</span><span>Kullanıcı Yönetimi</span></a></li>
+    </ul>
   `;
-  menu.appendChild(logsItem);
+  menu.appendChild(adminPanelItem);
 
-  const usersItem = document.createElement('li');
-  usersItem.innerHTML = `
-    <a href="#" onclick="showSection('users'); setActive(this); return false;" data-section-link="users" data-tooltip="Kullanıcı Yönetimi">
-      <span class="icon-wrap">👥</span>
-      <span>Kullanıcı Yönetimi</span>
-    </a>
-  `;
-  menu.appendChild(usersItem);
+  // Mobile tabs'a ekle
+  const mobileTabs = document.getElementById('mobile-tabs');
+  if (mobileTabs) {
+    const adminTab = document.createElement('button');
+    adminTab.type = 'button';
+    adminTab.className = 'tab';
+    adminTab.setAttribute('data-section', 'admin-panel');
+    adminTab.setAttribute('onclick', 'mobileTabTo(this)');
+    adminTab.innerHTML = '<span class="tab-icon">⚙️</span><span class="tab-text">Admin</span>';
+    mobileTabs.appendChild(adminTab);
+  }
 }
 
 function showFullAccessMenu() {
@@ -350,9 +364,48 @@ function handleSuAnaliziClick(event) {
   }
 }
 
+// Admin Panel menü toggle fonksiyonu
+function toggleAdminPanelMenu(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const menuParent = event.target.closest('.menu-parent');
+  const submenu = document.getElementById('admin-panel-submenu');
+
+  if (menuParent && submenu) {
+    const isOpen = submenu.classList.contains('open');
+    submenu.classList.toggle('open', !isOpen);
+    menuParent.classList.toggle('open', !isOpen);
+  }
+}
+
+// Admin Panel tıklama handler'ı - daraltılmış/açık menü için
+function handleAdminPanelClick(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const isCollapsed = document.body.classList.contains('menu-collapsed');
+
+  // Menü daraltılmışsa Admin Panel ana sayfasını aç (logs)
+  if (isCollapsed) {
+    showSection('admin-panel');
+    setActive(event.target.closest('a'));
+  }
+  // Menü açıksa alt menüyü toggle et
+  else {
+    toggleAdminPanelMenu(event);
+  }
+}
+
 // Global scope'a fonksiyonları ekle
 window.toggleSuAnaliziMenu = toggleSuAnaliziMenu;
 window.handleSuAnaliziClick = handleSuAnaliziClick;
+window.toggleAdminPanelMenu = toggleAdminPanelMenu;
+window.handleAdminPanelClick = handleAdminPanelClick;
 
 function showHomepage() {
   showSection('home');
@@ -366,14 +419,14 @@ function showSection(key) {
     return;
   }
 
-  if ((key === 'logs' || key === 'users') && currentUserRole !== 'admin') {
+  if ((key === 'logs' || key === 'users' || key === 'admin-panel') && currentUserRole !== 'admin') {
     showToast('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
     return;
   }
 
   currentSection = key;
 
-  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'logs', 'users', 'trends'].forEach(s => {
+  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'admin-panel', 'logs', 'users', 'trends'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });

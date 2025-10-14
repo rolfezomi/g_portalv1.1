@@ -404,6 +404,23 @@
         </div>
       </section>
 
+      <!-- Admin Panel Ana Sayfa -->
+      <section id="page-admin-panel" style="display:none;">
+        <div class="toolbar"><h2>⚙️ Admin Panel</h2></div>
+        <div class="control-points">
+          <div class="grid">
+            <div class="box" onclick="showSection('logs'); setActive(document.querySelector('.menu a[data-section-link=logs]'));">
+              <div style="font-size:32px; margin-bottom:8px;">📋</div>
+              <div>Sistem Logları</div>
+            </div>
+            <div class="box" onclick="showSection('users'); setActive(document.querySelector('.menu a[data-section-link=users]'));">
+              <div style="font-size:32px; margin-bottom:8px;">👥</div>
+              <div>Kullanıcı Yönetimi</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="page-logs" style="display:none;">
         <div class="toolbar">
           <h2>📋 Sistem Logları</h2>
