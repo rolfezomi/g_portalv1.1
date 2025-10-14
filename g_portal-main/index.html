@@ -549,6 +549,7 @@
                 <div>
                   <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">KATEGORİ</label>
                   <select id="trends-category" class="input" style="width:100%; background:#fff;">
+                    <option value="all">📊 Tümü (Tüm Kategoriler)</option>
                     <option value="klor">💧 Klor</option>
                     <option value="ph">⚗️ pH</option>
                     <option value="iletkenlik">⚡ İletkenlik</option>
@@ -617,16 +618,17 @@
             <div class="stat-value" id="trends-stat-min">-</div>
             <div class="stat-trend" id="trends-stat-min-trend"></div>
           </div>
-          <div class="stat-card stat-success">
+          <div class="stat-card stat-success" title="Standart Sapma: Verilerin ortalamadan ne kadar uzaklaştığını ölçer. Formül: σ = √(Σ(x - μ)² / n)" style="cursor: help;">
             <div class="stat-icon">📉</div>
             <div class="stat-label">Standart Sapma</div>
             <div class="stat-value" id="trends-stat-std">-</div>
             <div class="stat-trend" id="trends-stat-std-trend"></div>
+            <div style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; background: rgba(0,0,0,0.05); border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #666;">?</div>
           </div>
         </div>
 
         <!-- Trend Grafiği -->
-        <div style="background:#fff; border-radius:20px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.08); margin-bottom:20px;">
+        <div id="trends-chart-container" style="background:#fff; border-radius:20px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.08); margin-bottom:20px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
             <div>
               <h3 style="margin:0 0 4px; color:#1b5e20; font-size:18px; font-weight:700;">Trend Grafiği</h3>

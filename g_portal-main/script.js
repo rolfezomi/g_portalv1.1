@@ -1535,18 +1535,27 @@ function updateTrendsControlPoints() {
   if (!categorySelect || !pointSelect) return;
 
   const category = categorySelect.value;
-  const categoryName = categoryKeyToName[category];
 
-  // Seçili kategoriye ait tüm benzersiz kontrol noktalarını bul
-  const points = [...new Set(
-    cachedRecords
-      .filter(r => r.category === categoryName)
-      .map(r => r.point)
-      .filter(p => p)
-  )].sort();
+  // "Tümü" seçiliyse tüm kategorilerden kontrol noktalarını al
+  let points;
+  if (category === 'all') {
+    points = [...new Set(
+      cachedRecords
+        .map(r => r.point)
+        .filter(p => p)
+    )].sort();
+  } else {
+    const categoryName = categoryKeyToName[category];
+    points = [...new Set(
+      cachedRecords
+        .filter(r => r.category === categoryName)
+        .map(r => r.point)
+        .filter(p => p)
+    )].sort();
+  }
 
   // Dropdown'u güncelle
-  pointSelect.innerHTML = '<option value="">Tümü</option>';
+  pointSelect.innerHTML = '<option value="">Tüm Noktalar</option>';
   points.forEach(point => {
     const option = document.createElement('option');
     option.value = point;
@@ -1567,7 +1576,6 @@ function updateTrendsAnalysis() {
   const selectedPoint = pointSelect.value;
   const startDate = startDateInput?.value || '';
   const endDate = endDateInput?.value || '';
-  const categoryName = categoryKeyToName[category];
 
   // Log analiz güncelleme
   logActivity('TRENDS_ANALYSIS', 'Trends', {
@@ -1576,14 +1584,25 @@ function updateTrendsAnalysis() {
     dateRange: `${startDate} - ${endDate}`
   });
 
-  // Veriyi filtrele
-  let filteredData = cachedRecords.filter(r => {
-    if (r.category !== categoryName) return false;
-    if (selectedPoint && r.point !== selectedPoint) return false;
-    if (startDate && r.date < startDate) return false;
-    if (endDate && r.date > endDate) return false;
-    return r.value != null && r.value !== '';
-  });
+  // "Tümü" seçiliyse tüm kategorilerden veri al
+  let filteredData;
+  if (category === 'all') {
+    filteredData = cachedRecords.filter(r => {
+      if (selectedPoint && r.point !== selectedPoint) return false;
+      if (startDate && r.date < startDate) return false;
+      if (endDate && r.date > endDate) return false;
+      return r.value != null && r.value !== '';
+    });
+  } else {
+    const categoryName = categoryKeyToName[category];
+    filteredData = cachedRecords.filter(r => {
+      if (r.category !== categoryName) return false;
+      if (selectedPoint && r.point !== selectedPoint) return false;
+      if (startDate && r.date < startDate) return false;
+      if (endDate && r.date > endDate) return false;
+      return r.value != null && r.value !== '';
+    });
+  }
 
   // Tarihe göre sırala
   filteredData = filteredData.sort((a, b) => {
@@ -1594,8 +1613,15 @@ function updateTrendsAnalysis() {
   // İstatistikleri hesapla ve göster
   updateTrendsStats(filteredData);
 
-  // Grafik çiz
-  drawTrendsChart(filteredData, category);
+  // "Tümü" seçiliyse grafiği gizle
+  const chartContainer = document.getElementById('trends-chart-container');
+  if (category === 'all') {
+    if (chartContainer) chartContainer.style.display = 'none';
+  } else {
+    if (chartContainer) chartContainer.style.display = '';
+    // Grafik çiz
+    drawTrendsChart(filteredData, category);
+  }
 
   // Tabloyu güncelle
   renderTrendsTable(filteredData);
@@ -1758,9 +1784,13 @@ function renderTrendsTable(data) {
   tbody.innerHTML = '';
 
   if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr class="empty"><td colspan="7" style="padding:12px 10px; opacity:.7;">Seçilen filtrelere uygun veri bulunamadı.</td></tr>';
+    tbody.innerHTML = '<tr class="empty"><td colspan="8" style="padding:12px 10px; opacity:.7;">Seçilen filtrelere uygun veri bulunamadı.</td></tr>';
     return;
   }
+
+  // "Tümü" kategorisi seçiliyse kategori sütununu göster
+  const categorySelect = document.getElementById('trends-category');
+  const showCategory = categorySelect && categorySelect.value === 'all';
 
   data.forEach((r, i) => {
     const tr = document.createElement('tr');
@@ -1782,6 +1812,7 @@ function renderTrendsTable(data) {
     tr.innerHTML = `
       <td style="padding:10px 12px;">${r.date || '-'}</td>
       <td style="padding:10px 12px;">${r.time || '-'}</td>
+      ${showCategory ? `<td style="padding:10px 12px; font-weight:700; color:#1b5e20;">${r.category || '-'}</td>` : ''}
       <td style="padding:10px 12px; font-weight:600; color:#1b5e20;">${r.point || '-'}</td>
       <td style="padding:10px 12px; font-weight:700;">${displayValue}</td>
       <td style="padding:10px 12px;">${r.unit || '-'}</td>
@@ -1790,6 +1821,40 @@ function renderTrendsTable(data) {
     `;
     tbody.appendChild(tr);
   });
+
+  // Tablo başlıklarını da güncelle
+  updateTableHeaders(showCategory);
+}
+
+function updateTableHeaders(showCategory) {
+  const table = document.getElementById('trends-table');
+  if (!table) return;
+
+  const thead = table.querySelector('thead tr');
+  if (!thead) return;
+
+  if (showCategory) {
+    thead.innerHTML = `
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Tarih</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Saat</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kategori</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kontrol Noktası</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Değer</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Birim</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kullanıcı</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Açıklama</th>
+    `;
+  } else {
+    thead.innerHTML = `
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Tarih</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Saat</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kontrol Noktası</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Değer</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Birim</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kullanıcı</th>
+      <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Açıklama</th>
+    `;
+  }
 }
 
 window.updateTrendsAnalysis = updateTrendsAnalysis;
@@ -1843,8 +1908,11 @@ function resetTrendsFilters() {
   const categorySelect = document.getElementById('trends-category');
   const pointSelect = document.getElementById('trends-point');
 
-  if (categorySelect) categorySelect.value = 'klor';
+  if (categorySelect) categorySelect.value = 'all';
   if (pointSelect) pointSelect.value = '';
+
+  // Kontrol noktalarını güncelle
+  updateTrendsControlPoints();
 
   // "Bu Ay" filtresini uygula
   applyQuickFilter('month');
