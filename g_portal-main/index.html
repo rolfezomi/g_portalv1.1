@@ -49,10 +49,26 @@
       <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menüyü aç/kapat">☰</button>
       <ul>
         <li><a href="#" onclick="showHomepage(); setActive(this); return false;" class="active" data-section-link="home" data-tooltip="Anasayfa"><span class="icon-wrap"><img src="icons/home.png" alt="Anasayfa"></span><span>Anasayfa</span></a></li>
-        <li><a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor" data-tooltip="Klor"><span class="icon-wrap"><img src="icons/klor.png" alt="Klor"></span><span>Klor</span></a></li>
-        <li><a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik" data-tooltip="Sertlik"><span class="icon-wrap"><img src="icons/sertlik.png" alt="Sertlik"></span><span>Sertlik</span></a></li>
-        <li><a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph" data-tooltip="Ph"><span class="icon-wrap"><img src="icons/ph.png" alt="Ph"></span><span>Ph</span></a></li>
-        <li><a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik" data-tooltip="İletkenlik"><span class="icon-wrap"><img src="icons/iletkenlik.png" alt="İletkenlik"></span><span>İletkenlik</span></a></li>
+
+        <!-- Su Analizi Ana Menü -->
+        <li class="menu-group">
+          <a href="#" onclick="toggleSuAnaliziMenu(event); return false;" class="menu-parent" data-tooltip="Su Analizi">
+            <span class="icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+              </svg>
+            </span>
+            <span>Su Analizi</span>
+            <span class="menu-arrow">▼</span>
+          </a>
+          <ul class="submenu" id="su-analizi-submenu">
+            <li><a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor"><span class="icon-wrap"><img src="icons/klor.png" alt="Klor"></span><span>Klor</span></a></li>
+            <li><a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph"><span class="icon-wrap"><img src="icons/ph.png" alt="Ph"></span><span>Ph</span></a></li>
+            <li><a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik"><span class="icon-wrap"><img src="icons/iletkenlik.png" alt="İletkenlik"></span><span>İletkenlik</span></a></li>
+            <li><a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik"><span class="icon-wrap"><img src="icons/sertlik.png" alt="Sertlik"></span><span>Sertlik</span></a></li>
+          </ul>
+        </li>
+
         <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
       </ul>
     </aside>
@@ -66,12 +82,41 @@
     </div>
 
     <nav class="mobile-tabs" role="tablist" aria-label="Hızlı geçiş" id="mobile-tabs">
-      <button type="button" class="tab active" data-section="home" onclick="mobileTabTo(this)">Anasayfa</button>
-      <button type="button" class="tab" data-section="klor" onclick="mobileTabTo(this)">Klor</button>
-      <button type="button" class="tab" data-section="sertlik" onclick="mobileTabTo(this)">Sertlik</button>
-      <button type="button" class="tab" data-section="ph" onclick="mobileTabTo(this)">Ph</button>
-      <button type="button" class="tab" data-section="iletkenlik" onclick="mobileTabTo(this)">İletkenlik</button>
-      <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">Mikro</button>
+      <button type="button" class="tab active" data-section="home" onclick="mobileTabTo(this)">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-text">Anasayfa</span>
+      </button>
+
+      <div class="mobile-menu-group">
+        <button type="button" class="tab menu-parent-mobile" onclick="toggleMobileSuAnaliziMenu(event)">
+          <span class="tab-icon">💧</span>
+          <span class="tab-text">Su Analizi</span>
+          <span class="menu-arrow-mobile">▼</span>
+        </button>
+        <div class="mobile-submenu" id="mobile-su-analizi-submenu">
+          <button type="button" class="subtab" data-section="klor" onclick="mobileTabTo(this)">
+            <span class="subtab-dot"></span>
+            <span>Klor</span>
+          </button>
+          <button type="button" class="subtab" data-section="ph" onclick="mobileTabTo(this)">
+            <span class="subtab-dot"></span>
+            <span>Ph</span>
+          </button>
+          <button type="button" class="subtab" data-section="iletkenlik" onclick="mobileTabTo(this)">
+            <span class="subtab-dot"></span>
+            <span>İletkenlik</span>
+          </button>
+          <button type="button" class="subtab" data-section="sertlik" onclick="mobileTabTo(this)">
+            <span class="subtab-dot"></span>
+            <span>Sertlik</span>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">
+        <span class="tab-icon">🔬</span>
+        <span class="tab-text">Mikro</span>
+      </button>
     </nav>
 
     <main class="content">

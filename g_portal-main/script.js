@@ -313,6 +313,44 @@ function toggleMenu() {
   document.body.classList.toggle(isMobile ? 'mobile-menu-open' : 'menu-collapsed');
 }
 
+// Su Analizi menü toggle fonksiyonu (Masaüstü)
+function toggleSuAnaliziMenu(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const menuParent = event.target.closest('.menu-parent');
+  const submenu = document.getElementById('su-analizi-submenu');
+
+  if (menuParent && submenu) {
+    const isOpen = submenu.classList.contains('open');
+    submenu.classList.toggle('open', !isOpen);
+    menuParent.classList.toggle('open', !isOpen);
+  }
+}
+
+// Mobil Su Analizi menü toggle fonksiyonu
+function toggleMobileSuAnaliziMenu(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const menuParent = event.target.closest('.menu-parent-mobile');
+  const submenu = document.getElementById('mobile-su-analizi-submenu');
+
+  if (menuParent && submenu) {
+    const isOpen = submenu.classList.contains('open');
+    submenu.classList.toggle('open', !isOpen);
+    menuParent.classList.toggle('open', !isOpen);
+  }
+}
+
+// Global scope'a fonksiyonları ekle
+window.toggleSuAnaliziMenu = toggleSuAnaliziMenu;
+window.toggleMobileSuAnaliziMenu = toggleMobileSuAnaliziMenu;
+
 function showHomepage() {
   showSection('home');
   updateStatistics();
@@ -363,7 +401,13 @@ function showSection(key) {
 }
 
 function activateMobileTab(key) {
-  document.querySelectorAll('.mobile-tabs .tab').forEach(t => {
+  // Ana tab'ları kontrol et
+  document.querySelectorAll('.mobile-tabs .tab:not(.menu-parent-mobile)').forEach(t => {
+    t.classList.toggle('active', t.getAttribute('data-section') === key);
+  });
+
+  // Subtab'ları kontrol et
+  document.querySelectorAll('.mobile-tabs .subtab').forEach(t => {
     t.classList.toggle('active', t.getAttribute('data-section') === key);
   });
 }
@@ -371,9 +415,17 @@ function activateMobileTab(key) {
 function mobileTabTo(btn) {
   const section = btn.getAttribute('data-section');
   section === 'home' ? showHomepage() : showSection(section);
-  
+
   const link = document.querySelector(`.menu a[data-section-link="${section}"]`);
   if (link) setActive(link);
+
+  // Eğer subtab'dan tıklanmışsa, mobil submenu'yu kapat
+  if (btn.classList.contains('subtab')) {
+    const submenu = document.getElementById('mobile-su-analizi-submenu');
+    const parentBtn = document.querySelector('.menu-parent-mobile');
+    if (submenu) submenu.classList.remove('open');
+    if (parentBtn) parentBtn.classList.remove('open');
+  }
 }
 
 window.mobileTabTo = mobileTabTo;
