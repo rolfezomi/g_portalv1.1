@@ -2224,9 +2224,50 @@ function openKazanMikserEntryModal(testType) {
   });
 }
 
+function filterKazanMikserCards(searchTerm) {
+  const grid = document.getElementById('kazan-mikser-grid');
+  const searchInfo = document.getElementById('kazan-mikser-search-info');
+  const resultCount = document.getElementById('kazan-mikser-result-count');
+
+  if (!grid) return;
+
+  const boxes = grid.querySelectorAll('.box');
+  const term = searchTerm.toLowerCase().trim();
+  let visibleCount = 0;
+
+  boxes.forEach(box => {
+    const pointData = box.getAttribute('data-point').toLowerCase();
+
+    if (term === '' || pointData.includes(term)) {
+      box.style.display = '';
+      visibleCount++;
+    } else {
+      box.style.display = 'none';
+    }
+  });
+
+  // Sonuç sayısını göster
+  if (term !== '') {
+    searchInfo.style.display = '';
+    if (visibleCount === 0) {
+      resultCount.textContent = '❌ Sonuç bulunamadı';
+      resultCount.style.color = '#d32f2f';
+    } else if (visibleCount === boxes.length) {
+      resultCount.textContent = `✅ Tüm kontrol noktaları gösteriliyor (${visibleCount})`;
+      resultCount.style.color = '#1b5e20';
+    } else {
+      resultCount.textContent = `🔍 ${visibleCount} kontrol noktası bulundu`;
+      resultCount.style.color = '#1976d2';
+    }
+  } else {
+    searchInfo.style.display = 'none';
+  }
+}
+
 // Global scope'a fonksiyonları ekle
 window.openKazanMikserTestModal = openKazanMikserTestModal;
 window.closeKazanMikserTestModal = closeKazanMikserTestModal;
 window.openKazanMikserEntryModal = openKazanMikserEntryModal;
+window.filterKazanMikserCards = filterKazanMikserCards;
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---

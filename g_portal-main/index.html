@@ -425,6 +425,28 @@
         <div class="toolbar">
           <h2>⚙️ Kazan ve Mikser Analizleri</h2>
         </div>
+
+        <!-- Arama Alanı -->
+        <div style="background:#fff; border-radius:16px; padding:16px; margin-bottom:16px; box-shadow:0 2px 12px rgba(0,0,0,.08);">
+          <div style="position:relative;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none;">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+              type="text"
+              id="kazan-mikser-search"
+              class="input"
+              placeholder="Numara veya isim ile ara... (örn: 1010, mikser, kazan)"
+              style="width:100%; padding:12px 12px 12px 44px; font-size:15px;"
+              oninput="filterKazanMikserCards(this.value)"
+            />
+          </div>
+          <div id="kazan-mikser-search-info" style="margin-top:8px; font-size:13px; color:#666; display:none;">
+            <span id="kazan-mikser-result-count"></span>
+          </div>
+        </div>
+
         <div class="control-points">
           <div class="grid" id="kazan-mikser-grid">
             <div class="box" data-point="1010 / 3 Tonluk Mikser">
