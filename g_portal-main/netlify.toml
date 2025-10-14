@@ -1,7 +1,7 @@
 [build]
   # Build komutu (statik site için gerekli değil)
   command = "echo 'No build needed'"
-  # Publish edilecek klasör - repository root
+  # Publish edilecek klasör
   publish = "."
   # Functions klasörü
   functions = "netlify/functions"
@@ -24,14 +24,14 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Redirects for SPA
+# Redirects for SPA (optional)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Tüm route'ları index.html'e yönlendir (SPA için)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  conditions = {Role = ["admin"]}
