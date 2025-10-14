@@ -87,31 +87,10 @@
         <span class="tab-text">Anasayfa</span>
       </button>
 
-      <div class="mobile-menu-group">
-        <button type="button" class="tab menu-parent-mobile" onclick="toggleMobileSuAnaliziMenu(event)">
-          <span class="tab-icon">💧</span>
-          <span class="tab-text">Su Analizi</span>
-          <span class="menu-arrow-mobile">▼</span>
-        </button>
-        <div class="mobile-submenu" id="mobile-su-analizi-submenu">
-          <button type="button" class="subtab" data-section="klor" onclick="mobileTabTo(this)">
-            <span class="subtab-dot"></span>
-            <span>Klor</span>
-          </button>
-          <button type="button" class="subtab" data-section="ph" onclick="mobileTabTo(this)">
-            <span class="subtab-dot"></span>
-            <span>Ph</span>
-          </button>
-          <button type="button" class="subtab" data-section="iletkenlik" onclick="mobileTabTo(this)">
-            <span class="subtab-dot"></span>
-            <span>İletkenlik</span>
-          </button>
-          <button type="button" class="subtab" data-section="sertlik" onclick="mobileTabTo(this)">
-            <span class="subtab-dot"></span>
-            <span>Sertlik</span>
-          </button>
-        </div>
-      </div>
+      <button type="button" class="tab" data-section="su-analizi" onclick="mobileTabTo(this)">
+        <span class="tab-icon">💧</span>
+        <span class="tab-text">Su Analizi</span>
+      </button>
 
       <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">
         <span class="tab-icon">🔬</span>
@@ -310,6 +289,31 @@
             <div class="box" data-point="Kontrol Noktası 14">Kontrol Noktası 14</div>
             <div class="box" data-point="IBC Kontrol Noktası">IBC Kontrol Noktası</div>
             <div class="box" data-point="Kaynamış Su Kontrol Noktası">Kaynamış Su Kontrol Noktası</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Su Analizi Ana Sayfa -->
+      <section id="page-su-analizi" style="display:none;">
+        <div class="toolbar"><h2>💧 Su Analizi Testleri</h2></div>
+        <div class="control-points">
+          <div class="grid">
+            <div class="box" onclick="showSection('klor'); setActive(document.querySelector('.menu a[data-section-link=klor]'));">
+              <div style="font-size:32px; margin-bottom:8px;">💧</div>
+              <div>Klor</div>
+            </div>
+            <div class="box" onclick="showSection('ph'); setActive(document.querySelector('.menu a[data-section-link=ph]'));">
+              <div style="font-size:32px; margin-bottom:8px;">⚗️</div>
+              <div>pH</div>
+            </div>
+            <div class="box" onclick="showSection('iletkenlik'); setActive(document.querySelector('.menu a[data-section-link=iletkenlik]'));">
+              <div style="font-size:32px; margin-bottom:8px;">⚡</div>
+              <div>İletkenlik</div>
+            </div>
+            <div class="box" onclick="showSection('sertlik'); setActive(document.querySelector('.menu a[data-section-link=sertlik]'));">
+              <div style="font-size:32px; margin-bottom:8px;">🔬</div>
+              <div>Sertlik</div>
+            </div>
           </div>
         </div>
       </section>

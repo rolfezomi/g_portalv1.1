@@ -746,12 +746,6 @@ input:focus, select:focus, textarea:focus{
     border-radius:4px; 
   }
 
-  /* Mobil menu group */
-  .mobile-tabs .mobile-menu-group {
-    flex: 0 0 auto;
-    position: relative;
-  }
-
   .mobile-tabs .tab{
     flex:0 0 auto;
     padding:9px 16px;
@@ -788,108 +782,6 @@ input:focus, select:focus, textarea:focus{
     color:#fff;
     border-color:transparent;
     box-shadow:0 3px 12px rgba(46,125,50,0.3);
-  }
-
-  /* Mobil Su Analizi parent menü */
-  .mobile-tabs .menu-parent-mobile {
-    position: relative;
-    padding-right: 32px;
-  }
-
-  .mobile-tabs .menu-arrow-mobile {
-    font-size: 9px;
-    margin-left: 4px;
-    transition: transform 0.3s ease;
-    opacity: 0.8;
-  }
-
-  .mobile-tabs .menu-parent-mobile.open .menu-arrow-mobile {
-    transform: rotate(180deg);
-  }
-
-  /* Mobil submenu */
-  .mobile-tabs .mobile-submenu {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    min-width: 180px;
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    border: 1.5px solid #e8efe9;
-    padding: 8px;
-    display: none;
-    flex-direction: column;
-    gap: 4px;
-    z-index: 1000;
-    animation: slideDown 0.2s ease;
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .mobile-tabs .mobile-submenu.open {
-    display: flex;
-  }
-
-  .mobile-tabs .subtab {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 14px;
-    background: #f5faf6;
-    border: 1px solid #e3ede5;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--brand-800);
-    cursor: pointer;
-    transition: all .2s ease;
-    white-space: nowrap;
-    border-left: 3px solid transparent;
-  }
-
-  .mobile-tabs .subtab:hover {
-    background: #e9f5eb;
-    border-left-color: var(--brand-700);
-    transform: translateX(2px);
-  }
-
-  .mobile-tabs .subtab:active {
-    transform: translateX(2px) scale(0.98);
-  }
-
-  .mobile-tabs .subtab.active {
-    background: linear-gradient(90deg, var(--brand-700) 0%, var(--brand-800) 100%);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 2px 8px rgba(46,125,50,0.25);
-  }
-
-  .mobile-tabs .subtab-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--brand-700);
-    flex-shrink: 0;
-    transition: all .2s ease;
-  }
-
-  .mobile-tabs .subtab.active .subtab-dot {
-    background: rgba(255,255,255,0.9);
-    transform: scale(1.2);
-  }
-
-  .mobile-tabs .subtab:hover .subtab-dot {
-    transform: scale(1.15);
   }
 
   /* Menü: off-canvas */
