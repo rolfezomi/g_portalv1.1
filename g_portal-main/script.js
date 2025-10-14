@@ -1672,15 +1672,31 @@ function updateTrendsStats(data) {
   const max = Math.max(...values);
   const min = Math.min(...values);
 
-  // Standart sapma hesaplama
-  const variance = values.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / values.length;
-  const std = Math.sqrt(variance);
+  // Ortalamanın üstünde ve altında kaç değer var
+  const aboveAvg = values.filter(v => v > avg).length;
+  const belowAvg = values.filter(v => v < avg).length;
+  const equalAvg = values.filter(v => v === avg).length;
+
+  // Yüzde hesaplama
+  const abovePercent = ((aboveAvg / values.length) * 100).toFixed(1);
+  const belowPercent = ((belowAvg / values.length) * 100).toFixed(1);
 
   totalEl.textContent = data.length;
   avgEl.textContent = avg.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   maxEl.textContent = max.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   minEl.textContent = min.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
-  stdEl.textContent = std.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+
+  // Ortalama karşılaştırma gösterimi
+  if (aboveAvg > belowAvg) {
+    stdEl.textContent = `↑ Üstünde (%${abovePercent})`;
+    stdEl.style.color = '#d32f2f'; // Kırmızı - Yüksek değerler
+  } else if (belowAvg > aboveAvg) {
+    stdEl.textContent = `↓ Altında (%${belowPercent})`;
+    stdEl.style.color = '#1976d2'; // Mavi - Düşük değerler
+  } else {
+    stdEl.textContent = '⚖️ Dengede';
+    stdEl.style.color = '#388e3c'; // Yeşil - Dengeli
+  }
 }
 
 function showOverviewStats(data, totalEl, avgEl, maxEl, minEl, stdEl) {
@@ -1750,12 +1766,6 @@ function updateStatCardLabels(isOverview) {
 
     statCards[4].querySelector('.stat-icon').textContent = '👥';
     statCards[4].querySelector('.stat-label').textContent = 'AKTİF KULLANICI';
-
-    // Tooltip kaldır
-    statCards[4].removeAttribute('title');
-    statCards[4].style.cursor = 'default';
-    const helpIcon = statCards[4].querySelector('div[style*="position: absolute"]');
-    if (helpIcon) helpIcon.style.display = 'none';
   } else {
     // Orijinal ikonlar ve labellar
     statCards[0].querySelector('.stat-icon').textContent = '📊';
@@ -1770,14 +1780,11 @@ function updateStatCardLabels(isOverview) {
     statCards[3].querySelector('.stat-icon').textContent = '⬇️';
     statCards[3].querySelector('.stat-label').textContent = 'MİNİMUM';
 
-    statCards[4].querySelector('.stat-icon').textContent = '📉';
-    statCards[4].querySelector('.stat-label').textContent = 'STANDART SAPMA';
+    statCards[4].querySelector('.stat-icon').textContent = '⚖️';
+    statCards[4].querySelector('.stat-label').textContent = 'ORTALAMA KARŞILAŞTIRMA';
 
-    // Tooltip geri ekle
-    statCards[4].setAttribute('title', 'Standart Sapma: Verilerin ortalamadan ne kadar uzaklaştığını ölçer. Formül: σ = √(Σ(x - μ)² / n)');
-    statCards[4].style.cursor = 'help';
-    const helpIcon = statCards[4].querySelector('div[style*="position: absolute"]');
-    if (helpIcon) helpIcon.style.display = '';
+    // Rengi sıfırla
+    statCards[4].querySelector('.stat-value').style.color = '';
   }
 }
 
