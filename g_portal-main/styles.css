@@ -1682,3 +1682,273 @@ input:focus, select:focus, textarea:focus{
     font-size: 20px;
   }
 }
+
+/* =========================
+   KAZAN VE MİKSER KARTLARI - PROFESYONEL TASARIM
+   ========================= */
+
+.kazan-mikser-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.kazan-mikser-card {
+  background: #fff;
+  border: 2px solid #e8efe9;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.kazan-mikser-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(27,94,32,0.03) 0%, rgba(46,125,50,0.08) 100%);
+  border-radius: 50%;
+  transform: translate(40%, -40%);
+  transition: all .4s ease;
+}
+
+.kazan-mikser-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(46,125,50,0.18);
+  border-color: var(--brand-700);
+}
+
+.kazan-mikser-card:hover::before {
+  transform: translate(30%, -30%) scale(1.2);
+  opacity: 0.8;
+}
+
+.kazan-mikser-card:active {
+  transform: translateY(-3px) scale(1.01);
+  transition: all .1s ease;
+}
+
+.km-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  background: linear-gradient(135deg, #f7faf7 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0f4f0;
+  position: relative;
+  z-index: 1;
+}
+
+.km-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1.5px solid;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: all .2s ease;
+}
+
+.km-badge-mikser {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  border-color: #90caf9;
+}
+
+.km-badge-kazan {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  color: #e65100;
+  border-color: #ffb74d;
+}
+
+.km-badge-seyyar {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  color: #6a1b9a;
+  border-color: #ba68c8;
+}
+
+.km-badge-transfer {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #2e7d32;
+  border-color: #81c784;
+}
+
+.km-badge-special {
+  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+  color: #c2185b;
+  border-color: #f48fb1;
+}
+
+.km-badge-pilot {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  color: #f57f17;
+  border-color: #fdd835;
+}
+
+.km-number {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--brand-800);
+  letter-spacing: -1px;
+  text-shadow: 0 2px 4px rgba(27,94,32,0.1);
+  line-height: 1;
+}
+
+.km-card-body {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.km-capacity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(27,94,32,0.06) 0%, rgba(46,125,50,0.12) 100%);
+  border-radius: 12px;
+  border: 1.5px solid rgba(27,94,32,0.15);
+  transition: all .2s ease;
+}
+
+.kazan-mikser-card:hover .km-capacity {
+  background: linear-gradient(135deg, rgba(27,94,32,0.1) 0%, rgba(46,125,50,0.16) 100%);
+  border-color: rgba(27,94,32,0.25);
+  transform: translateX(3px);
+}
+
+.km-capacity svg {
+  flex-shrink: 0;
+  stroke: var(--brand-800);
+  stroke-width: 2.5;
+  opacity: 0.8;
+}
+
+.km-capacity span {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--brand-800);
+  letter-spacing: 0.3px;
+}
+
+.km-description {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5a6c5c;
+  line-height: 1.4;
+  padding: 0 4px;
+}
+
+/* Mobil Responsive - Kazan Mikser Kartları */
+@media (max-width: 768px) {
+  .kazan-mikser-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .kazan-mikser-card:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  .km-card-header {
+    padding: 16px 18px 12px;
+  }
+
+  .km-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  .km-number {
+    font-size: 28px;
+  }
+
+  .km-card-body {
+    padding: 16px 18px 18px;
+    gap: 10px;
+  }
+
+  .km-capacity {
+    padding: 10px 14px;
+  }
+
+  .km-capacity svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .km-capacity span {
+    font-size: 14px;
+  }
+
+  .km-description {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kazan-mikser-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .kazan-mikser-card::before {
+    width: 100px;
+    height: 100px;
+  }
+
+  .km-card-header {
+    padding: 14px 16px 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .km-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  .km-number {
+    font-size: 26px;
+    align-self: center;
+  }
+
+  .km-card-body {
+    padding: 14px 16px 16px;
+  }
+
+  .km-capacity {
+    padding: 9px 12px;
+    gap: 8px;
+  }
+
+  .km-capacity svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .km-capacity span {
+    font-size: 13px;
+  }
+
+  .km-description {
+    font-size: 12px;
+    text-align: center;
+  }
+}

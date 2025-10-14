@@ -2231,7 +2231,8 @@ function filterKazanMikserCards(searchTerm) {
 
   if (!grid) return;
 
-  const boxes = grid.querySelectorAll('.box');
+  // Hem eski box sınıfını hem de yeni kazan-mikser-card sınıfını destekle
+  const boxes = grid.querySelectorAll('.box, .kazan-mikser-card');
   const term = searchTerm.toLowerCase().trim();
   let visibleCount = 0;
 
