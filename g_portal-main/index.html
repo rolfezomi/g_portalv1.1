@@ -69,8 +69,6 @@
           </ul>
         </li>
 
-        <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
-
         <li><a href="#" onclick="showSection('kazan-mikser'); setActive(this); return false;" data-section-link="kazan-mikser" data-tooltip="Kazan ve Mikser Analizleri">
           <span class="icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -81,6 +79,8 @@
           </span>
           <span>Kazan & Mikser</span>
         </a></li>
+
+        <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
       </ul>
     </aside>
 
@@ -103,14 +103,14 @@
         <span class="tab-text">Su Analizi</span>
       </button>
 
-      <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">
-        <span class="tab-icon">🔬</span>
-        <span class="tab-text">Mikro</span>
-      </button>
-
       <button type="button" class="tab" data-section="kazan-mikser" onclick="mobileTabTo(this)">
         <span class="tab-icon">⚙️</span>
         <span class="tab-text">Kazan&Mikser</span>
+      </button>
+
+      <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">
+        <span class="tab-icon">🔬</span>
+        <span class="tab-text">Mikro</span>
       </button>
     </nav>
 
