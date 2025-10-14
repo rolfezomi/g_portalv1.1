@@ -791,63 +791,86 @@ async function initUsersPage() {
     const { users: authUsers } = await response.json();
 
     if (!authUsers || authUsers.length === 0) {
-      usersContainer.innerHTML = '<p style="opacity:0.6; padding:20px;">Henüz kullanıcı kaydı yok.</p>';
+      usersContainer.innerHTML = '<p style="opacity:0.6; padding:20px; text-align:center;">Henüz kullanıcı kaydı yok.</p>';
       return;
     }
 
-    let html = `
-      <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-        <thead>
-          <tr>
-            <th style="text-align:left; padding:8px 10px;">Email</th>
-            <th style="text-align:left; padding:8px 10px;">Kayıt Tarihi</th>
-            <th style="text-align:left; padding:8px 10px;">Son Giriş</th>
-            <th style="text-align:left; padding:8px 10px;">Rol</th>
-            <th style="text-align:left; padding:8px 10px;">İşlem</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
+    // Mobil uyumlu kart bazlı tasarım
+    let html = '<div class="users-grid">';
 
     authUsers.forEach((user, i) => {
       const email = user.email;
       const createdDate = new Date(user.created_at);
-      const createdStr = createdDate.toLocaleDateString('tr-TR') + ' ' + createdDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      const createdStr = createdDate.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+      const createdTime = createdDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
       const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
-      const lastSignInStr = lastSignIn
-        ? lastSignIn.toLocaleDateString('tr-TR') + ' ' + lastSignIn.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-        : '-';
+      const lastSignInStr = lastSignIn ? lastSignIn.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '-';
 
       const currentRole = user.role || 'full';
       const roleId = user.role_id || null;
 
-      const roleOptions = ['admin', 'full', 'restricted'].map(role =>
-        `<option value="${role}" ${currentRole === role ? 'selected' : ''}>${getRoleLabel(role)}</option>`
-      ).join('');
+      const roleColors = {
+        'admin': '#d32f2f',
+        'full': '#1976d2',
+        'restricted': '#f57c00'
+      };
+
+      const roleIcons = {
+        'admin': '⚙️',
+        'full': '✓',
+        'restricted': '◐'
+      };
 
       html += `
-        <tr style="background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); border-radius:10px; animation:fadeInRow 0.3s ease ${i * 0.03}s both;">
-          <td style="padding:10px 12px; font-weight:600; color:#1b5e20;">${email}</td>
-          <td style="padding:10px 12px; font-size:13px;">${createdStr}</td>
-          <td style="padding:10px 12px; font-size:13px;">${lastSignInStr}</td>
-          <td style="padding:10px 12px;">
-            <select id="role-${email.replace(/[@.]/g, '_')}" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
-              ${roleOptions}
-            </select>
-          </td>
-          <td style="padding:10px 12px;">
-            <button onclick="updateUserRoleByEmail('${email}', ${roleId})" class="btn btn-primary" style="padding:6px 12px; font-size:13px;">Güncelle</button>
-          </td>
-        </tr>
+        <div class="user-card" style="animation:fadeInRow 0.3s ease ${i * 0.05}s both;">
+          <div class="user-card-header">
+            <div class="user-avatar">${email.charAt(0).toUpperCase()}</div>
+            <div class="user-info-header">
+              <div class="user-email">${email}</div>
+              <div class="user-meta">
+                <span>📅 ${createdStr}</span>
+                <span>•</span>
+                <span>⏰ ${createdTime}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-card-body">
+            <div class="user-stat">
+              <span class="stat-label">Son Giriş</span>
+              <span class="stat-value">${lastSignInStr}</span>
+            </div>
+
+            <div class="user-role-section">
+              <label class="role-label">Yetki Seviyesi</label>
+              <select id="role-${email.replace(/[@.]/g, '_')}" class="role-select">
+                <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>⚙️ Admin - Tam Yetki + Yönetim</option>
+                <option value="full" ${currentRole === 'full' ? 'selected' : ''}>✓ Tam Yetki</option>
+                <option value="restricted" ${currentRole === 'restricted' ? 'selected' : ''}>◐ Kısıtlı Erişim</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="user-card-footer">
+            <button onclick="updateUserRoleByEmail('${email}', ${roleId})" class="btn-update">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Kaydet
+            </button>
+          </div>
+        </div>
       `;
     });
 
-    html += '</tbody></table>';
+    html += '</div>';
     usersContainer.innerHTML = html;
   } catch (err) {
     console.error('Kullanıcı yükleme hatası:', err);
-    usersContainer.innerHTML = '<p style="color:#d32f2f; padding:20px;">Beklenmeyen hata oluştu: ' + err.message + '</p>';
+    usersContainer.innerHTML = '<p style="color:#d32f2f; padding:20px; text-align:center;">Beklenmeyen hata oluştu: ' + err.message + '</p>';
   }
 }
 
