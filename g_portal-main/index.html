@@ -70,6 +70,17 @@
         </li>
 
         <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
+
+        <li><a href="#" onclick="showSection('kazan-mikser'); setActive(this); return false;" data-section-link="kazan-mikser" data-tooltip="Kazan ve Mikser Analizleri">
+          <span class="icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="6"></circle>
+              <circle cx="12" cy="12" r="2"></circle>
+            </svg>
+          </span>
+          <span>Kazan & Mikser</span>
+        </a></li>
       </ul>
     </aside>
 
@@ -95,6 +106,11 @@
       <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">
         <span class="tab-icon">🔬</span>
         <span class="tab-text">Mikro</span>
+      </button>
+
+      <button type="button" class="tab" data-section="kazan-mikser" onclick="mobileTabTo(this)">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-text">Kazan&Mikser</span>
       </button>
     </nav>
 
@@ -399,6 +415,85 @@
               <div class="box" onclick="openPetriModal('12')">Kontrol Noktası 12</div>
               <div class="box" onclick="openPetriModal('13')">Kontrol Noktası 13</div>
               <div class="box" onclick="openPetriModal('14')">Kontrol Noktası 14</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Kazan ve Mikser Analizleri -->
+      <section id="page-kazan-mikser" style="display:none;">
+        <div class="toolbar">
+          <h2>⚙️ Kazan ve Mikser Analizleri</h2>
+        </div>
+        <div class="control-points">
+          <div class="grid" id="kazan-mikser-grid">
+            <div class="box" data-point="1010 / 3 Tonluk Mikser">
+              <div style="font-weight:700; margin-bottom:4px;">1010</div>
+              <div style="font-size:12px; opacity:0.8;">3 Tonluk Mikser</div>
+            </div>
+            <div class="box" data-point="1011 / 7 Tonluk Mikser">
+              <div style="font-weight:700; margin-bottom:4px;">1011</div>
+              <div style="font-size:12px; opacity:0.8;">7 Tonluk Mikser</div>
+            </div>
+            <div class="box" data-point="1012 / 7 Tonluk Mikser">
+              <div style="font-weight:700; margin-bottom:4px;">1012</div>
+              <div style="font-size:12px; opacity:0.8;">7 Tonluk Mikser</div>
+            </div>
+            <div class="box" data-point="1013 / 2 Tonluk Mikser">
+              <div style="font-weight:700; margin-bottom:4px;">1013</div>
+              <div style="font-size:12px; opacity:0.8;">2 Tonluk Mikser</div>
+            </div>
+            <div class="box" data-point="1014 / UNIMIX">
+              <div style="font-weight:700; margin-bottom:4px;">1014</div>
+              <div style="font-size:12px; opacity:0.8;">UNIMIX</div>
+            </div>
+            <div class="box" data-point="1015 / Emülsiyon Ünitesi">
+              <div style="font-weight:700; margin-bottom:4px;">1015</div>
+              <div style="font-size:12px; opacity:0.8;">Emülsiyon Ünitesi</div>
+            </div>
+            <div class="box" data-point="1018 / 1 Tonluk Seyyar Transfer Kazanı">
+              <div style="font-weight:700; margin-bottom:4px;">1018</div>
+              <div style="font-size:12px; opacity:0.8;">1T Seyyar Transfer Kazanı</div>
+            </div>
+            <div class="box" data-point="1019 / 1 Tonluk Seyyar Transfer Kazanı">
+              <div style="font-weight:700; margin-bottom:4px;">1019</div>
+              <div style="font-size:12px; opacity:0.8;">1T Seyyar Transfer Kazanı</div>
+            </div>
+            <div class="box" data-point="1020 / 500 Litrelik Seyyar Tip Mikser Kazanı">
+              <div style="font-weight:700; margin-bottom:4px;">1020</div>
+              <div style="font-size:12px; opacity:0.8;">500L Seyyar Mikser Kazanı</div>
+            </div>
+            <div class="box" data-point="1021 / 500 Litrelik Seyyar Tip Mikser Kazanı">
+              <div style="font-weight:700; margin-bottom:4px;">1021</div>
+              <div style="font-size:12px; opacity:0.8;">500L Seyyar Mikser Kazanı</div>
+            </div>
+            <div class="box" data-point="1022 / 250 Litrelik Seyyar Tip Mikser Kazanı">
+              <div style="font-weight:700; margin-bottom:4px;">1022</div>
+              <div style="font-size:12px; opacity:0.8;">250L Seyyar Mikser Kazanı</div>
+            </div>
+            <div class="box" data-point="1023 / 250 Litrelik Seyyar Tip Mikser Kazanı">
+              <div style="font-weight:700; margin-bottom:4px;">1023</div>
+              <div style="font-size:12px; opacity:0.8;">250L Seyyar Mikser Kazanı</div>
+            </div>
+            <div class="box" data-point="1061 / 500 Litrelik Seyyar Mikser">
+              <div style="font-weight:700; margin-bottom:4px;">1061</div>
+              <div style="font-size:12px; opacity:0.8;">500L Seyyar Mikser</div>
+            </div>
+            <div class="box" data-point="1108 / 250 Litrelik Seyyar Kazan">
+              <div style="font-weight:700; margin-bottom:4px;">1108</div>
+              <div style="font-size:12px; opacity:0.8;">250L Seyyar Kazan</div>
+            </div>
+            <div class="box" data-point="1109 / 250 Litrelik Seyyar Kazan">
+              <div style="font-weight:700; margin-bottom:4px;">1109</div>
+              <div style="font-size:12px; opacity:0.8;">250L Seyyar Kazan</div>
+            </div>
+            <div class="box" data-point="1135 / 500 Litrelik Seyyar Mikser">
+              <div style="font-weight:700; margin-bottom:4px;">1135</div>
+              <div style="font-size:12px; opacity:0.8;">500L Seyyar Mikser</div>
+            </div>
+            <div class="box" data-point="1142 / Pilot Mikser - Dolmak">
+              <div style="font-weight:700; margin-bottom:4px;">1142</div>
+              <div style="font-size:12px; opacity:0.8;">Pilot Mikser - Dolmak</div>
             </div>
           </div>
         </div>
@@ -725,6 +820,29 @@
       </form>
     </div>
   </div>
+
+  <!-- Kazan Mikser Analiz Tipi Seçim Modali -->
+  <div class="modal" id="kazan-mikser-test-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title" id="kazanMikserTestTitle">Analiz Tipi Seçimi</h3>
+        <button class="btn btn-ghost" onclick="closeKazanMikserTestModal()">Kapat</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; padding:12px 0;">
+          <button class="box" onclick="openKazanMikserEntryModal('pH')" style="cursor:pointer; padding:24px 16px; text-align:center;">
+            <div style="font-size:32px; margin-bottom:8px;">⚗️</div>
+            <div style="font-weight:700;">pH</div>
+          </button>
+          <button class="box" onclick="openKazanMikserEntryModal('İletkenlik')" style="cursor:pointer; padding:24px 16px; text-align:center;">
+            <div style="font-size:32px; margin-bottom:8px;">⚡</div>
+            <div style="font-weight:700;">İletkenlik</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">Kayıt başarıyla kaydedildi.</div>
   <script>
     // Backend API URL'i
