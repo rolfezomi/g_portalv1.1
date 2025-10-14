@@ -2,9 +2,9 @@
   # Build komutu (statik site için gerekli değil)
   command = "echo 'No build needed'"
   # Publish edilecek klasör
-  publish = "g_portal-main"
+  publish = "."
   # Functions klasörü
-  functions = "g_portal-main/netlify/functions"
+  functions = "netlify/functions"
 
 [dev]
   # Local development
