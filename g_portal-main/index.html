@@ -503,85 +503,193 @@
 
       <section id="page-trends" style="display:none;">
         <div class="toolbar">
-          <h2>📊 Detaylı Trend Analizi</h2>
+          <h2>📊 Trend Analizi</h2>
         </div>
-        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin-bottom:20px;">
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:20px;">
-            <div>
-              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Kategori</label>
-              <select id="trends-category" class="input" style="width:100%;">
-                <option value="klor">Klor</option>
-                <option value="sertlik">Sertlik</option>
-                <option value="ph">Ph</option>
-                <option value="iletkenlik">İletkenlik</option>
-                <option value="mikro">MikroBiyoloji</option>
-              </select>
+
+        <!-- Akıllı Filtre Kartları -->
+        <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:20px; padding:28px; margin-bottom:20px; box-shadow:0 8px 24px rgba(27,94,32,0.3); position:relative; overflow:hidden;">
+          <div style="position:absolute; top:-60px; right:-60px; width:200px; height:200px; background:rgba(255,255,255,0.08); border-radius:50%; filter:blur(40px);"></div>
+          <div style="position:relative; z-index:1;">
+            <div style="margin-bottom:20px;">
+              <h3 style="margin:0 0 8px; color:#fff; font-size:18px; font-weight:700;">Hızlı Analiz</h3>
+              <p style="margin:0; color:rgba(255,255,255,0.85); font-size:13px;">Tek tıkla trend analizine başlayın</p>
             </div>
-            <div>
-              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Kontrol Noktası</label>
-              <select id="trends-point" class="input" style="width:100%;">
-                <option value="">Tümü</option>
-              </select>
+
+            <!-- Hızlı Filtreler -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:24px;">
+              <button onclick="applyQuickFilter('today')" class="quick-filter-btn">
+                <span class="filter-icon">📅</span>
+                <span>Bugün</span>
+              </button>
+              <button onclick="applyQuickFilter('week')" class="quick-filter-btn">
+                <span class="filter-icon">📆</span>
+                <span>Son 7 Gün</span>
+              </button>
+              <button onclick="applyQuickFilter('month')" class="quick-filter-btn active">
+                <span class="filter-icon">🗓️</span>
+                <span>Bu Ay</span>
+              </button>
+              <button onclick="applyQuickFilter('3months')" class="quick-filter-btn">
+                <span class="filter-icon">📊</span>
+                <span>Son 3 Ay</span>
+              </button>
+              <button onclick="applyQuickFilter('6months')" class="quick-filter-btn">
+                <span class="filter-icon">📈</span>
+                <span>Son 6 Ay</span>
+              </button>
+              <button onclick="applyQuickFilter('year')" class="quick-filter-btn">
+                <span class="filter-icon">📋</span>
+                <span>Bu Yıl</span>
+              </button>
             </div>
-            <div>
-              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Başlangıç Tarihi</label>
-              <input type="date" id="trends-start-date" class="input" style="width:100%;" />
+
+            <!-- Gelişmiş Filtreler -->
+            <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.25);">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:16px;">
+                <div>
+                  <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">KATEGORİ</label>
+                  <select id="trends-category" class="input" style="width:100%; background:#fff;">
+                    <option value="klor">💧 Klor</option>
+                    <option value="ph">⚗️ pH</option>
+                    <option value="iletkenlik">⚡ İletkenlik</option>
+                    <option value="sertlik">🔬 Sertlik</option>
+                    <option value="mikro">🦠 Mikrobiyoloji</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">KONTROL NOKTASI</label>
+                  <select id="trends-point" class="input" style="width:100%; background:#fff;">
+                    <option value="">Tüm Noktalar</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">BAŞLANGIÇ</label>
+                  <input type="date" id="trends-start-date" class="input" style="width:100%; background:#fff;" />
+                </div>
+                <div>
+                  <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">BİTİŞ</label>
+                  <input type="date" id="trends-end-date" class="input" style="width:100%; background:#fff;" />
+                </div>
+              </div>
+              <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn" onclick="resetTrendsFilters()" style="background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                  Sıfırla
+                </button>
+                <button class="btn btn-primary" onclick="updateTrendsAnalysis()" style="background:#fff; color:#1b5e20; font-weight:700;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                  Analiz Et
+                </button>
+              </div>
             </div>
-            <div>
-              <label style="display:block; margin-bottom:8px; font-weight:600; color:#444;">Bitiş Tarihi</label>
-              <input type="date" id="trends-end-date" class="input" style="width:100%;" />
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <button class="btn btn-primary" onclick="updateTrendsAnalysis()" style="padding:10px 24px;">
-              <span>Analizi Güncelle</span>
-            </button>
           </div>
         </div>
 
-        <div id="trends-stats" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px;">
-          <div style="background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(27,94,32,0.3);">
-            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">TOPLAM ÖLÇÜM</div>
-            <div id="trends-stat-total" style="font-size:32px; font-weight:900;">0</div>
+        <!-- İstatistik Kartları -->
+        <div id="trends-stats" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-bottom:20px;">
+          <div class="stat-card stat-primary">
+            <div class="stat-icon">📊</div>
+            <div class="stat-label">Toplam Ölçüm</div>
+            <div class="stat-value" id="trends-stat-total">0</div>
+            <div class="stat-trend" id="trends-stat-total-trend"></div>
           </div>
-          <div style="background:linear-gradient(135deg, #1976d2 0%, #2196f3 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(25,118,210,0.3);">
-            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">ORTALAMA</div>
-            <div id="trends-stat-avg" style="font-size:32px; font-weight:900;">-</div>
+          <div class="stat-card stat-info">
+            <div class="stat-icon">📈</div>
+            <div class="stat-label">Ortalama</div>
+            <div class="stat-value" id="trends-stat-avg">-</div>
+            <div class="stat-trend" id="trends-stat-avg-trend"></div>
           </div>
-          <div style="background:linear-gradient(135deg, #d32f2f 0%, #f44336 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(211,47,47,0.3);">
-            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">MAKSIMUM</div>
-            <div id="trends-stat-max" style="font-size:32px; font-weight:900;">-</div>
+          <div class="stat-card stat-danger">
+            <div class="stat-icon">⬆️</div>
+            <div class="stat-label">Maksimum</div>
+            <div class="stat-value" id="trends-stat-max">-</div>
+            <div class="stat-trend" id="trends-stat-max-trend"></div>
           </div>
-          <div style="background:linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%); border-radius:16px; padding:20px; color:#fff; box-shadow:0 4px 12px rgba(123,31,162,0.3);">
-            <div style="font-size:12px; opacity:0.9; margin-bottom:8px; font-weight:700;">MINIMUM</div>
-            <div id="trends-stat-min" style="font-size:32px; font-weight:900;">-</div>
+          <div class="stat-card stat-warning">
+            <div class="stat-icon">⬇️</div>
+            <div class="stat-label">Minimum</div>
+            <div class="stat-value" id="trends-stat-min">-</div>
+            <div class="stat-trend" id="trends-stat-min-trend"></div>
+          </div>
+          <div class="stat-card stat-success">
+            <div class="stat-icon">📉</div>
+            <div class="stat-label">Standart Sapma</div>
+            <div class="stat-value" id="trends-stat-std">-</div>
+            <div class="stat-trend" id="trends-stat-std-trend"></div>
           </div>
         </div>
 
-        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin-bottom:24px;">
-          <h3 style="margin:0 0 20px; color:#1b5e20;">Trend Grafiği</h3>
-          <div style="position:relative; height:400px;">
+        <!-- Trend Grafiği -->
+        <div style="background:#fff; border-radius:20px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.08); margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px; color:#1b5e20; font-size:18px; font-weight:700;">Trend Grafiği</h3>
+              <p style="margin:0; color:#666; font-size:13px;" id="trends-chart-subtitle">Seçilen filtrelere göre değişim</p>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button onclick="exportTrendsChart()" class="btn btn-ghost" style="display:inline-flex; align-items:center; gap:6px; font-size:13px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Grafiği İndir
+              </button>
+            </div>
+          </div>
+          <div style="position:relative; height:450px;">
             <canvas id="trendsChart"></canvas>
           </div>
         </div>
 
-        <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08);">
-          <h3 style="margin:0 0 16px; color:#1b5e20;">Detaylı Veri Tablosu</h3>
+        <!-- Veri Tablosu -->
+        <div style="background:#fff; border-radius:20px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.08);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px; color:#1b5e20; font-size:18px; font-weight:700;">Detaylı Veri</h3>
+              <p style="margin:0; color:#666; font-size:13px;" id="trends-table-subtitle">Tüm ölçüm kayıtları</p>
+            </div>
+            <button onclick="exportTrendsData()" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:6px; font-size:13px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Excel İndir
+            </button>
+          </div>
           <div style="overflow:auto;">
             <table id="trends-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;">
               <thead>
                 <tr>
-                  <th style="text-align:left; padding:8px 10px;">Tarih</th>
-                  <th style="text-align:left; padding:8px 10px;">Saat</th>
-                  <th style="text-align:left; padding:8px 10px;">Kontrol Noktası</th>
-                  <th style="text-align:left; padding:8px 10px;">Değer</th>
-                  <th style="text-align:left; padding:8px 10px;">Birim</th>
-                  <th style="text-align:left; padding:8px 10px;">Kullanıcı</th>
-                  <th style="text-align:left; padding:8px 10px;">Açıklama</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Tarih</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Saat</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kontrol Noktası</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Değer</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Birim</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Kullanıcı</th>
+                  <th style="text-align:left; padding:10px 12px; color:#666; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Açıklama</th>
                 </tr>
               </thead>
               <tbody id="trends-tbody">
-                <tr class="empty"><td colspan="7" style="padding:12px 10px; opacity:.7;">Filtre seçip "Analizi Güncelle" butonuna tıklayın.</td></tr>
+                <tr class="empty">
+                  <td colspan="7" style="padding:40px 12px; text-align:center;">
+                    <div style="opacity:0.5;">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin:0 auto 12px; display:block;">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                      </svg>
+                      <div style="font-size:14px; font-weight:600; color:#666;">Analiz için filtreleri ayarlayın</div>
+                      <div style="font-size:12px; color:#999; margin-top:4px;">Hızlı filtre butonlarını kullanarak başlayabilirsiniz</div>
+                    </div>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>

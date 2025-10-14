@@ -1507,6 +1507,7 @@ window.exportToExcel = exportToExcel;
 
 // ====== TREND ANALİZİ SAYFASI ======
 let trendsChart = null;
+let currentQuickFilter = 'month';
 const pageInitsExtended = { trends: false };
 
 function initTrendsPage() {
@@ -1523,16 +1524,8 @@ function initTrendsPage() {
     updateTrendsControlPoints(); // İlk yükleme
   }
 
-  // Varsayılan tarih aralığını ayarla (son 30 gün)
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 30);
-
-  const startInput = document.getElementById('trends-start-date');
-  const endInput = document.getElementById('trends-end-date');
-
-  if (startInput) startInput.value = startDate.toISOString().slice(0, 10);
-  if (endInput) endInput.value = endDate.toISOString().slice(0, 10);
+  // Varsayılan olarak "Bu Ay" filtresi ile başlat
+  applyQuickFilter('month');
 }
 
 function updateTrendsControlPoints() {
@@ -1613,14 +1606,16 @@ function updateTrendsStats(data) {
   const avgEl = document.getElementById('trends-stat-avg');
   const maxEl = document.getElementById('trends-stat-max');
   const minEl = document.getElementById('trends-stat-min');
+  const stdEl = document.getElementById('trends-stat-std');
 
-  if (!totalEl || !avgEl || !maxEl || !minEl) return;
+  if (!totalEl || !avgEl || !maxEl || !minEl || !stdEl) return;
 
   if (!data || data.length === 0) {
     totalEl.textContent = '0';
     avgEl.textContent = '-';
     maxEl.textContent = '-';
     minEl.textContent = '-';
+    stdEl.textContent = '-';
     return;
   }
 
@@ -1631,6 +1626,7 @@ function updateTrendsStats(data) {
     avgEl.textContent = '-';
     maxEl.textContent = '-';
     minEl.textContent = '-';
+    stdEl.textContent = '-';
     return;
   }
 
@@ -1639,10 +1635,15 @@ function updateTrendsStats(data) {
   const max = Math.max(...values);
   const min = Math.min(...values);
 
+  // Standart sapma hesaplama
+  const variance = values.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / values.length;
+  const std = Math.sqrt(variance);
+
   totalEl.textContent = data.length;
   avgEl.textContent = avg.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   maxEl.textContent = max.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   minEl.textContent = min.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  stdEl.textContent = std.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
 }
 
 function drawTrendsChart(data, categoryKey) {
@@ -1792,5 +1793,135 @@ function renderTrendsTable(data) {
 }
 
 window.updateTrendsAnalysis = updateTrendsAnalysis;
+
+// ====== HIZLI FİLTRE FONKSİYONLARI ======
+function applyQuickFilter(filterType) {
+  currentQuickFilter = filterType;
+
+  // Tüm hızlı filtre butonlarından active sınıfını kaldır
+  document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
+
+  // Tıklanan butona active sınıfını ekle
+  event.target.closest('.quick-filter-btn')?.classList.add('active');
+
+  const endDate = new Date();
+  let startDate = new Date();
+
+  switch(filterType) {
+    case 'today':
+      startDate = new Date();
+      break;
+    case 'week':
+      startDate.setDate(startDate.getDate() - 7);
+      break;
+    case 'month':
+      startDate.setMonth(startDate.getMonth() - 1);
+      break;
+    case '3months':
+      startDate.setMonth(startDate.getMonth() - 3);
+      break;
+    case '6months':
+      startDate.setMonth(startDate.getMonth() - 6);
+      break;
+    case 'year':
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      break;
+  }
+
+  const startInput = document.getElementById('trends-start-date');
+  const endInput = document.getElementById('trends-end-date');
+
+  if (startInput) startInput.value = startDate.toISOString().slice(0, 10);
+  if (endInput) endInput.value = endDate.toISOString().slice(0, 10);
+
+  // Otomatik olarak analizi güncelle
+  updateTrendsAnalysis();
+}
+
+function resetTrendsFilters() {
+  // Kategori ve kontrol noktasını sıfırla
+  const categorySelect = document.getElementById('trends-category');
+  const pointSelect = document.getElementById('trends-point');
+
+  if (categorySelect) categorySelect.value = 'klor';
+  if (pointSelect) pointSelect.value = '';
+
+  // "Bu Ay" filtresini uygula
+  applyQuickFilter('month');
+}
+
+// ====== EXPORT FONKSİYONLARI ======
+function exportTrendsChart() {
+  if (!trendsChart) {
+    showToast('Önce bir analiz çalıştırın.');
+    return;
+  }
+
+  const canvas = document.getElementById('trendsChart');
+  if (!canvas) return;
+
+  // Canvas'ı PNG olarak indir
+  const link = document.createElement('a');
+  const now = new Date();
+  const fileName = `trend_grafik_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.png`;
+
+  link.download = fileName;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+
+  showToast('Grafik indirildi.');
+  logActivity('CHART_EXPORT', 'Trends', { type: 'chart' });
+}
+
+function exportTrendsData() {
+  const tbody = document.getElementById('trends-tbody');
+  if (!tbody || tbody.querySelector('.empty')) {
+    showToast('İndirilecek veri bulunamadı.');
+    return;
+  }
+
+  // Mevcut filtrelenmiş veriyi al
+  const categorySelect = document.getElementById('trends-category');
+  const pointSelect = document.getElementById('trends-point');
+  const startDateInput = document.getElementById('trends-start-date');
+  const endDateInput = document.getElementById('trends-end-date');
+
+  if (!categorySelect) return;
+
+  const category = categorySelect.value;
+  const selectedPoint = pointSelect?.value || '';
+  const startDate = startDateInput?.value || '';
+  const endDate = endDateInput?.value || '';
+  const categoryName = categoryKeyToName[category];
+
+  // Veriyi filtrele
+  let filteredData = cachedRecords.filter(r => {
+    if (r.category !== categoryName) return false;
+    if (selectedPoint && r.point !== selectedPoint) return false;
+    if (startDate && r.date < startDate) return false;
+    if (endDate && r.date > endDate) return false;
+    return r.value != null && r.value !== '';
+  });
+
+  if (!filteredData || filteredData.length === 0) {
+    showToast('İndirilecek veri bulunamadı.');
+    return;
+  }
+
+  // CSV'ye dönüştür
+  const csv = convertToCSV(filteredData);
+  const now = new Date();
+  const fileName = `trend_analiz_${category}_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.csv`;
+
+  downloadCSV(csv, fileName);
+  showToast(`${filteredData.length} kayıt indirildi.`);
+  logActivity('DATA_EXPORT', 'Trends', { category, records: filteredData.length });
+}
+
+// Global scope'a yeni fonksiyonları ekle
+window.applyQuickFilter = applyQuickFilter;
+window.resetTrendsFilters = resetTrendsFilters;
+window.exportTrendsChart = exportTrendsChart;
+window.exportTrendsData = exportTrendsData;
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
