@@ -2446,7 +2446,7 @@ function openKazanMikserTestModal(point) {
 
   if (!modal || !title) return;
 
-  title.textContent = `${point} - Analiz Tipi Seçimi`;
+  title.textContent = `Analiz Tipi Seçimi - ${point}`;
   modal.style.display = 'flex';
 
   logActivity('MODAL_OPEN', 'KazanMikser', { point, action: 'test_selection' });
@@ -2607,7 +2607,7 @@ function openDolumMakinalariTestModal(point, nozulCount) {
 
   if (!modal || !title) return;
 
-  title.textContent = `${point} - Analiz Tipi Seçimi`;
+  title.textContent = `Analiz Tipi Seçimi - ${point}`;
   modal.style.display = 'flex';
 
   logActivity('MODAL_OPEN', 'DolumMakinalari', { point, nozulCount, action: 'test_selection' });
