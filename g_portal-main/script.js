@@ -1721,8 +1721,10 @@ function updateTrendsControlPoints() {
       console.log('📦 DolumMakinalari kayıtları:', dolumMakinalariRecords.length);
       console.log('📦 İlk 3 DolumMakinalari kaydı:', dolumMakinalariRecords.slice(0, 3));
 
-      // Veritabanındaki kontrol noktaları
-      const dbPoints = dolumMakinalariRecords.map(r => r.point).filter(p => p);
+      // Veritabanındaki kontrol noktaları - sadece makina ismini al (test tipi ve nozul bilgisi olmadan)
+      const dbPoints = dolumMakinalariRecords
+        .map(r => (r.point || '').split(' - ')[0]) // "1029 / ALTILI..." kısmını al
+        .filter(p => p);
 
       // Sabit kontrol noktaları + veritabanındaki kontrol noktaları (benzersiz)
       points = [...new Set([...dolumMakinalariControlPoints, ...dbPoints])].sort();
@@ -1852,21 +1854,22 @@ function updateTrendsAnalysis() {
       // Dolum Makinaları kategorisi seçildiğinde dolum-makinalari kategorisinden test tipine göre verileri al
       filteredData = cachedRecords.filter(r => {
         if (r.category !== 'dolum-makinalari') return false;
-        if (selectedPoint && r.point !== selectedPoint) return false;
         if (startDate && r.date < startDate) return false;
         if (endDate && r.date > endDate) return false;
         if (r.value == null || r.value === '') return false;
 
-        // Test tipi filtresi
+        // Test tipi filtresi - point alanında test tipi var
         if (testType) {
-          const unit = (r.unit || '').toLowerCase();
-          if (testType === 'ph') {
-            // pH için: birim boş, "pH", "ph" veya "PH" olanlar
-            return unit === '' || unit === 'ph' || unit.includes('ph');
-          } else if (testType === 'iletkenlik') {
-            // İletkenlik için: µS/cm veya us/cm içeren birimler
-            return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
-          }
+          const pointLower = (r.point || '').toLowerCase();
+          // Test tipi point içinde olmalı (örn: "1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI - pH - Nozul 1")
+          if (testType === 'ph' && !pointLower.includes('ph')) return false;
+          if (testType === 'iletkenlik' && !pointLower.includes('iletkenlik')) return false;
+        }
+
+        // Kontrol noktası filtresi - seçili nokta point'in başında olmalı
+        if (selectedPoint) {
+          const pointStart = (r.point || '').split(' - ')[0]; // "1029 / ALTILI..." kısmını al
+          if (pointStart !== selectedPoint) return false;
         }
 
         return true;
@@ -2720,16 +2723,13 @@ async function saveDolumMakinalariData(event) {
     const promises = nozulData.map(nozul => {
       const record = {
         category: 'dolum-makinalari',
-        point: point,
+        point: `${point} - ${testType} - Nozul ${nozul.nozul}`,
         value: nozul.value,
         unit: unit,
         date: date,
         time: time,
         user: user,
-        note: note ? `Nozul ${nozul.nozul}: ${note}` : `Nozul ${nozul.nozul}`,
-        test_type: testType,
-        nozul_number: nozul.nozul,
-        created_at: `${date}T${time}:00`
+        note: note || '-'
       };
 
       return window.supabaseClient
