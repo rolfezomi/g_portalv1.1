@@ -478,15 +478,57 @@ window.mobileTabTo = mobileTabTo;
 async function updateStatistics() {
   const { data, error } = await supabaseClient.from('measurements').select('*');
   if (error) return console.error('İstatistik hatası:', error);
-  
+
   const records = data || [];
   const totalEl = document.getElementById('total-records');
   const todayEl = document.getElementById('today-records');
-  
+  const mostCheckedPointEl = document.getElementById('most-checked-point');
+  const mostCheckedCountEl = document.getElementById('most-checked-count');
+
   if (totalEl) totalEl.textContent = records.length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRecords = records.filter(r => r.date === today);
+
   if (todayEl) {
-    const today = new Date().toISOString().slice(0, 10);
-    todayEl.textContent = records.filter(r => r.date === today).length;
+    todayEl.textContent = todayRecords.length;
+  }
+
+  // Bugün en çok kontrol yapılan noktayı hesapla
+  if (mostCheckedPointEl && mostCheckedCountEl) {
+    if (todayRecords.length === 0) {
+      mostCheckedPointEl.textContent = '-';
+      mostCheckedCountEl.textContent = '0 ölçüm';
+    } else {
+      // Kontrol noktalarını say
+      const pointCounts = {};
+      todayRecords.forEach(r => {
+        if (r.point) {
+          pointCounts[r.point] = (pointCounts[r.point] || 0) + 1;
+        }
+      });
+
+      // En çok kontrol edilen noktayı bul
+      let maxPoint = '';
+      let maxCount = 0;
+      Object.entries(pointCounts).forEach(([point, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          maxPoint = point;
+        }
+      });
+
+      if (maxPoint) {
+        // Uzun isimler için kısalt
+        const displayPoint = maxPoint.length > 25 ? maxPoint.substring(0, 25) + '...' : maxPoint;
+        mostCheckedPointEl.textContent = displayPoint;
+        mostCheckedPointEl.title = maxPoint; // Tam isim için tooltip
+        mostCheckedCountEl.textContent = `${maxCount} ölçüm`;
+      } else {
+        mostCheckedPointEl.textContent = '-';
+        mostCheckedCountEl.textContent = '0 ölçüm';
+      }
+    }
   }
 }
 
