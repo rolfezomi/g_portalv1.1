@@ -98,6 +98,19 @@
           <span>Kazan & Mikser</span>
         </a></li>
 
+        <li><a href="#" onclick="showSection('dolum-makinalari'); setActive(this); return false;" data-section-link="dolum-makinalari" data-tooltip="Dolum Makinaları">
+          <span class="icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <path d="M9 3v18"></path>
+              <path d="M15 3v18"></path>
+              <path d="M3 9h18"></path>
+              <path d="M3 15h18"></path>
+            </svg>
+          </span>
+          <span>Dolum Makinaları</span>
+        </a></li>
+
         <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
       </ul>
     </aside>
@@ -129,6 +142,11 @@
       <button type="button" class="tab" data-section="kazan-mikser" onclick="mobileTabTo(this)">
         <span class="tab-icon">⚙️</span>
         <span class="tab-text">Kazan&Mikser</span>
+      </button>
+
+      <button type="button" class="tab" data-section="dolum-makinalari" onclick="mobileTabTo(this)">
+        <span class="tab-icon">📦</span>
+        <span class="tab-text">Dolum</span>
       </button>
 
       <button type="button" class="tab" data-section="mikro" onclick="mobileTabTo(this)">
@@ -784,6 +802,70 @@
         </div>
       </section>
 
+      <!-- Dolum Makinaları Analizleri -->
+      <section id="page-dolum-makinalari" style="display:none;">
+        <div class="toolbar">
+          <h2>📦 Dolum Makinaları Analizleri</h2>
+        </div>
+
+        <!-- Arama Alanı -->
+        <div style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin-bottom:16px;">
+          <div style="position:relative;">
+            <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); opacity:0.5;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+              type="text"
+              id="dolum-makinalari-search"
+              class="input"
+              placeholder="Numara veya isim ile ara... (örn: 1029, altılı, roll-on)"
+              style="width:100%; padding:12px 12px 12px 44px; font-size:15px;"
+              oninput="filterDolumMakinalariCards(this.value)"
+            />
+          </div>
+          <div id="dolum-makinalari-search-info" style="margin-top:8px; font-size:13px; color:#666; display:none;">
+            <span id="dolum-makinalari-result-count"></span>
+          </div>
+        </div>
+
+        <div class="control-points">
+          <div class="dolum-makinalari-grid" id="dolum-makinalari-grid">
+            <div class="dolum-makinalari-card" data-point="1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI" data-nozul="2">
+              <div class="dm-card-header">
+                <div class="dm-badge dm-badge-altili">6'lı Dolum</div>
+                <div class="dm-number">1029</div>
+              </div>
+              <div class="dm-card-body">
+                <div class="dm-capacity">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  <span>2 Nozul</span>
+                </div>
+                <div class="dm-description">Altılı Likit Dolum ve Kapama Makinası</div>
+              </div>
+            </div>
+            <div class="dolum-makinalari-card" data-point="1148 / ROLL-ON DOLUM VE KAPAMA MAKİNASI" data-nozul="6">
+              <div class="dm-card-header">
+                <div class="dm-badge dm-badge-rollon">Roll-On</div>
+                <div class="dm-number">1148</div>
+              </div>
+              <div class="dm-card-body">
+                <div class="dm-capacity">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 12h8M12 8v8"></path>
+                  </svg>
+                  <span>6 Nozul</span>
+                </div>
+                <div class="dm-description">Roll-On Dolum ve Kapama Makinası</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Admin Panel Ana Sayfa -->
       <section id="page-admin-panel" style="display:none;">
         <div class="toolbar"><h2>⚙️ Admin Panel</h2></div>
@@ -936,6 +1018,7 @@
                     <option value="sertlik">🔬 Sertlik</option>
                     <option value="mikro">🦠 Mikrobiyoloji</option>
                     <option value="kazanmikser">⚙️ Kazan & Mikser</option>
+                    <option value="dolummakinalari">📦 Dolum Makinaları</option>
                   </select>
                 </div>
                 <div class="filter-field">
@@ -1134,6 +1217,65 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Dolum Makinaları Analiz Tipi Seçim Modali -->
+  <div class="modal" id="dolum-makinalari-test-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title" id="dolumMakinalariTestTitle">Analiz Tipi Seçimi</h3>
+        <button class="btn btn-ghost" onclick="closeDolumMakinalariTestModal()">Kapat</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; padding:12px 0;">
+          <button class="box" onclick="openDolumMakinalariEntryModal('pH')" style="cursor:pointer; padding:24px 16px; text-align:center;">
+            <div style="font-size:32px; margin-bottom:8px;">⚗️</div>
+            <div style="font-weight:700;">pH</div>
+          </button>
+          <button class="box" onclick="openDolumMakinalariEntryModal('İletkenlik')" style="cursor:pointer; padding:24px 16px; text-align:center;">
+            <div style="font-size:32px; margin-bottom:8px;">⚡</div>
+            <div style="font-weight:700;">İletkenlik</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dolum Makinaları Nozul Veri Girişi Modali -->
+  <div class="modal" id="dolum-makinalari-nozul-modal">
+    <div class="modal-card" style="max-width:900px;">
+      <div class="modal-head">
+        <h3 class="modal-title" id="dolumMakinalariNozulTitle">Nozul Verisi Girişi</h3>
+        <button class="btn btn-ghost" onclick="closeDolumMakinalariNozulModal()">Kapat</button>
+      </div>
+      <form id="dolum-makinalari-nozul-form" onsubmit="saveDolumMakinalariData(event)">
+        <div class="modal-body">
+          <!-- Nozul giriş alanları dinamik olarak buraya eklenecek -->
+          <div id="nozul-inputs-container"></div>
+
+          <div style="margin-top:20px; padding-top:20px; border-top:2px solid #f0f0f0;">
+            <div class="full"><label for="dm-note">Açıklama / Not</label><textarea id="dm-note" rows="3" placeholder="İsteğe bağlı açıklama girebilirsiniz..."></textarea></div>
+          </div>
+
+          <input type="hidden" id="dm-point" />
+          <input type="hidden" id="dm-test-type" />
+          <input type="hidden" id="dm-date" />
+          <input type="hidden" id="dm-time" />
+          <input type="hidden" id="dm-user" />
+          <input type="hidden" id="dm-nozul-count" />
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-primary" type="submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Tüm Verileri Kaydet
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

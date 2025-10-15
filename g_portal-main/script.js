@@ -445,6 +445,7 @@ function showSection(key) {
     iletkenlik: initIletkenlikPage,
     mikro: initMikroPage,
     'kazan-mikser': initKazanMikserPage,
+    'dolum-makinalari': initDolumMakinalariPage,
     logs: initLogsPage,
     users: initUsersPage,
     trends: initTrendsPage
@@ -1342,7 +1343,8 @@ function showToast(msg) {
 const categoryKeyToName = {
   klor: 'Klor', sertlik: 'Sertlik', ph: 'Ph',
   iletkenlik: 'İletkenlik', mikro: 'Mikro Biyoloji',
-  kazanmikser: 'kazan-mikser'
+  kazanmikser: 'kazan-mikser',
+  dolummakinalari: 'dolum-makinalari'
 };
 
 // Kazan & Mikser sabit kontrol noktaları (HTML'den alınmıştır)
@@ -1366,13 +1368,20 @@ const kazanMikserControlPoints = [
   '1142 / Pilot Mikser - Dolmak'
 ];
 
+// Dolum Makinaları sabit kontrol noktaları
+const dolumMakinalariControlPoints = [
+  '1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI',
+  '1148 / ROLL-ON DOLUM VE KAPAMA MAKİNASI'
+];
+
 const colorMap = {
   klor: { gradient: ['rgba(46,125,50,0.8)', 'rgba(27,94,32,1)'], border: '#1b5e20', point: '#2e7d32', pointHover: '#145214' },
   sertlik: { gradient: ['rgba(33,150,243,0.8)', 'rgba(25,118,210,1)'], border: '#1976d2', point: '#2196f3', pointHover: '#0d47a1' },
   ph: { gradient: ['rgba(156,39,176,0.8)', 'rgba(123,31,162,1)'], border: '#7b1fa2', point: '#9c27b0', pointHover: '#4a148c' },
   iletkenlik: { gradient: ['rgba(255,152,0,0.8)', 'rgba(245,124,0,1)'], border: '#f57c00', point: '#ff9800', pointHover: '#e65100' },
   mikro: { gradient: ['rgba(233,30,99,0.8)', 'rgba(194,24,91,1)'], border: '#c2185b', point: '#e91e63', pointHover: '#880e4f' },
-  kazanmikser: { gradient: ['rgba(96,125,139,0.8)', 'rgba(69,90,100,1)'], border: '#455a64', point: '#607d8b', pointHover: '#263238' }
+  kazanmikser: { gradient: ['rgba(96,125,139,0.8)', 'rgba(69,90,100,1)'], border: '#455a64', point: '#607d8b', pointHover: '#263238' },
+  dolummakinalari: { gradient: ['rgba(121,85,72,0.8)', 'rgba(93,64,55,1)'], border: '#5d4037', point: '#795548', pointHover: '#3e2723' }
 };
 
 function buildTrendData(categoryKey) {
@@ -1628,9 +1637,10 @@ function initTrendsPage() {
     categorySelect.addEventListener('change', () => {
       updateTrendsControlPoints();
 
-      // Kazan & Mikser kategorisi seçiliyse test tipi dropdown'ını göster
+      // Kazan & Mikser veya Dolum Makinaları kategorisi seçiliyse test tipi dropdown'ını göster
       if (testTypeContainer) {
-        testTypeContainer.style.display = categorySelect.value === 'kazanmikser' ? '' : 'none';
+        const showTestType = categorySelect.value === 'kazanmikser' || categorySelect.value === 'dolummakinalari';
+        testTypeContainer.style.display = showTestType ? '' : 'none';
       }
     });
     updateTrendsControlPoints(); // İlk yükleme
@@ -1705,6 +1715,17 @@ function updateTrendsControlPoints() {
 
       // Sabit kontrol noktaları + veritabanındaki kontrol noktaları (benzersiz)
       points = [...new Set([...kazanMikserControlPoints, ...dbPoints])].sort();
+    } else if (category === 'dolummakinalari') {
+      // Dolum Makinaları kategorisi seçildiğinde hem sabit kontrol noktalarını hem de veritabanındakileri göster
+      const dolumMakinalariRecords = cachedRecords.filter(r => r.category === 'dolum-makinalari');
+      console.log('📦 DolumMakinalari kayıtları:', dolumMakinalariRecords.length);
+      console.log('📦 İlk 3 DolumMakinalari kaydı:', dolumMakinalariRecords.slice(0, 3));
+
+      // Veritabanındaki kontrol noktaları
+      const dbPoints = dolumMakinalariRecords.map(r => r.point).filter(p => p);
+
+      // Sabit kontrol noktaları + veritabanındaki kontrol noktaları (benzersiz)
+      points = [...new Set([...dolumMakinalariControlPoints, ...dbPoints])].sort();
     } else {
       // Diğer kategoriler için sadece kendi kontrol noktalarını al
       points = [...new Set(
@@ -1808,6 +1829,29 @@ function updateTrendsAnalysis() {
       // Kazan & Mikser kategorisi seçildiğinde kazan-mikser kategorisinden test tipine göre verileri al
       filteredData = cachedRecords.filter(r => {
         if (r.category !== 'kazan-mikser') return false;
+        if (selectedPoint && r.point !== selectedPoint) return false;
+        if (startDate && r.date < startDate) return false;
+        if (endDate && r.date > endDate) return false;
+        if (r.value == null || r.value === '') return false;
+
+        // Test tipi filtresi
+        if (testType) {
+          const unit = (r.unit || '').toLowerCase();
+          if (testType === 'ph') {
+            // pH için: birim boş, "pH", "ph" veya "PH" olanlar
+            return unit === '' || unit === 'ph' || unit.includes('ph');
+          } else if (testType === 'iletkenlik') {
+            // İletkenlik için: µS/cm veya us/cm içeren birimler
+            return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
+          }
+        }
+
+        return true;
+      });
+    } else if (category === 'dolummakinalari') {
+      // Dolum Makinaları kategorisi seçildiğinde dolum-makinalari kategorisinden test tipine göre verileri al
+      filteredData = cachedRecords.filter(r => {
+        if (r.category !== 'dolum-makinalari') return false;
         if (selectedPoint && r.point !== selectedPoint) return false;
         if (startDate && r.date < startDate) return false;
         if (endDate && r.date > endDate) return false;
@@ -2503,5 +2547,261 @@ window.openKazanMikserTestModal = openKazanMikserTestModal;
 window.closeKazanMikserTestModal = closeKazanMikserTestModal;
 window.openKazanMikserEntryModal = openKazanMikserEntryModal;
 window.filterKazanMikserCards = filterKazanMikserCards;
+
+// ============================================
+// DOLUM MAKİNALARI FONKSİYONLARI
+// ============================================
+
+let selectedDolumMakinalariPoint = '';
+let selectedDolumMakinalariNozulCount = 0;
+
+function initDolumMakinalariPage() {
+  const dolumMakinalariGrid = document.getElementById('dolum-makinalari-grid');
+  if (!dolumMakinalariGrid) return;
+
+  const cards = dolumMakinalariGrid.querySelectorAll('.dolum-makinalari-card');
+  cards.forEach(card => {
+    card.addEventListener('click', function() {
+      const point = this.getAttribute('data-point');
+      const nozulCount = parseInt(this.getAttribute('data-nozul'));
+      selectedDolumMakinalariPoint = point;
+      selectedDolumMakinalariNozulCount = nozulCount;
+      openDolumMakinalariTestModal(point, nozulCount);
+    });
+  });
+
+  logActivity('PAGE_VIEW', 'DolumMakinalari', { page: 'dolum-makinalari' });
+}
+
+function openDolumMakinalariTestModal(point, nozulCount) {
+  const modal = document.getElementById('dolum-makinalari-test-modal');
+  const title = document.getElementById('dolumMakinalariTestTitle');
+
+  if (!modal || !title) return;
+
+  title.textContent = `${point} - Analiz Tipi Seçimi`;
+  modal.style.display = 'flex';
+
+  logActivity('MODAL_OPEN', 'DolumMakinalari', { point, nozulCount, action: 'test_selection' });
+}
+
+function closeDolumMakinalariTestModal() {
+  const modal = document.getElementById('dolum-makinalari-test-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openDolumMakinalariEntryModal(testType) {
+  closeDolumMakinalariTestModal();
+
+  const modal = document.getElementById('dolum-makinalari-nozul-modal');
+  const modalTitle = document.getElementById('dolumMakinalariNozulTitle');
+  const container = document.getElementById('nozul-inputs-container');
+  const pointInput = document.getElementById('dm-point');
+  const testTypeInput = document.getElementById('dm-test-type');
+  const dateInput = document.getElementById('dm-date');
+  const timeInput = document.getElementById('dm-time');
+  const userInput = document.getElementById('dm-user');
+  const nozulCountInput = document.getElementById('dm-nozul-count');
+  const noteInput = document.getElementById('dm-note');
+
+  if (!modal || !container) return;
+
+  // Başlık ve gizli alanları ayarla
+  modalTitle.textContent = `${selectedDolumMakinalariPoint} - ${testType} Ölçümü`;
+  pointInput.value = selectedDolumMakinalariPoint;
+  testTypeInput.value = testType;
+  nozulCountInput.value = selectedDolumMakinalariNozulCount;
+
+  const now = new Date();
+  dateInput.value = now.toISOString().slice(0, 10);
+  timeInput.value = now.toTimeString().slice(0, 5);
+  userInput.value = currentUserEmail || 'Bilinmiyor';
+  noteInput.value = '';
+
+  // Birim ayarla
+  const unit = testType === 'pH' ? 'pH' : 'µS/cm';
+
+  // Nozul input alanlarını oluştur
+  container.innerHTML = '';
+  const gridStyle = selectedDolumMakinalariNozulCount === 2
+    ? 'grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));'
+    : 'grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));';
+
+  container.innerHTML = `
+    <div style="margin-bottom:16px;">
+      <h4 style="margin:0 0 12px; color:#1b5e20; font-size:16px; font-weight:700;">
+        ${testType === 'pH' ? '⚗️' : '⚡'} ${testType} Değerleri (${selectedDolumMakinalariNozulCount} Nozul)
+      </h4>
+      <p style="margin:0; font-size:13px; color:#666;">Her nozul için ${testType} değerini giriniz.</p>
+    </div>
+    <div style="display:grid; ${gridStyle} gap:14px;">
+      ${Array.from({ length: selectedDolumMakinalariNozulCount }, (_, i) => `
+        <div style="background:#f9fafb; border:2px solid #e0e7e9; border-radius:12px; padding:16px;">
+          <label style="display:block; margin-bottom:8px; font-weight:700; font-size:13px; color:#2e7d32;">
+            Nozul ${i + 1}
+          </label>
+          <div style="position:relative;">
+            <input
+              type="text"
+              id="dm-nozul-${i + 1}"
+              class="input dm-nozul-input"
+              placeholder="0,000"
+              required
+              style="width:100%; padding-right:60px; font-size:15px; font-weight:600;"
+              data-nozul="${i + 1}"
+            />
+            <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:13px; color:#666; font-weight:600;">
+              ${unit}
+            </span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // Decimal input kurallarını tüm nozul inputlarına uygula
+  setTimeout(() => {
+    const nozulInputs = container.querySelectorAll('.dm-nozul-input');
+    nozulInputs.forEach(input => {
+      applyDecimalInputRules(input);
+    });
+  }, 100);
+
+  modal.style.display = 'flex';
+
+  logActivity('MODAL_OPEN', 'DolumMakinalari', {
+    point: selectedDolumMakinalariPoint,
+    testType,
+    nozulCount: selectedDolumMakinalariNozulCount,
+    action: 'nozul_data_entry'
+  });
+}
+
+function closeDolumMakinalariNozulModal() {
+  const modal = document.getElementById('dolum-makinalari-nozul-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function saveDolumMakinalariData(event) {
+  event.preventDefault();
+
+  const point = document.getElementById('dm-point').value;
+  const testType = document.getElementById('dm-test-type').value;
+  const date = document.getElementById('dm-date').value;
+  const time = document.getElementById('dm-time').value;
+  const user = document.getElementById('dm-user').value;
+  const nozulCount = parseInt(document.getElementById('dm-nozul-count').value);
+  const note = document.getElementById('dm-note').value;
+
+  // Tüm nozul verilerini topla
+  const nozulData = [];
+  for (let i = 1; i <= nozulCount; i++) {
+    const input = document.getElementById(`dm-nozul-${i}`);
+    if (input) {
+      const value = input.value.trim().replace(',', '.');
+      if (value) {
+        nozulData.push({
+          nozul: i,
+          value: parseFloat(value)
+        });
+      }
+    }
+  }
+
+  if (nozulData.length === 0) {
+    alert('En az bir nozul değeri girmelisiniz!');
+    return;
+  }
+
+  const unit = testType === 'pH' ? 'pH' : 'µS/cm';
+
+  try {
+    // Her nozul için ayrı kayıt oluştur
+    const promises = nozulData.map(nozul => {
+      const record = {
+        category: 'dolum-makinalari',
+        point: point,
+        value: nozul.value,
+        unit: unit,
+        user: user,
+        note: note ? `Nozul ${nozul.nozul}: ${note}` : `Nozul ${nozul.nozul}`,
+        test_type: testType,
+        nozul_number: nozul.nozul,
+        created_at: `${date}T${time}:00`
+      };
+
+      return window.supabaseClient
+        .from('measurements')
+        .insert([record]);
+    });
+
+    await Promise.all(promises);
+
+    showToast(`${nozulCount} nozul verisi başarıyla kaydedildi!`);
+    closeDolumMakinalariNozulModal();
+
+    logActivity('DATA_SAVED', 'DolumMakinalari', {
+      point,
+      testType,
+      nozulCount,
+      totalRecords: nozulData.length
+    });
+
+    // Form'u sıfırla
+    document.getElementById('dolum-makinalari-nozul-form').reset();
+
+  } catch (error) {
+    console.error('Dolum Makinaları veri kaydetme hatası:', error);
+    alert('Veriler kaydedilirken bir hata oluştu: ' + error.message);
+  }
+}
+
+function filterDolumMakinalariCards(searchTerm) {
+  const grid = document.getElementById('dolum-makinalari-grid');
+  const searchInfo = document.getElementById('dolum-makinalari-search-info');
+  const resultCount = document.getElementById('dolum-makinalari-result-count');
+
+  if (!grid) return;
+
+  const cards = grid.querySelectorAll('.dolum-makinalari-card');
+  const term = searchTerm.toLowerCase().trim();
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const pointData = card.getAttribute('data-point').toLowerCase();
+
+    if (term === '' || pointData.includes(term)) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // Sonuç sayısını göster
+  if (term !== '') {
+    searchInfo.style.display = '';
+    if (visibleCount === 0) {
+      resultCount.textContent = '❌ Sonuç bulunamadı';
+      resultCount.style.color = '#d32f2f';
+    } else if (visibleCount === cards.length) {
+      resultCount.textContent = `✅ Tüm makinalar gösteriliyor (${visibleCount})`;
+      resultCount.style.color = '#1b5e20';
+    } else {
+      resultCount.textContent = `🔍 ${visibleCount} makina bulundu`;
+      resultCount.style.color = '#1976d2';
+    }
+  } else {
+    searchInfo.style.display = 'none';
+  }
+}
+
+// Global scope'a fonksiyonları ekle
+window.openDolumMakinalariTestModal = openDolumMakinalariTestModal;
+window.closeDolumMakinalariTestModal = closeDolumMakinalariTestModal;
+window.openDolumMakinalariEntryModal = openDolumMakinalariEntryModal;
+window.closeDolumMakinalariNozulModal = closeDolumMakinalariNozulModal;
+window.saveDolumMakinalariData = saveDolumMakinalariData;
+window.filterDolumMakinalariCards = filterDolumMakinalariCards;
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
