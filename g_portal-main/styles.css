@@ -2030,12 +2030,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     flex-direction: column !important;
   }
 
-  /* Tüm filtre alanlarını eşitle - height ve padding düzeltmesi */
+  /* Tüm filtre alanlarını eşitle - select alanları */
   #trends-category,
   #trends-point,
-  #trends-test-type,
-  #trends-start-date,
-  #trends-end-date {
+  #trends-test-type {
     width: 100% !important;
     height: 46px !important;
     min-height: 46px !important;
@@ -2047,6 +2045,42 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     border-radius: 8px !important;
   }
 
+  /* Tarih alanlarını aynı boyutta yap */
+  #trends-start-date,
+  #trends-end-date,
+  .filter-date {
+    width: 100% !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    padding: 11px 14px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+    line-height: 1.3 !important;
+    border-radius: 8px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+  }
+
+  /* Date input calendar icon düzenlemesi */
+  #trends-start-date::-webkit-calendar-picker-indicator,
+  #trends-end-date::-webkit-calendar-picker-indicator,
+  .filter-date::-webkit-calendar-picker-indicator {
+    width: 20px !important;
+    height: 20px !important;
+    margin-left: 4px !important;
+  }
+
+  /* Date input için özel içerik düzeltmesi */
+  #trends-start-date::-webkit-date-and-time-value,
+  #trends-end-date::-webkit-date-and-time-value,
+  .filter-date::-webkit-date-and-time-value {
+    text-align: left !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
   /* Label stilleri - hepsi aynı boyut */
   #trends-filter-grid label {
     display: block !important;
@@ -2054,6 +2088,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     font-weight: 600 !important;
     font-size: 12px !important;
     color: rgba(255,255,255,0.9) !important;
+    height: auto !important;
   }
 
   /* Test tipi container'ı göster/gizle durumunda bile layout'u koru */
