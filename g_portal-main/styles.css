@@ -2022,16 +2022,28 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     gap: 14px !important;
   }
 
-  /* Tüm filtre alanlarını eşitle */
+  /* Tüm filtre alanlarını eşitle - height ve padding düzeltmesi */
   #trends-category,
   #trends-point,
   #trends-test-type,
   #trends-start-date,
   #trends-end-date {
-    min-height: 46px !important;
-    height: 46px !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
     padding: 12px 14px !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Label stilleri */
+  #trends-page label {
+    display: block !important;
+    margin-bottom: 6px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
   }
 
   /* Test tipi container'ı göster/gizle durumunda bile layout'u koru */
