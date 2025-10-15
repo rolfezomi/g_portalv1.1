@@ -1573,6 +1573,10 @@ function updateTrendsControlPoints() {
   console.log('📊 Kategori:', category);
   console.log('📦 cachedRecords uzunluğu:', cachedRecords.length);
 
+  // Tüm kategorileri göster
+  const allCategories = [...new Set(cachedRecords.map(r => r.category))];
+  console.log('📋 Veritabanındaki tüm kategoriler:', allCategories);
+
   // "Tümü" seçiliyse tüm kategorilerden kontrol noktalarını al
   let points;
   if (category === 'all') {
