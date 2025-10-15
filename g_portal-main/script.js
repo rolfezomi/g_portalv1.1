@@ -1293,7 +1293,7 @@ function showToast(msg) {
 const categoryKeyToName = {
   klor: 'Klor', sertlik: 'Sertlik', ph: 'Ph',
   iletkenlik: 'İletkenlik', mikro: 'Mikro Biyoloji',
-  kazanmikser: 'KazanMikser'
+  kazanmikser: 'kazan-mikser'
 };
 
 const colorMap = {
@@ -1308,14 +1308,14 @@ const colorMap = {
 function buildTrendData(categoryKey) {
   const name = categoryKeyToName[categoryKey];
 
-  // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden verileri al
+  // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de kazan-mikser kategorisinden verileri al
   let filteredRecords;
   if (categoryKey === 'ph' || categoryKey === 'iletkenlik') {
     filteredRecords = cachedRecords.filter(r => {
       // Kendi kategorisinden veriler
       if (r.category === name && r.value != null && r.value !== '') return true;
-      // KazanMikser kategorisinden, sadece ilgili birime sahip veriler
-      if (r.category === 'KazanMikser' && r.value != null && r.value !== '') {
+      // kazan-mikser kategorisinden, sadece ilgili birime sahip veriler
+      if (r.category === 'kazan-mikser' && r.value != null && r.value !== '') {
         // pH için: birim boş, "pH", "ph" veya "PH" olanlar
         if (categoryKey === 'ph') {
           const unit = (r.unit || '').toLowerCase().trim();
@@ -1589,15 +1589,15 @@ function updateTrendsControlPoints() {
     const categoryName = categoryKeyToName[category];
     console.log('🏷️ categoryName:', categoryName);
 
-    // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden kontrol noktalarını al
+    // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de kazan-mikser kategorisinden kontrol noktalarını al
     if (category === 'ph' || category === 'iletkenlik') {
       points = [...new Set(
         cachedRecords
           .filter(r => {
             // Kendi kategorisinden noktalar
             if (r.category === categoryName) return true;
-            // KazanMikser kategorisinden noktalar
-            if (r.category === 'KazanMikser' && r.value != null && r.value !== '') {
+            // kazan-mikser kategorisinden noktalar
+            if (r.category === 'kazan-mikser' && r.value != null && r.value !== '') {
               // pH için: birim boş, "pH", "ph" veya "PH" olanlar
               if (category === 'ph') {
                 const unit = (r.unit || '').toLowerCase().trim();
@@ -1615,8 +1615,8 @@ function updateTrendsControlPoints() {
           .filter(p => p)
       )].sort();
     } else if (category === 'kazanmikser') {
-      // Kazan & Mikser kategorisi seçildiğinde KazanMikser kategorisindeki tüm kontrol noktalarını al
-      const kazanMikserRecords = cachedRecords.filter(r => r.category === 'KazanMikser');
+      // Kazan & Mikser kategorisi seçildiğinde kazan-mikser kategorisindeki tüm kontrol noktalarını al
+      const kazanMikserRecords = cachedRecords.filter(r => r.category === 'kazan-mikser');
       console.log('⚙️ KazanMikser kayıtları:', kazanMikserRecords.length);
       console.log('⚙️ İlk 3 KazanMikser kaydı:', kazanMikserRecords.slice(0, 3));
 
@@ -1683,7 +1683,7 @@ function updateTrendsAnalysis() {
   } else {
     const categoryName = categoryKeyToName[category];
 
-    // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden verileri al
+    // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de kazan-mikser kategorisinden verileri al
     if (category === 'ph' || category === 'iletkenlik') {
       filteredData = cachedRecords.filter(r => {
         // Tarih filtresi
@@ -1697,8 +1697,8 @@ function updateTrendsAnalysis() {
           return true;
         }
 
-        // KazanMikser kategorisinden veriler
-        if (r.category === 'KazanMikser') {
+        // kazan-mikser kategorisinden veriler
+        if (r.category === 'kazan-mikser') {
           if (selectedPoint && r.point !== selectedPoint) return false;
           // pH için: birim boş, "pH", "ph" veya "PH" olanlar
           if (category === 'ph') {
@@ -1715,9 +1715,9 @@ function updateTrendsAnalysis() {
         return false;
       });
     } else if (category === 'kazanmikser') {
-      // Kazan & Mikser kategorisi seçildiğinde KazanMikser kategorisinden tüm verileri al
+      // Kazan & Mikser kategorisi seçildiğinde kazan-mikser kategorisinden tüm verileri al
       filteredData = cachedRecords.filter(r => {
-        if (r.category !== 'KazanMikser') return false;
+        if (r.category !== 'kazan-mikser') return false;
         if (selectedPoint && r.point !== selectedPoint) return false;
         if (startDate && r.date < startDate) return false;
         if (endDate && r.date > endDate) return false;
@@ -2328,7 +2328,7 @@ function openKazanMikserEntryModal(testType) {
     categoryInput.id = 'category-hidden';
     form.appendChild(categoryInput);
   }
-  categoryInput.value = 'KazanMikser';
+  categoryInput.value = 'kazan-mikser';
 
   // Test tipini gizli alana kaydet
   let testTypeInput = form.querySelector('#test-type-hidden');
