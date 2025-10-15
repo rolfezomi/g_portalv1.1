@@ -2663,7 +2663,7 @@ function openDolumMakinalariEntryModal(testType) {
   setTimeout(() => {
     const nozulInputs = container.querySelectorAll('.dm-nozul-input');
     nozulInputs.forEach(input => {
-      applyDecimalInputRules(input);
+      initDecimalValueInput(input);
     });
   }, 100);
 
