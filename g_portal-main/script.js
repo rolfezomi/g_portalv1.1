@@ -2723,6 +2723,8 @@ async function saveDolumMakinalariData(event) {
         point: point,
         value: nozul.value,
         unit: unit,
+        date: date,
+        time: time,
         user: user,
         note: note ? `Nozul ${nozul.nozul}: ${note}` : `Nozul ${nozul.nozul}`,
         test_type: testType,
@@ -2746,6 +2748,9 @@ async function saveDolumMakinalariData(event) {
       nozulCount,
       totalRecords: nozulData.length
     });
+
+    // Tabloları ve grafikleri güncelle
+    await loadRecent();
 
     // Form'u sıfırla
     document.getElementById('dolum-makinalari-nozul-form').reset();
