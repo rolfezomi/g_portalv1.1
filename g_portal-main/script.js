@@ -1605,6 +1605,14 @@ function updateTrendsControlPoints() {
           .map(r => r.point)
           .filter(p => p)
       )].sort();
+    } else if (category === 'kazanmikser') {
+      // Kazan & Mikser kategorisi seçildiğinde KazanMikser kategorisindeki tüm kontrol noktalarını al
+      points = [...new Set(
+        cachedRecords
+          .filter(r => r.category === 'KazanMikser')
+          .map(r => r.point)
+          .filter(p => p)
+      )].sort();
     } else {
       // Diğer kategoriler için sadece kendi kontrol noktalarını al
       points = [...new Set(
@@ -1688,6 +1696,15 @@ function updateTrendsAnalysis() {
         }
 
         return false;
+      });
+    } else if (category === 'kazanmikser') {
+      // Kazan & Mikser kategorisi seçildiğinde KazanMikser kategorisinden tüm verileri al
+      filteredData = cachedRecords.filter(r => {
+        if (r.category !== 'KazanMikser') return false;
+        if (selectedPoint && r.point !== selectedPoint) return false;
+        if (startDate && r.date < startDate) return false;
+        if (endDate && r.date > endDate) return false;
+        return r.value != null && r.value !== '';
       });
     } else {
       // Diğer kategoriler için sadece kendi verilerini al
