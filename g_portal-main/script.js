@@ -1852,28 +1852,53 @@ function updateTrendsAnalysis() {
       });
     } else if (category === 'dolummakinalari') {
       // Dolum Makinaları kategorisi seçildiğinde dolum-makinalari kategorisinden test tipine göre verileri al
+      console.log('🔍 Dolum Makinaları filtreleme başladı');
+      console.log('📊 Toplam cached kayıt:', cachedRecords.length);
+      console.log('🎯 selectedPoint:', selectedPoint);
+      console.log('🧪 testType:', testType);
+
       filteredData = cachedRecords.filter(r => {
         if (r.category !== 'dolum-makinalari') return false;
         if (startDate && r.date < startDate) return false;
         if (endDate && r.date > endDate) return false;
         if (r.value == null || r.value === '') return false;
 
-        // Test tipi filtresi - point alanında test tipi var
+        // Test tipi filtresi - unit veya point alanında test tipi var
         if (testType) {
           const pointLower = (r.point || '').toLowerCase();
-          // Test tipi point içinde olmalı (örn: "1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI - pH - Nozul 1")
-          if (testType === 'ph' && !pointLower.includes('ph')) return false;
-          if (testType === 'iletkenlik' && !pointLower.includes('iletkenlik')) return false;
+          const unitLower = (r.unit || '').toLowerCase();
+          const testTypeLower = testType.toLowerCase();
+
+          if (testTypeLower === 'ph') {
+            // pH için: unit'de "ph" var VEYA point'de "ph" var
+            const hasPhInUnit = unitLower.includes('ph');
+            const hasPhInPoint = pointLower.includes('ph');
+            if (!hasPhInUnit && !hasPhInPoint) return false;
+          } else if (testTypeLower === 'iletkenlik' || testTypeLower === 'İletkenlik'.toLowerCase()) {
+            // İletkenlik için: unit'de "µs/cm" var VEYA point'de "iletkenlik" var
+            const hasIletkenlikInUnit = unitLower.includes('µs/cm') || unitLower.includes('us/cm') || unitLower.includes('μs/cm');
+            const hasIletkenlikInPoint = pointLower.includes('iletkenlik');
+            if (!hasIletkenlikInUnit && !hasIletkenlikInPoint) return false;
+          }
         }
 
         // Kontrol noktası filtresi - seçili nokta point'in başında olmalı
-        if (selectedPoint) {
+        if (selectedPoint && selectedPoint !== '') {
           const pointStart = (r.point || '').split(' - ')[0]; // "1029 / ALTILI..." kısmını al
           if (pointStart !== selectedPoint) return false;
         }
 
         return true;
       });
+
+      console.log('✅ Filtrelenmiş veri sayısı:', filteredData.length);
+      if (filteredData.length > 0) {
+        console.log('📦 İlk 3 kayıt:', filteredData.slice(0, 3).map(r => ({
+          point: r.point,
+          unit: r.unit,
+          value: r.value
+        })));
+      }
     } else {
       // Diğer kategoriler için sadece kendi verilerini al
       filteredData = cachedRecords.filter(r => {
