@@ -1571,10 +1571,19 @@ function initTrendsPage() {
   // Log sayfa ziyareti
   logActivity('PAGE_VIEW', 'Trends', { page: 'trends' });
 
-  // Kategori değişikliğinde kontrol noktalarını güncelle
+  // Kategori değişikliğinde kontrol noktalarını güncelle ve test tipi dropdown'ını göster/gizle
   const categorySelect = document.getElementById('trends-category');
+  const testTypeContainer = document.getElementById('trends-test-type-container');
+
   if (categorySelect) {
-    categorySelect.addEventListener('change', updateTrendsControlPoints);
+    categorySelect.addEventListener('change', () => {
+      updateTrendsControlPoints();
+
+      // Kazan & Mikser kategorisi seçiliyse test tipi dropdown'ını göster
+      if (testTypeContainer) {
+        testTypeContainer.style.display = categorySelect.value === 'kazanmikser' ? '' : 'none';
+      }
+    });
     updateTrendsControlPoints(); // İlk yükleme
   }
 
@@ -1693,6 +1702,8 @@ function updateTrendsAnalysis() {
   const selectedPoint = pointSelect.value;
   const startDate = startDateInput?.value || '';
   const endDate = endDateInput?.value || '';
+  const testTypeSelect = document.getElementById('trends-test-type');
+  const testType = testTypeSelect?.value || '';
 
   // Log analiz güncelleme
   logActivity('TRENDS_ANALYSIS', 'Trends', {
@@ -1745,13 +1756,27 @@ function updateTrendsAnalysis() {
         return false;
       });
     } else if (category === 'kazanmikser') {
-      // Kazan & Mikser kategorisi seçildiğinde kazan-mikser kategorisinden tüm verileri al
+      // Kazan & Mikser kategorisi seçildiğinde kazan-mikser kategorisinden test tipine göre verileri al
       filteredData = cachedRecords.filter(r => {
         if (r.category !== 'kazan-mikser') return false;
         if (selectedPoint && r.point !== selectedPoint) return false;
         if (startDate && r.date < startDate) return false;
         if (endDate && r.date > endDate) return false;
-        return r.value != null && r.value !== '';
+        if (r.value == null || r.value === '') return false;
+
+        // Test tipi filtresi
+        if (testType) {
+          const unit = (r.unit || '').toLowerCase();
+          if (testType === 'ph') {
+            // pH için: birim boş, "pH", "ph" veya "PH" olanlar
+            return unit === '' || unit === 'ph' || unit.includes('ph');
+          } else if (testType === 'iletkenlik') {
+            // İletkenlik için: µS/cm veya us/cm içeren birimler
+            return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
+          }
+        }
+
+        return true;
       });
     } else {
       // Diğer kategoriler için sadece kendi verilerini al
