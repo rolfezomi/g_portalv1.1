@@ -2556,16 +2556,25 @@ let selectedDolumMakinalariPoint = '';
 let selectedDolumMakinalariNozulCount = 0;
 
 function initDolumMakinalariPage() {
+  console.log('🔧 initDolumMakinalariPage çağrıldı');
   const dolumMakinalariGrid = document.getElementById('dolum-makinalari-grid');
-  if (!dolumMakinalariGrid) return;
+  console.log('📦 Grid element:', dolumMakinalariGrid);
+
+  if (!dolumMakinalariGrid) {
+    console.error('❌ dolum-makinalari-grid bulunamadı!');
+    return;
+  }
 
   const cards = dolumMakinalariGrid.querySelectorAll('.dolum-makinalari-card');
+  console.log('🎯 Bulunan kartlar:', cards.length);
+
   cards.forEach(card => {
     card.addEventListener('click', function() {
       const point = this.getAttribute('data-point');
       const nozulCount = parseInt(this.getAttribute('data-nozul'));
       selectedDolumMakinalariPoint = point;
       selectedDolumMakinalariNozulCount = nozulCount;
+      console.log('✅ Kart tıklandı:', point, 'Nozul:', nozulCount);
       openDolumMakinalariTestModal(point, nozulCount);
     });
   });
