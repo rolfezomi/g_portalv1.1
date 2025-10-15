@@ -2400,6 +2400,10 @@ function openKazanMikserEntryModal(testType) {
   pointInput.value = selectedKazanMikserPoint;
   pointInput.readOnly = true;
   valueInput.value = '';
+
+  // Decimal input kurallarını uygula (virgül kullanımı, max 3 basamak)
+  takeOverValueInput();
+
   valueInput.focus();
   noteInput.value = '';
 
