@@ -1635,6 +1635,9 @@ function updateTrendsControlPoints() {
 }
 
 function updateTrendsAnalysis() {
+  // Önce kontrol noktalarını güncelle
+  updateTrendsControlPoints();
+
   const categorySelect = document.getElementById('trends-category');
   const pointSelect = document.getElementById('trends-point');
   const startDateInput = document.getElementById('trends-start-date');
