@@ -2016,10 +2016,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
    ========================= */
 @media (max-width: 768px) {
   /* Trend filtre grid düzenlemesi - tüm alanlar eşit boyut */
-  #trends-page .content > div:first-child > div:nth-child(2) > div:first-child {
+  #trends-filter-grid {
     display: grid !important;
     grid-template-columns: 1fr !important;
     gap: 14px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Tüm filtre input container'larını eşitle */
+  #trends-filter-grid > div {
+    width: 100% !important;
   }
 
   /* Tüm filtre alanlarını eşitle - height ve padding düzeltmesi */
@@ -2029,21 +2035,23 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   #trends-start-date,
   #trends-end-date {
     width: 100% !important;
-    height: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
-    padding: 12px 14px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 10px 12px !important;
     font-size: 16px !important;
     box-sizing: border-box !important;
-    line-height: 1.5 !important;
+    line-height: 1.3 !important;
+    border-radius: 8px !important;
   }
 
-  /* Label stilleri */
-  #trends-page label {
+  /* Label stilleri - hepsi aynı boyut */
+  #trends-filter-grid label {
     display: block !important;
     margin-bottom: 6px !important;
     font-weight: 600 !important;
     font-size: 12px !important;
+    color: rgba(255,255,255,0.9) !important;
   }
 
   /* Test tipi container'ı göster/gizle durumunda bile layout'u koru */
