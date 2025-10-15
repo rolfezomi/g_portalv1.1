@@ -1995,3 +1995,18 @@ input:focus, select:focus, textarea:focus{
     text-align: center;
   }
 }
+/* Date input genişlik düzeltmesi */
+input[type="date"].input,
+input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

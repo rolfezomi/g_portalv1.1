@@ -310,7 +310,14 @@ function showFullAccessMenu() {
     trendsTab.className = 'tab';
     trendsTab.setAttribute('data-section', 'trends');
     trendsTab.setAttribute('onclick', 'mobileTabTo(this)');
-    trendsTab.textContent = 'Trendler';
+    trendsTab.innerHTML = `
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </span>
+      <span class="tab-text">Trendler</span>
+    `;
     mobileTabs.appendChild(trendsTab);
   }
 }
