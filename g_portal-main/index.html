@@ -926,7 +926,7 @@
             <!-- Gelişmiş Filtreler -->
             <div style="background:rgba(255,255,255,0.15); backdrop-filter:blur(12px); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.25);">
               <div id="trends-filter-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:16px;">
-                <div>
+                <div class="filter-field">
                   <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">KATEGORİ</label>
                   <select id="trends-category" class="input" style="width:100%; background:#fff;">
                     <option value="all">📊 Tümü (Tüm Kategoriler)</option>
@@ -938,13 +938,13 @@
                     <option value="kazanmikser">⚙️ Kazan & Mikser</option>
                   </select>
                 </div>
-                <div>
+                <div class="filter-field">
                   <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">KONTROL NOKTASI</label>
                   <select id="trends-point" class="input" style="width:100%; background:#fff;">
                     <option value="">Tüm Noktalar</option>
                   </select>
                 </div>
-                <div id="trends-test-type-container" style="display:none;">
+                <div id="trends-test-type-container" class="filter-field" style="display:none;">
                   <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">TEST TİPİ</label>
                   <select id="trends-test-type" class="input" style="width:100%; background:#fff;">
                     <option value="">Tümü</option>
@@ -952,11 +952,11 @@
                     <option value="iletkenlik">⚡ İletkenlik</option>
                   </select>
                 </div>
-                <div>
+                <div class="filter-field">
                   <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">BAŞLANGIÇ</label>
                   <input type="date" id="trends-start-date" class="input" style="width:100%; background:#fff;" />
                 </div>
-                <div>
+                <div class="filter-field">
                   <label style="display:block; margin-bottom:6px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.9);">BİTİŞ</label>
                   <input type="date" id="trends-end-date" class="input" style="width:100%; background:#fff;" />
                 </div>
