@@ -1296,6 +1296,27 @@ const categoryKeyToName = {
   kazanmikser: 'kazan-mikser'
 };
 
+// Kazan & Mikser sabit kontrol noktaları (HTML'den alınmıştır)
+const kazanMikserControlPoints = [
+  '1010 / 3 Tonluk Mikser',
+  '1011 / 7 Tonluk Mikser',
+  '1012 / 7 Tonluk Mikser',
+  '1013 / 2 Tonluk Mikser',
+  '1014 / UNIMIX',
+  '1015 / Emülsiyon Ünitesi',
+  '1018 / 1 Tonluk Seyyar Transfer Kazanı',
+  '1019 / 1 Tonluk Seyyar Transfer Kazanı',
+  '1020 / 500 Litrelik Seyyar Tip Mikser Kazanı',
+  '1021 / 500 Litrelik Seyyar Tip Mikser Kazanı',
+  '1022 / 250 Litrelik Seyyar Tip Mikser Kazanı',
+  '1023 / 250 Litrelik Seyyar Tip Mikser Kazanı',
+  '1061 / 500 Litrelik Seyyar Mikser',
+  '1108 / 250 Litrelik Seyyar Kazan',
+  '1109 / 250 Litrelik Seyyar Kazan',
+  '1135 / 500 Litrelik Seyyar Mikser',
+  '1142 / Pilot Mikser - Dolmak'
+];
+
 const colorMap = {
   klor: { gradient: ['rgba(46,125,50,0.8)', 'rgba(27,94,32,1)'], border: '#1b5e20', point: '#2e7d32', pointHover: '#145214' },
   sertlik: { gradient: ['rgba(33,150,243,0.8)', 'rgba(25,118,210,1)'], border: '#1976d2', point: '#2196f3', pointHover: '#0d47a1' },
@@ -1591,40 +1612,41 @@ function updateTrendsControlPoints() {
 
     // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de kazan-mikser kategorisinden kontrol noktalarını al
     if (category === 'ph' || category === 'iletkenlik') {
-      points = [...new Set(
-        cachedRecords
-          .filter(r => {
-            // Kendi kategorisinden noktalar
-            if (r.category === categoryName) return true;
-            // kazan-mikser kategorisinden noktalar
-            if (r.category === 'kazan-mikser' && r.value != null && r.value !== '') {
-              // pH için: birim boş, "pH", "ph" veya "PH" olanlar
-              if (category === 'ph') {
-                const unit = (r.unit || '').toLowerCase().trim();
-                return unit === '' || unit === 'ph' || unit.includes('ph');
-              }
-              // İletkenlik için: µS/cm veya us/cm içeren birimler
-              if (category === 'iletkenlik') {
-                const unit = (r.unit || '').toLowerCase();
-                return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
-              }
+      const dbPoints = cachedRecords
+        .filter(r => {
+          // Kendi kategorisinden noktalar
+          if (r.category === categoryName) return true;
+          // kazan-mikser kategorisinden noktalar
+          if (r.category === 'kazan-mikser' && r.value != null && r.value !== '') {
+            // pH için: birim boş, "pH", "ph" veya "PH" olanlar
+            if (category === 'ph') {
+              const unit = (r.unit || '').toLowerCase().trim();
+              return unit === '' || unit === 'ph' || unit.includes('ph');
             }
-            return false;
-          })
-          .map(r => r.point)
-          .filter(p => p)
-      )].sort();
+            // İletkenlik için: µS/cm veya us/cm içeren birimler
+            if (category === 'iletkenlik') {
+              const unit = (r.unit || '').toLowerCase();
+              return unit.includes('µs/cm') || unit.includes('us/cm') || unit.includes('μs/cm');
+            }
+          }
+          return false;
+        })
+        .map(r => r.point)
+        .filter(p => p);
+
+      // Sabit Kazan & Mikser kontrol noktalarını da ekle
+      points = [...new Set([...kazanMikserControlPoints, ...dbPoints])].sort();
     } else if (category === 'kazanmikser') {
-      // Kazan & Mikser kategorisi seçildiğinde kazan-mikser kategorisindeki tüm kontrol noktalarını al
+      // Kazan & Mikser kategorisi seçildiğinde hem sabit kontrol noktalarını hem de veritabanındakileri göster
       const kazanMikserRecords = cachedRecords.filter(r => r.category === 'kazan-mikser');
       console.log('⚙️ KazanMikser kayıtları:', kazanMikserRecords.length);
       console.log('⚙️ İlk 3 KazanMikser kaydı:', kazanMikserRecords.slice(0, 3));
 
-      points = [...new Set(
-        kazanMikserRecords
-          .map(r => r.point)
-          .filter(p => p)
-      )].sort();
+      // Veritabanındaki kontrol noktaları
+      const dbPoints = kazanMikserRecords.map(r => r.point).filter(p => p);
+
+      // Sabit kontrol noktaları + veritabanındaki kontrol noktaları (benzersiz)
+      points = [...new Set([...kazanMikserControlPoints, ...dbPoints])].sort();
     } else {
       // Diğer kategoriler için sadece kendi kontrol noktalarını al
       points = [...new Set(
