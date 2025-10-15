@@ -1660,6 +1660,9 @@ function updateTrendsControlPoints() {
 
   console.log('✅ Bulunan kontrol noktaları:', points);
 
+  // Mevcut seçili değeri kaydet
+  const currentSelectedPoint = pointSelect.value;
+
   // Dropdown'u güncelle
   pointSelect.innerHTML = '<option value="">Tüm Noktalar</option>';
   points.forEach(point => {
@@ -1668,6 +1671,11 @@ function updateTrendsControlPoints() {
     option.textContent = point;
     pointSelect.appendChild(option);
   });
+
+  // Eğer önceden seçili bir değer varsa ve hala listede mevcutsa, onu tekrar seç
+  if (currentSelectedPoint && points.includes(currentSelectedPoint)) {
+    pointSelect.value = currentSelectedPoint;
+  }
 }
 
 function updateTrendsAnalysis() {
