@@ -1569,6 +1569,10 @@ function updateTrendsControlPoints() {
 
   const category = categorySelect.value;
 
+  console.log('🔍 updateTrendsControlPoints çağrıldı');
+  console.log('📊 Kategori:', category);
+  console.log('📦 cachedRecords uzunluğu:', cachedRecords.length);
+
   // "Tümü" seçiliyse tüm kategorilerden kontrol noktalarını al
   let points;
   if (category === 'all') {
@@ -1579,6 +1583,7 @@ function updateTrendsControlPoints() {
     )].sort();
   } else {
     const categoryName = categoryKeyToName[category];
+    console.log('🏷️ categoryName:', categoryName);
 
     // pH veya İletkenlik seçildiğinde, hem kendi kategorisinden hem de KazanMikser kategorisinden kontrol noktalarını al
     if (category === 'ph' || category === 'iletkenlik') {
@@ -1607,9 +1612,12 @@ function updateTrendsControlPoints() {
       )].sort();
     } else if (category === 'kazanmikser') {
       // Kazan & Mikser kategorisi seçildiğinde KazanMikser kategorisindeki tüm kontrol noktalarını al
+      const kazanMikserRecords = cachedRecords.filter(r => r.category === 'KazanMikser');
+      console.log('⚙️ KazanMikser kayıtları:', kazanMikserRecords.length);
+      console.log('⚙️ İlk 3 KazanMikser kaydı:', kazanMikserRecords.slice(0, 3));
+
       points = [...new Set(
-        cachedRecords
-          .filter(r => r.category === 'KazanMikser')
+        kazanMikserRecords
           .map(r => r.point)
           .filter(p => p)
       )].sort();
@@ -1623,6 +1631,8 @@ function updateTrendsControlPoints() {
       )].sort();
     }
   }
+
+  console.log('✅ Bulunan kontrol noktaları:', points);
 
   // Dropdown'u güncelle
   pointSelect.innerHTML = '<option value="">Tüm Noktalar</option>';
