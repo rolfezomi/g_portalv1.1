@@ -347,6 +347,9 @@ const ADMIN_EMAIL = 'ugur.onar@glohe.com';
 let realtimeChannel = null;
 let realtimeLogsChannel = null;
 let isRealtimeConnected = false;
+let connectionCheckInterval = null;
+let connectionAttempts = 0;
+const MAX_CONNECTION_ATTEMPTS = 5; // 10 saniye (2 sn x 5)
 
 /**
  * Real-time subscription başlat
@@ -362,6 +365,9 @@ function setupRealtimeSubscription() {
     supabaseClient.removeChannel(realtimeLogsChannel);
     realtimeLogsChannel = null;
   }
+
+  // Bağlantı kontrolünü başlat
+  startConnectionCheck();
 
   // Measurements tablosunu dinle
   realtimeChannel = supabaseClient
@@ -382,6 +388,11 @@ function setupRealtimeSubscription() {
       console.log('Real-time subscription durumu:', status);
       isRealtimeConnected = (status === 'SUBSCRIBED');
       updateConnectionStatus();
+
+      // Bağlantı başarılı olduğunda deneme sayacını sıfırla
+      if (status === 'SUBSCRIBED') {
+        connectionAttempts = 0;
+      }
     });
 
   // Logs tablosunu dinle (LOGIN/LOGOUT için)
@@ -402,6 +413,39 @@ function setupRealtimeSubscription() {
     .subscribe((status) => {
       console.log('Real-time logs subscription durumu:', status);
     });
+}
+
+/**
+ * Bağlantı durumu kontrolünü başlat (2 saniyede bir)
+ */
+function startConnectionCheck() {
+  // Önceki interval varsa temizle
+  if (connectionCheckInterval) {
+    clearInterval(connectionCheckInterval);
+  }
+
+  connectionAttempts = 0;
+
+  connectionCheckInterval = setInterval(() => {
+    if (!isRealtimeConnected) {
+      connectionAttempts++;
+      console.log(`🔄 Bağlantı kontrolü: Deneme ${connectionAttempts}/${MAX_CONNECTION_ATTEMPTS}`);
+
+      // Maksimum deneme sayısına ulaşıldı
+      if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
+        console.warn('⚠️ Real-time bağlantı kurulamadı. Yeniden deneniyor...');
+
+        // Yeniden bağlanmayı dene
+        setupRealtimeSubscription();
+      }
+    } else {
+      // Bağlantı başarılı, deneme sayacını sıfırla
+      if (connectionAttempts > 0) {
+        console.log('✅ Real-time bağlantı başarılı!');
+        connectionAttempts = 0;
+      }
+    }
+  }, 2000); // Her 2 saniyede bir kontrol
 }
 
 /**
@@ -576,6 +620,12 @@ function updateConnectionStatus() {
  * Real-time subscription'ı durdur
  */
 function stopRealtimeSubscription() {
+  // Interval'i temizle
+  if (connectionCheckInterval) {
+    clearInterval(connectionCheckInterval);
+    connectionCheckInterval = null;
+  }
+
   if (realtimeChannel) {
     supabaseClient.removeChannel(realtimeChannel);
     realtimeChannel = null;
@@ -624,7 +674,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       await loadRecent();
       updateTrendFromStorage();
     } else if (currentUserRole === 'executive') {
-      showExecutiveMenu(); // Dashboard
+      showFullAccessMenu(); // Trend Analizi
+      showExecutiveMenu(); // Dashboard (Executive menü kısıtlamaları sonrasında uygulanır)
       showSection('executive-dashboard'); // Executive için anasayfa Dashboard
     } else {
       showHomepage();
@@ -722,7 +773,8 @@ if (loginForm) {
         showHomepage();
         loadRecent();
       } else if (currentUserRole === 'executive') {
-        showExecutiveMenu(); // Dashboard
+        showFullAccessMenu(); // Trend Analizi
+        showExecutiveMenu(); // Dashboard (Executive menü kısıtlamaları sonrasında uygulanır)
         await logActivity('LOGIN', 'Auth', { email });
         showSection('executive-dashboard'); // Executive için anasayfa Dashboard
       } else {
