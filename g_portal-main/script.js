@@ -3448,6 +3448,56 @@ function showDashboardChangeNotification() {
   }
 }
 
+// KPI artış bildirimi - Tek seferlik
+let kpiNotificationShown = {};
+
+function showKPIChangeNotification(kpiName, change, percentage) {
+  // Aynı bildirimi tekrar gösterme (1 dakika içinde)
+  const lastShown = kpiNotificationShown[kpiName];
+  if (lastShown && (Date.now() - lastShown) < 60000) {
+    return;
+  }
+
+  kpiNotificationShown[kpiName] = Date.now();
+
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10001;
+    transform: translateX(400px);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  `;
+  notification.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 24px;">📈</div>
+      <div>
+        <div style="font-size: 15px; font-weight: 700;">${kpiName}</div>
+        <div style="font-size: 13px; opacity: 0.9;">${change} (${percentage}%)</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.transform = 'translateX(0)';
+  }, 50);
+
+  setTimeout(() => {
+    notification.style.transform = 'translateX(400px)';
+    notification.style.opacity = '0';
+    setTimeout(() => notification.remove(), 400);
+  }, 4000);
+}
+
 // Değişen kartları highlight et
 function highlightChangedCards(eventType) {
   // Tüm kartlara pulse animasyonu ekle
@@ -3495,25 +3545,41 @@ function updateExecutiveKPIs(measurements, logs) {
 
   document.getElementById('exec-today-measurements').textContent = todayCount.toLocaleString('tr-TR');
 
-  // Trend göstergesini güncelle (sadece değişiklik varsa)
+  // Trend göstergesini güncelle (sadece değişiklik varsa) - PROFESYONEL BADGE
   if (diff !== 0 && yesterdayCount > 0) {
     const percentage = Math.abs(Math.round((diff / yesterdayCount) * 100));
-    const trendIcon = diff > 0 ? '↑' : '↓';
+    const trendIcon = diff > 0 ? '▲' : '▼';
     const trendColor = diff > 0 ? '#10b981' : '#ef4444';
+    const trendBg = diff > 0 ? '#d1fae5' : '#fee2e2';
     const trendText = diff > 0 ? 'artış' : 'azalış';
 
-    trendElement.innerHTML = `
-      <span style="color: ${trendColor}; font-weight: 600;">
-        ${trendIcon} ${Math.abs(diff)} (${percentage}% ${trendText})
-      </span>
+    trendElement.innerHTML = `${trendIcon} ${percentage}% ${trendText}`;
+    trendElement.style.cssText = `
+      color: ${trendColor};
+      background: ${trendBg};
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 12px;
     `;
-    trendElement.style.fontSize = '12px';
+
+    // Tek seferlik bildirim (sadece artış varsa)
+    if (diff > 0) {
+      showKPIChangeNotification('Bugünkü Ölçümler', `+${diff} artış`, percentage);
+    }
   } else if (yesterdayCount === 0 && todayCount > 0) {
-    trendElement.innerHTML = '<span style="color: #10b981; font-weight: 600;">↑ Yeni</span>';
-    trendElement.style.fontSize = '12px';
+    trendElement.innerHTML = '▲ Yeni';
+    trendElement.style.cssText = `
+      color: #10b981;
+      background: #d1fae5;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 12px;
+    `;
   } else {
     trendElement.textContent = 'Bugün';
-    trendElement.style.fontSize = '';
+    trendElement.style.cssText = '';
   }
 
   // Ortalama günlük ölçüm (son 30 gün)
@@ -3745,7 +3811,7 @@ function updateHourlyChart(measurements) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -3921,7 +3987,7 @@ function updateWeeklyChart(measurements) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       interaction: {
         mode: 'index',
         intersect: false

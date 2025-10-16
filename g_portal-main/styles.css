@@ -3419,11 +3419,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-kpi-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4b5563;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .exec-kpi-icon {
@@ -3438,11 +3438,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-kpi-value {
-  font-size: 42px;
-  font-weight: 800;
+  font-size: 56px;
+  font-weight: 900;
   line-height: 1;
   color: #111827;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
 }
 
 .exec-kpi-bottom {
@@ -3452,9 +3453,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-kpi-trend {
-  font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 700;
+  color: #10b981;
+  padding: 4px 10px;
+  background: #d1fae5;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* KPI Renk Varyantları */
