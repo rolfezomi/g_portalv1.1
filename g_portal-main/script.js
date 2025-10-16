@@ -343,6 +343,200 @@ let currentUserEmail = '';
 let currentUserRole = 'full'; // 'admin', 'full', 'restricted'
 const ADMIN_EMAIL = 'ugur.onar@glohe.com';
 
+// ====== REAL-TIME SUBSCRIPTION ======
+let realtimeChannel = null;
+let isRealtimeConnected = false;
+
+/**
+ * Real-time subscription başlat
+ * Veritabanındaki measurements tablosunu dinler ve değişiklikleri otomatik yansıtır
+ */
+function setupRealtimeSubscription() {
+  // Mevcut kanal varsa önce kapat
+  if (realtimeChannel) {
+    supabaseClient.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+
+  // Measurements tablosunu dinle
+  realtimeChannel = supabaseClient
+    .channel('measurements_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*', // INSERT, UPDATE, DELETE hepsini dinle
+        schema: 'public',
+        table: 'measurements'
+      },
+      (payload) => {
+        console.log('Real-time güncelleme alındı:', payload);
+        handleRealtimeChange(payload);
+      }
+    )
+    .subscribe((status) => {
+      console.log('Real-time subscription durumu:', status);
+      isRealtimeConnected = (status === 'SUBSCRIBED');
+      updateConnectionStatus();
+    });
+}
+
+/**
+ * Real-time değişikliği işle
+ */
+function handleRealtimeChange(payload) {
+  const { eventType, new: newRecord, old: oldRecord } = payload;
+
+  if (eventType === 'INSERT') {
+    console.log('Yeni kayıt eklendi:', newRecord);
+    // Cache'e ekle
+    cachedRecords.unshift(newRecord);
+    // Son kayıtları güncelle
+    updateRecentRecordsDisplay();
+    // Aktif section'a göre güncelle
+    if (currentSection === 'home') {
+      refreshHomepage();
+    } else if (currentSection === newRecord.category) {
+      refreshCurrentSection();
+    }
+    // Executive dashboard güncelle
+    if (currentSection === 'executive-dashboard') {
+      refreshExecutiveDashboard();
+    }
+    // Trend analizi güncelle
+    updateTrendFromStorage();
+
+  } else if (eventType === 'UPDATE') {
+    console.log('Kayıt güncellendi:', newRecord);
+    // Cache'i güncelle
+    const index = cachedRecords.findIndex(r => r.id === newRecord.id);
+    if (index !== -1) {
+      cachedRecords[index] = newRecord;
+    }
+    // İlgili görünümleri güncelle
+    refreshCurrentSection();
+    updateTrendFromStorage();
+    if (currentSection === 'executive-dashboard') {
+      refreshExecutiveDashboard();
+    }
+
+  } else if (eventType === 'DELETE') {
+    console.log('Kayıt silindi:', oldRecord);
+    // Cache'den kaldır
+    cachedRecords = cachedRecords.filter(r => r.id !== oldRecord.id);
+    // İlgili görünümleri güncelle
+    refreshCurrentSection();
+    updateRecentRecordsDisplay();
+    updateTrendFromStorage();
+    if (currentSection === 'executive-dashboard') {
+      refreshExecutiveDashboard();
+    }
+  }
+}
+
+/**
+ * Anasayfa son kayıtları güncelle
+ */
+function updateRecentRecordsDisplay() {
+  const grid = document.getElementById('recent-grid');
+  if (!grid) return;
+
+  // Son 20 kaydı göster
+  const recentRecords = cachedRecords.slice(0, 20);
+
+  // Mevcut HTML'i temizle
+  grid.innerHTML = '';
+
+  // Her kayıt için kart oluştur
+  recentRecords.forEach(rec => {
+    const cat = APP_CONFIG.getCategoryByKey(rec.category);
+    if (!cat) return;
+
+    const box = document.createElement('div');
+    box.className = 'box';
+    box.setAttribute('data-point', rec.control_point);
+
+    const dateStr = new Date(rec.created_at).toLocaleString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    box.innerHTML = `
+      <div class="box-header">
+        <span class="icon">${cat.icon}</span>
+        <span>${cat.displayName}</span>
+      </div>
+      <div class="box-body">
+        <strong>${rec.control_point}</strong>
+        <p>${dateStr}</p>
+        <p>${rec.value} ${rec.unit || ''}</p>
+      </div>
+    `;
+
+    grid.appendChild(box);
+  });
+}
+
+/**
+ * Aktif section'ı yenile
+ */
+function refreshCurrentSection() {
+  if (currentSection && currentSection !== 'home' && currentSection !== 'executive-dashboard') {
+    showSection(currentSection);
+  }
+}
+
+/**
+ * Anasayfayı yenile
+ */
+function refreshHomepage() {
+  if (currentSection === 'home') {
+    loadRecent();
+  }
+}
+
+/**
+ * Executive dashboard'u yenile
+ */
+function refreshExecutiveDashboard() {
+  if (currentSection === 'executive-dashboard') {
+    showExecutiveDashboard();
+  }
+}
+
+/**
+ * Bağlantı durumunu göster
+ */
+function updateConnectionStatus() {
+  const statusIndicator = document.getElementById('realtime-status');
+  if (statusIndicator) {
+    if (isRealtimeConnected) {
+      statusIndicator.classList.remove('disconnected');
+      statusIndicator.classList.add('connected');
+      statusIndicator.title = 'Canlı bağlantı aktif';
+    } else {
+      statusIndicator.classList.remove('connected');
+      statusIndicator.classList.add('disconnected');
+      statusIndicator.title = 'Bağlantı kesildi';
+    }
+  }
+}
+
+/**
+ * Real-time subscription'ı durdur
+ */
+function stopRealtimeSubscription() {
+  if (realtimeChannel) {
+    supabaseClient.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+    isRealtimeConnected = false;
+    updateConnectionStatus();
+    console.log('Real-time subscription durduruldu');
+  }
+}
+
 // ====== INIT ======
 window.addEventListener('DOMContentLoaded', async () => {
   const isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -377,10 +571,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     showHomepage();
     await loadRecent();
     updateTrendFromStorage();
+
+    // Real-time subscription başlat
+    setupRealtimeSubscription();
   }
 
   initClock();
   initMobileMenuScrim();
+});
+
+// Sayfa kapatılırken real-time subscription'ı durdur
+window.addEventListener('beforeunload', () => {
+  stopRealtimeSubscription();
 });
 
 // ====== SAAT ======

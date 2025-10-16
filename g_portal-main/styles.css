@@ -425,6 +425,66 @@ body.menu-collapsed .menu .menu-arrow {
   transform: scale(1.1);
 }
 
+/* Real-time bağlantı durumu göstergesi */
+.realtime-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all .3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.realtime-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  position: relative;
+  transition: all .3s ease;
+}
+
+.realtime-status.connected .status-dot {
+  background: #4caf50;
+  box-shadow: 0 0 0 0 rgba(76,175,80,1);
+  animation: pulse-green 2s infinite;
+}
+
+.realtime-status.disconnected .status-dot {
+  background: #ff9800;
+}
+
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76,175,80,0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(76,175,80,0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76,175,80,0);
+  }
+}
+
+.realtime-status .status-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.realtime-status.connected {
+  background: rgba(76,175,80,0.15);
+  border-color: rgba(76,175,80,0.3);
+}
+
+.realtime-status.disconnected {
+  background: rgba(255,152,0,0.15);
+  border-color: rgba(255,152,0,0.3);
+}
+
 /* =========================
    MOBİL ÜST SEKME ÇUBUĞU
    ========================= */
@@ -853,6 +913,21 @@ input:focus, select:focus, textarea:focus{
   .user-info span{
     font-size: 13px;
     padding: 6px 10px;
+  }
+
+  /* Mobilde realtime status daha kompakt */
+  .realtime-status {
+    padding: 5px 10px;
+    gap: 5px;
+  }
+
+  .realtime-status .status-dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .realtime-status .status-text {
+    font-size: 11px;
   }
 
   .content{
