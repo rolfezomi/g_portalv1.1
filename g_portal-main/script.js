@@ -3419,8 +3419,10 @@ function setupDashboardRealtime() {
       executiveDashboardCache.measurements = null;
       await updateExecutiveDashboard(true);
 
-      // Değişiklik bildirimi göster (subtle)
-      showDashboardChangeNotification();
+      // Değişiklik bildirimi göster (SADECE normal modda - tam ekranda sessiz)
+      if (!isFullscreenMode) {
+        showDashboardChangeNotification();
+      }
 
       // Kartları highlight YAPMA - Sadece KPI artış/azalış bildiriminde animasyon
       // highlightChangedCards(payload.eventType); // DEVRE DIŞI
@@ -4992,17 +4994,14 @@ function startFullscreenAutoRefresh() {
     clearInterval(fullscreenRefreshInterval);
   }
 
-  // 30 saniyede bir otomatik yenile
+  // 30 saniyede bir otomatik yenile (SESSİZCE - animasyon yok)
   fullscreenRefreshInterval = setInterval(() => {
     if (isFullscreenMode && currentSection === 'executive-dashboard') {
-      console.log('🔄 Fullscreen auto-refresh...');
+      console.log('🔄 Fullscreen auto-refresh (sessiz)...');
       updateExecutiveDashboard();
 
-      // Tüm grafikleri highlight et (güncelleme göstergesi)
-      highlightUpdatedChart('exec-weekly-chart');
-      setTimeout(() => highlightUpdatedChart('exec-category-breakdown'), 200);
-      setTimeout(() => highlightUpdatedChart('exec-hourly-chart'), 400);
-      setTimeout(() => highlightUpdatedChart('exec-user-chart'), 600);
+      // ANIMASYONLAR KALDIRILDI - Sessizce güncelleniyor
+      // highlightUpdatedChart() fonksiyonları artık çalışmıyor
     }
   }, 30000); // 30 saniye
 }

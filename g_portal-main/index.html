@@ -949,17 +949,31 @@
           </div>
         </div>
 
-        <!-- Main Chart - Haftalık Trend (Full Width, Büyük) -->
-        <div class="exec-main-chart-container">
-          <div class="exec-chart-card-modern">
+        <!-- Grafik Grid - Yan Yana 2 Kolon (KPI Boyutunda) -->
+        <div class="exec-chart-grid">
+          <!-- Haftalık Performans Özeti -->
+          <div class="exec-chart-card-modern exec-chart-card-compact">
             <div class="exec-chart-header">
               <div>
-                <h2 class="exec-chart-title">Haftalık Performans Özeti</h2>
-                <p class="exec-chart-subtitle">Son 7 günlük ölçüm trendi ve analizi</p>
+                <h3 class="exec-chart-title">Haftalık Performans Özeti</h3>
+                <p class="exec-chart-subtitle">Son 7 günlük ölçüm trendi</p>
               </div>
             </div>
-            <div class="exec-chart-body" style="height: 400px; padding: 24px;">
+            <div class="exec-chart-body" style="height: 140px; padding: 16px;">
               <canvas id="exec-weekly-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Bugünkü Aktivite -->
+          <div class="exec-chart-card-modern exec-chart-card-compact">
+            <div class="exec-chart-header">
+              <div>
+                <h3 class="exec-chart-title">Bugünkü Aktivite</h3>
+                <p class="exec-chart-subtitle">Saatlik dağılım</p>
+              </div>
+            </div>
+            <div class="exec-chart-body" style="height: 140px; padding: 16px;">
+              <canvas id="exec-hourly-chart"></canvas>
             </div>
           </div>
         </div>
@@ -992,19 +1006,6 @@
               </div>
               <div class="exec-chart-body">
                 <div id="exec-top-points" class="exec-top-list"></div>
-              </div>
-            </div>
-
-            <!-- Saatlik Aktivite - Mini Card -->
-            <div class="exec-chart-card-modern exec-mini-card">
-              <div class="exec-chart-header">
-                <div>
-                  <h3 class="exec-chart-title">Bugünkü Aktivite</h3>
-                  <p class="exec-chart-subtitle">Saatlik dağılım</p>
-                </div>
-              </div>
-              <div class="exec-chart-body" style="height: 260px; padding: 24px;">
-                <canvas id="exec-hourly-chart"></canvas>
               </div>
             </div>
           </div>

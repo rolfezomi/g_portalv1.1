@@ -3367,20 +3367,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* Tam Ekran Mod: Grafikler Yan Yana + Son Aktiviteler Gizli */
-.dashboard-fullscreen .exec-main-chart-container,
-.dashboard-fullscreen .exec-column-right {
-  display: inline-block;
-  vertical-align: top;
-}
-
-.dashboard-fullscreen .exec-main-chart-container {
-  width: calc(60% - 12px);
-  margin-right: 24px;
-}
-
-.dashboard-fullscreen .exec-column-right {
-  width: calc(40% - 12px);
+/* Tam Ekran Mod: Sadece KPI ve Grafikler Göster */
+.dashboard-fullscreen .exec-chart-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
 }
 
 .dashboard-fullscreen .exec-two-column {
@@ -3532,6 +3522,14 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Main Chart Container - Büyük Haftalık Grafik */
+/* Grafik Grid - Yan Yana 2 Kolon (KPI Boyutunda) */
+.exec-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
 .exec-main-chart-container {
   margin-bottom: 24px;
 }
@@ -3542,6 +3540,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   border: 1px solid #f0f0f0;
   overflow: hidden;
+}
+
+.exec-chart-card-compact {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
 }
 
 .exec-chart-header {
