@@ -3311,10 +3311,15 @@ let executiveDashboardCache = {
   lastFetch: null
 };
 
+let dashboardRealtimeSubscription = null;
+
 // Executive dashboard'u göster
 async function showExecutiveDashboard() {
   currentSection = 'executive-dashboard';
   await updateExecutiveDashboard(true);
+
+  // Real-time subscription başlat
+  setupDashboardRealtime();
 }
 
 // Dashboard verilerini güncelle
@@ -3392,6 +3397,94 @@ async function updateExecutiveDashboard(forceRefresh = false) {
   }
 }
 
+// Dashboard Real-time Subscription
+function setupDashboardRealtime() {
+  // Eski subscription varsa kaldır
+  if (dashboardRealtimeSubscription) {
+    dashboardRealtimeSubscription.unsubscribe();
+  }
+
+  console.log('📡 Dashboard real-time subscription başlatılıyor...');
+
+  dashboardRealtimeSubscription = supabaseClient
+    .channel('dashboard-measurements')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'measurements'
+    }, async (payload) => {
+      console.log('🔔 Dashboard değişiklik algılandı:', payload.eventType, payload.new);
+
+      // Cache'i temizle ve dashboard'u yenile
+      executiveDashboardCache.measurements = null;
+      await updateExecutiveDashboard(true);
+
+      // Değişiklik bildirimi göster
+      showDashboardChangeNotification(payload.eventType);
+
+      // İlgili kartları highlight et
+      highlightChangedCards(payload.eventType);
+    })
+    .subscribe((status) => {
+      console.log('📡 Dashboard subscription status:', status);
+    });
+}
+
+// Dashboard değişiklik bildirimi
+function showDashboardChangeNotification(eventType) {
+  const messages = {
+    'INSERT': 'Yeni ölçüm eklendi',
+    'UPDATE': 'Ölçüm güncellendi',
+    'DELETE': 'Ölçüm silindi'
+  };
+
+  const message = messages[eventType] || 'Veri değişikliği';
+
+  // Toast benzeri bildirim
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+  `;
+  notification.textContent = `📊 ${message} - Dashboard güncellendi`;
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+// Değişen kartları highlight et
+function highlightChangedCards(eventType) {
+  // Tüm kartlara pulse animasyonu ekle
+  const allCards = document.querySelectorAll('.exec-kpi-card-modern, .exec-chart-card-modern');
+
+  allCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.transition = 'all 0.3s ease';
+      card.style.transform = 'scale(1.02)';
+      card.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.3)';
+
+      setTimeout(() => {
+        card.style.transform = 'scale(1)';
+        card.style.boxShadow = '';
+      }, 500);
+    }, index * 50);
+  });
+}
+
 // KPI'ları güncelle
 function updateExecutiveKPIs(measurements, logs) {
   const today = new Date().toISOString().split('T')[0];
@@ -3446,13 +3539,6 @@ function updateExecutiveKPIs(measurements, logs) {
   const avgDaily = Math.round(last30DaysMeasurements.length / 30);
   document.getElementById('exec-avg-daily').textContent = avgDaily.toLocaleString('tr-TR');
   document.getElementById('exec-avg-trend').textContent = 'Son 30 gün';
-
-  // Aktif kullanıcılar (bugün ölçüm yapan)
-  const todayUsers = new Set(todayMeasurements.map(m => m.user).filter(u => u));
-  const activeUsersElement = document.getElementById('exec-active-users');
-  if (activeUsersElement) {
-    activeUsersElement.textContent = todayUsers.size;
-  }
 }
 
 // Grafikleri güncelle
@@ -4183,12 +4269,13 @@ function enterFullscreenMode() {
     `;
   }
 
-  // 4. MODERN DASHBOARD - DİNAMİK VIEWPORT HESAPLAMA
+  // 4. MODERN DASHBOARD - DİNAMİK VIEWPORT HESAPLAMA (3 KPI IÇIN OPTİMİZE)
   const vh = window.innerHeight;
-  const vw = window.innerWidth;
 
-  const gap = Math.max(12, Math.floor(vh * 0.015));
-  const padding = 24;
+  // Gap ve padding'i minimize ediyoruz
+  const gap = 10; // Sabit küçük gap
+  const padding = 20; // Daha az padding
+  const toolbarHeight = 60; // Toolbar yüksekliği (tahmin)
 
   if (dashboard) {
     dashboard.style.cssText = `
@@ -4197,40 +4284,58 @@ function enterFullscreenMode() {
       display: flex;
       flex-direction: column;
       gap: ${gap}px;
+      padding: ${padding}px !important;
       padding-top: 0 !important;
     `;
   }
 
-  // 5. MODERN KPI GRID
+  // HESAPLAMA: Kullanılabilir alan = 100vh - padding - gaps
+  const availableHeight = vh - (padding * 2);
+  const totalGaps = gap * 4; // KPI, Main, TwoColumn, Activity arası
+
+  // Yüzde dağılımı:
+  // KPI: 12%, Main Chart: 18%, Two Column: 48%, Activity: 22%
+  const kpiHeight = Math.floor(availableHeight * 0.12);
+  const mainChartHeight = Math.floor(availableHeight * 0.18);
+  const twoColumnHeight = Math.floor(availableHeight * 0.48);
+  const activityHeight = Math.floor(availableHeight * 0.22);
+
+  console.log(`🖥️ Fullscreen layout: vh=${vh}, KPI=${kpiHeight}, Main=${mainChartHeight}, Two=${twoColumnHeight}, Activity=${activityHeight}`);
+
+  // 5. MODERN KPI GRID (3 KPI)
   const kpiGrid = document.querySelector('.exec-kpi-modern');
-  const kpiHeight = Math.min(110, vh * 0.13);
 
   if (kpiGrid) {
     kpiGrid.style.cssText = `
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: ${gap}px;
       height: ${kpiHeight}px;
       flex-shrink: 0;
       margin-bottom: ${gap}px;
     `;
 
-    // KPI kartlarını kompakt yap
+    // KPI kartlarını ultra kompakt yap
     const kpiCards = kpiGrid.querySelectorAll('.exec-kpi-card-modern');
     kpiCards.forEach(card => {
-      card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+      card.style.cssText = `
+        padding: 12px 16px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      `;
 
       const kpiValue = card.querySelector('.exec-kpi-value');
-      if (kpiValue) kpiValue.style.fontSize = '36px';
+      if (kpiValue) kpiValue.style.fontSize = '28px';
 
       const kpiLabel = card.querySelector('.exec-kpi-label');
-      if (kpiLabel) kpiLabel.style.fontSize = '11px';
+      if (kpiLabel) kpiLabel.style.fontSize = '10px';
+
+      const kpiTrend = card.querySelector('.exec-kpi-trend');
+      if (kpiTrend) kpiTrend.style.fontSize = '10px';
     });
   }
 
   // 6. MAIN CHART CONTAINER (Haftalık Özet)
   const mainChartContainer = document.querySelector('.exec-main-chart-container');
-  const mainChartHeight = Math.min(180, vh * 0.22);
 
   if (mainChartContainer) {
     mainChartContainer.style.cssText = `
@@ -4245,15 +4350,29 @@ function enterFullscreenMode() {
         height: 100%;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
       `;
+
+      const chartHeader = mainCard.querySelector('.exec-chart-header');
+      if (chartHeader) {
+        chartHeader.style.cssText = `
+          padding: 12px 20px !important;
+          min-height: 40px;
+        `;
+
+        const chartTitle = chartHeader.querySelector('.exec-chart-title');
+        if (chartTitle) chartTitle.style.fontSize = '15px';
+
+        const chartSubtitle = chartHeader.querySelector('.exec-chart-subtitle');
+        if (chartSubtitle) chartSubtitle.style.fontSize = '11px';
+      }
 
       const chartBody = mainCard.querySelector('.exec-chart-body');
       if (chartBody) {
         chartBody.style.cssText = `
           flex: 1;
           min-height: 0;
-          padding: 20px 28px;
+          padding: 12px 20px !important;
         `;
       }
     }
@@ -4261,7 +4380,6 @@ function enterFullscreenMode() {
 
   // 7. TWO COLUMN LAYOUT
   const twoColumn = document.querySelector('.exec-two-column');
-  const twoColumnHeight = vh - padding - kpiHeight - mainChartHeight - (gap * 4) - 200;
 
   if (twoColumn) {
     twoColumn.style.cssText = `
@@ -4292,13 +4410,26 @@ function enterFullscreenMode() {
           overflow: hidden;
         `;
 
+        const categoryHeader = categoryCard.querySelector('.exec-chart-header');
+        if (categoryHeader) {
+          categoryHeader.style.cssText = `padding: 10px 16px !important;`;
+          const title = categoryHeader.querySelector('.exec-chart-title');
+          if (title) title.style.fontSize = '14px';
+        }
+
         const categoryBody = categoryCard.querySelector('.exec-chart-body');
         if (categoryBody) {
           categoryBody.style.cssText = `
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 12px 16px !important;
           `;
+
+          // Kategori item'larını kompakt yap
+          const categoryItems = categoryBody.querySelectorAll('.exec-category-item-modern');
+          categoryItems.forEach(item => {
+            item.style.cssText = `padding: 8px 12px !important; font-size: 12px;`;
+          });
         }
       }
     }
@@ -4322,29 +4453,51 @@ function enterFullscreenMode() {
           overflow: hidden;
         `;
 
+        const topHeader = topCard.querySelector('.exec-chart-header');
+        if (topHeader) {
+          topHeader.style.cssText = `padding: 10px 16px !important;`;
+          const title = topHeader.querySelector('.exec-chart-title');
+          if (title) title.style.fontSize = '14px';
+        }
+
         const topBody = topCard.querySelector('.exec-chart-body');
         if (topBody) {
           topBody.style.cssText = `
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 12px 16px !important;
           `;
+
+          // Top item'larını kompakt yap
+          const topItems = topBody.querySelectorAll('.exec-top-item-modern');
+          topItems.forEach(item => {
+            item.style.cssText = `padding: 8px 12px !important; font-size: 12px;`;
+          });
         }
       }
 
       const miniCard = rightColumn.querySelector('.exec-mini-card');
       if (miniCard) {
         miniCard.style.cssText = `
-          height: ${Math.min(160, twoColumnHeight * 0.35)}px;
+          height: ${Math.floor(twoColumnHeight * 0.35)}px;
           flex-shrink: 0;
         `;
+
+        const miniHeader = miniCard.querySelector('.exec-chart-header');
+        if (miniHeader) {
+          miniHeader.style.cssText = `padding: 8px 12px !important;`;
+          const title = miniHeader.querySelector('.exec-chart-title');
+          if (title) title.style.fontSize = '12px';
+        }
+
+        const miniBody = miniCard.querySelector('.exec-chart-body');
+        if (miniBody) miniBody.style.cssText = `padding: 8px 12px !important;`;
       }
     }
   }
 
   // 8. ACTIVITY CONTAINER
   const activityContainer = document.querySelector('.exec-activity-container');
-  const activityHeight = Math.min(180, vh * 0.2);
 
   if (activityContainer) {
     activityContainer.style.cssText = `
@@ -4361,6 +4514,13 @@ function enterFullscreenMode() {
         flex-direction: column;
       `;
 
+      const activityHeader = activityCard.querySelector('.exec-chart-header');
+      if (activityHeader) {
+        activityHeader.style.cssText = `padding: 10px 16px !important;`;
+        const title = activityHeader.querySelector('.exec-chart-title');
+        if (title) title.style.fontSize = '14px';
+      }
+
       const tableWrapper = activityCard.querySelector('.exec-table-wrapper');
       if (tableWrapper) {
         tableWrapper.style.cssText = `
@@ -4372,14 +4532,23 @@ function enterFullscreenMode() {
 
       const activityTable = activityCard.querySelector('.exec-table-modern');
       if (activityTable) {
-        activityTable.style.fontSize = '12px';
+        activityTable.style.fontSize = '11px';
+
+        const thead = activityTable.querySelector('thead');
+        if (thead) {
+          thead.style.cssText = `font-size: 10px;`;
+          const thCells = thead.querySelectorAll('th');
+          thCells.forEach(th => {
+            th.style.padding = '6px 10px';
+          });
+        }
 
         const rows = activityTable.querySelectorAll('tbody tr');
         rows.forEach(row => {
-          row.style.height = '28px';
+          row.style.height = '24px';
           const cells = row.querySelectorAll('td');
           cells.forEach(cell => {
-            cell.style.padding = '6px 12px';
+            cell.style.padding = '4px 10px';
           });
         });
       }
