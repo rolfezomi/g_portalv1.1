@@ -3345,11 +3345,30 @@ function updateRecentActivity(measurements) {
   }).join('');
 }
 
-// Executive menu'yu göster/gizle
+// Executive menu'yu göster/gizle (desktop + mobile)
 function showExecutiveMenu() {
   const menu = document.getElementById('executive-dashboard-menu');
   if (menu) {
     menu.style.display = 'block';
+  }
+
+  // Mobile tabs'a da ekle
+  const mobileTabs = document.getElementById('mobile-tabs');
+  if (mobileTabs) {
+    // Önce var mı kontrol et
+    const existingTab = mobileTabs.querySelector('[data-section="executive-dashboard"]');
+    if (!existingTab) {
+      const execTab = document.createElement('button');
+      execTab.type = 'button';
+      execTab.className = 'tab';
+      execTab.setAttribute('data-section', 'executive-dashboard');
+      execTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Üst Yönetim</span>';
+      execTab.onclick = () => {
+        showSection('executive-dashboard');
+        activateMobileTab('executive-dashboard');
+      };
+      mobileTabs.appendChild(execTab);
+    }
   }
 }
 

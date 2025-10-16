@@ -3049,9 +3049,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
    ÜST YÖNETİM - EN ÇOK KONTROL EDİLEN NOKTALAR VE SON AKTİVİTELER YAN YANA
    ========================= */
 
-/* En çok kontrol edilen noktalar kartı daha dar */
+/* En çok kontrol edilen noktalar kartı daha dar ve üstle hizalı */
 .executive-top-points-card {
   max-width: 420px;
+  align-self: start;
 }
 
 /* Son aktiviteler compact kart */
