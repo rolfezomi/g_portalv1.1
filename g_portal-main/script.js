@@ -4210,10 +4210,14 @@ function handleFullscreenChange() {
     document.msFullscreenElement
   );
 
+  const btnText = document.getElementById('fullscreen-btn-text');
+
   if (isFullscreen && currentSection === 'executive-dashboard') {
     enterFullscreenMode();
+    if (btnText) btnText.textContent = 'Çıkış (ESC)';
   } else if (!isFullscreen && isFullscreenMode) {
     exitFullscreenMode();
+    if (btnText) btnText.textContent = 'Tam Ekran';
   }
 }
 
@@ -4273,8 +4277,8 @@ function enterFullscreenMode() {
   const vh = window.innerHeight;
 
   // Gap ve padding'i minimize ediyoruz
-  const gap = 10; // Sabit küçük gap
-  const padding = 20; // Daha az padding
+  const gap = 8; // Daha küçük gap
+  const padding = 16; // Minimal padding
   const toolbarHeight = 60; // Toolbar yüksekliği (tahmin)
 
   if (dashboard) {
@@ -4286,21 +4290,22 @@ function enterFullscreenMode() {
       gap: ${gap}px;
       padding: ${padding}px !important;
       padding-top: 0 !important;
+      padding-bottom: ${padding}px !important;
     `;
   }
 
   // HESAPLAMA: Kullanılabilir alan = 100vh - padding - gaps
-  const availableHeight = vh - (padding * 2);
-  const totalGaps = gap * 4; // KPI, Main, TwoColumn, Activity arası
+  const totalGaps = gap * 3; // KPI, Main, TwoColumn arası (3 gap)
+  const availableHeight = vh - (padding * 2) - totalGaps;
 
-  // Yüzde dağılımı:
-  // KPI: 12%, Main Chart: 18%, Two Column: 48%, Activity: 22%
-  const kpiHeight = Math.floor(availableHeight * 0.12);
-  const mainChartHeight = Math.floor(availableHeight * 0.18);
-  const twoColumnHeight = Math.floor(availableHeight * 0.48);
+  // Yüzde dağılımı (GAP HARİÇ):
+  // KPI: 10%, Main Chart: 16%, Two Column: 52%, Activity: 22%
+  const kpiHeight = Math.floor(availableHeight * 0.10);
+  const mainChartHeight = Math.floor(availableHeight * 0.16);
+  const twoColumnHeight = Math.floor(availableHeight * 0.52);
   const activityHeight = Math.floor(availableHeight * 0.22);
 
-  console.log(`🖥️ Fullscreen layout: vh=${vh}, KPI=${kpiHeight}, Main=${mainChartHeight}, Two=${twoColumnHeight}, Activity=${activityHeight}`);
+  console.log(`🖥️ Fullscreen layout: vh=${vh}, available=${availableHeight}, gaps=${totalGaps}, KPI=${kpiHeight}, Main=${mainChartHeight}, Two=${twoColumnHeight}, Activity=${activityHeight}`);
 
   // 5. MODERN KPI GRID (3 KPI)
   const kpiGrid = document.querySelector('.exec-kpi-modern');
@@ -4496,14 +4501,16 @@ function enterFullscreenMode() {
     }
   }
 
-  // 8. ACTIVITY CONTAINER
+  // 8. ACTIVITY CONTAINER (EN ALTA YAPIŞTIR)
   const activityContainer = document.querySelector('.exec-activity-container');
 
   if (activityContainer) {
     activityContainer.style.cssText = `
       height: ${activityHeight}px;
       flex-shrink: 0;
+      flex-grow: 0;
       overflow: hidden;
+      margin-bottom: 0 !important;
     `;
 
     const activityCard = activityContainer.querySelector('.exec-chart-card-modern');
@@ -4908,24 +4915,53 @@ function stopFullscreenAutoRefresh() {
 // Fullscreen detection başlat
 initFullscreenDetection();
 
-// Test fonksiyonu - Manuel fullscreen tetikleme (Buton toggle)
-window.testFullscreenMode = function() {
+// Test fonksiyonu - Fullscreen API ile tam ekran toggle
+window.testFullscreenMode = async function() {
   if (currentSection !== 'executive-dashboard') {
     console.warn('⚠️ Dashboard açık değil!');
     return;
   }
 
-  // Buton text güncelle
   const btnText = document.getElementById('fullscreen-btn-text');
 
-  if (isFullscreenMode) {
-    console.log('🖥️ Normal moda dönülüyor...');
+  // Fullscreen API kontrolü
+  if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+    // Fullscreen'den çık
+    console.log('🖥️ Fullscreen API: Çıkılıyor...');
+    if (document.exitFullscreen) {
+      await document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      await document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      await document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      await document.msExitFullscreen();
+    }
+
     exitFullscreenMode();
     if (btnText) btnText.textContent = 'Tam Ekran';
   } else {
-    console.log('🖥️ Tam ekran moduna geçiliyor...');
-    enterFullscreenMode();
-    if (btnText) btnText.textContent = 'Çıkış';
+    // Fullscreen'e gir
+    console.log('🖥️ Fullscreen API: Giriliyor...');
+    const elem = document.documentElement;
+
+    try {
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        await elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        await elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        await elem.msRequestFullscreen();
+      }
+
+      enterFullscreenMode();
+      if (btnText) btnText.textContent = 'Çıkış (ESC)';
+    } catch (err) {
+      console.error('❌ Fullscreen API hatası:', err);
+      showToast('Tam ekran modu desteklenmiyor.');
+    }
   }
 };
 
