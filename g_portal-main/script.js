@@ -3420,7 +3420,7 @@ function setupDashboardRealtime() {
       await updateExecutiveDashboard(true);
 
       // Değişiklik bildirimi göster
-      showDashboardChangeNotification(payload.eventType);
+      showDashboardChangeNotification();
 
       // İlgili kartları highlight et
       highlightChangedCards(payload.eventType);
@@ -3430,40 +3430,22 @@ function setupDashboardRealtime() {
     });
 }
 
-// Dashboard değişiklik bildirimi
-function showDashboardChangeNotification(eventType) {
-  const messages = {
-    'INSERT': 'Yeni ölçüm eklendi',
-    'UPDATE': 'Ölçüm güncellendi',
-    'DELETE': 'Ölçüm silindi'
-  };
+// Dashboard değişiklik bildirimi - Subtle
+function showDashboardChangeNotification() {
+  // Son güncelleme badge'ini pulse yap
+  const lastUpdate = document.getElementById('dashboard-last-update');
+  if (lastUpdate) {
+    lastUpdate.style.transition = 'all 0.3s ease';
+    lastUpdate.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    lastUpdate.style.color = 'white';
+    lastUpdate.style.transform = 'scale(1.05)';
 
-  const message = messages[eventType] || 'Veri değişikliği';
-
-  // Toast benzeri bildirim
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed;
-    top: 80px;
-    right: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 10000;
-    animation: slideInRight 0.3s ease;
-  `;
-  notification.textContent = `📊 ${message} - Dashboard güncellendi`;
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    notification.style.opacity = '0';
-    notification.style.transition = 'opacity 0.3s ease';
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
+    setTimeout(() => {
+      lastUpdate.style.background = '#f9fafb';
+      lastUpdate.style.color = '#6b7280';
+      lastUpdate.style.transform = 'scale(1)';
+    }, 800);
+  }
 }
 
 // Değişen kartları highlight et
@@ -4080,7 +4062,30 @@ function updateRecentActivity(measurements) {
     return;
   }
 
-  tbody.innerHTML = recent.map(m => {
+  // Mevcut satırları sola kaydır ve sil
+  const existingRows = tbody.querySelectorAll('tr');
+  if (existingRows.length > 0) {
+    existingRows.forEach((row, index) => {
+      setTimeout(() => {
+        row.style.transition = 'all 0.4s ease';
+        row.style.transform = 'translateX(-100%)';
+        row.style.opacity = '0';
+      }, index * 30);
+    });
+
+    // Tüm animasyon bittikten sonra yeni içeriği ekle
+    setTimeout(() => {
+      addActivityRowsWithAnimation(tbody, recent);
+    }, (existingRows.length * 30) + 400);
+  } else {
+    // İlk yüklemede direkt ekle
+    addActivityRowsWithAnimation(tbody, recent);
+  }
+}
+
+// Aktivite satırlarını sağdan sola kayan animasyon ile ekle
+function addActivityRowsWithAnimation(tbody, measurements) {
+  tbody.innerHTML = measurements.map(m => {
     // Değer ve birimi profesyonel formatta göster
     let valueDisplay = '-';
     if (m.value) {
@@ -4090,7 +4095,7 @@ function updateRecentActivity(measurements) {
     }
 
     return `
-      <tr>
+      <tr style="transform: translateX(100%); opacity: 0;">
         <td>${m.date || '-'}</td>
         <td>${m.time || '-'}</td>
         <td><strong>${m.category || '-'}</strong></td>
@@ -4100,6 +4105,16 @@ function updateRecentActivity(measurements) {
       </tr>
     `;
   }).join('');
+
+  // Satırları sırayla sağdan sola kaydır
+  const newRows = tbody.querySelectorAll('tr');
+  newRows.forEach((row, index) => {
+    setTimeout(() => {
+      row.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      row.style.transform = 'translateX(0)';
+      row.style.opacity = '1';
+    }, index * 50);
+  });
 }
 
 // Executive menu'yu göster/gizle (desktop + mobile)
@@ -4320,22 +4335,22 @@ function enterFullscreenMode() {
       margin-bottom: ${gap}px;
     `;
 
-    // KPI kartlarını ultra kompakt yap
+    // KPI kartlarını kompakt ama okunabilir yap
     const kpiCards = kpiGrid.querySelectorAll('.exec-kpi-card-modern');
     kpiCards.forEach(card => {
       card.style.cssText = `
-        padding: 12px 16px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        padding: 16px 20px !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
       `;
 
       const kpiValue = card.querySelector('.exec-kpi-value');
-      if (kpiValue) kpiValue.style.fontSize = '28px';
+      if (kpiValue) kpiValue.style.fontSize = '36px';
 
       const kpiLabel = card.querySelector('.exec-kpi-label');
-      if (kpiLabel) kpiLabel.style.fontSize = '10px';
+      if (kpiLabel) kpiLabel.style.fontSize = '12px';
 
       const kpiTrend = card.querySelector('.exec-kpi-trend');
-      if (kpiTrend) kpiTrend.style.fontSize = '10px';
+      if (kpiTrend) kpiTrend.style.fontSize = '11px';
     });
   }
 
@@ -4361,15 +4376,15 @@ function enterFullscreenMode() {
       const chartHeader = mainCard.querySelector('.exec-chart-header');
       if (chartHeader) {
         chartHeader.style.cssText = `
-          padding: 12px 20px !important;
-          min-height: 40px;
+          padding: 14px 24px !important;
+          min-height: 50px;
         `;
 
         const chartTitle = chartHeader.querySelector('.exec-chart-title');
-        if (chartTitle) chartTitle.style.fontSize = '15px';
+        if (chartTitle) chartTitle.style.fontSize = '17px';
 
         const chartSubtitle = chartHeader.querySelector('.exec-chart-subtitle');
-        if (chartSubtitle) chartSubtitle.style.fontSize = '11px';
+        if (chartSubtitle) chartSubtitle.style.fontSize = '13px';
       }
 
       const chartBody = mainCard.querySelector('.exec-chart-body');

@@ -3735,9 +3735,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-table-wrapper {
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
   max-height: 400px;
+  position: relative;
 }
 
 .exec-table-modern {
