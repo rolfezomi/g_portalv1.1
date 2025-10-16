@@ -2955,16 +2955,8 @@ function updateExecutiveKPIs(measurements, logs) {
 
 // Grafikleri güncelle
 function updateExecutiveCharts(measurements) {
-  const selectedCategory = document.getElementById('exec-monthly-category')?.value || 'all';
-
-  // Kategori filtresi uygula
-  let filteredData = measurements;
-  if (selectedCategory !== 'all') {
-    filteredData = measurements.filter(m => m.category === selectedCategory);
-  }
-
-  // Aylık trend grafiği
-  updateMonthlyChart(filteredData);
+  // Aylık trend grafiği (kategori filtrelemeli)
+  updateMonthlyChartWithFilter(measurements);
 
   // Kategori dağılımı
   updateCategoryChart(measurements);
@@ -2977,6 +2969,19 @@ function updateExecutiveCharts(measurements) {
 
   // Haftalık özet
   updateWeeklyChart(measurements);
+}
+
+// Aylık trend grafiğini kategori filtresiyle güncelle
+function updateMonthlyChartWithFilter(measurements) {
+  const selectedCategory = document.getElementById('exec-monthly-category')?.value || 'all';
+
+  // Kategori filtresi uygula
+  let filteredData = measurements;
+  if (selectedCategory !== 'all') {
+    filteredData = measurements.filter(m => m.category === selectedCategory);
+  }
+
+  updateMonthlyChart(filteredData);
 }
 
 // Aylık trend grafiği
@@ -3311,5 +3316,7 @@ function showExecutiveMenu() {
 // Global fonksiyonları expose et
 window.updateExecutiveDashboard = updateExecutiveDashboard;
 window.showExecutiveDashboard = showExecutiveDashboard;
+window.updateMonthlyChartWithFilter = updateMonthlyChartWithFilter;
+window.executiveDashboardCache = executiveDashboardCache;
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
