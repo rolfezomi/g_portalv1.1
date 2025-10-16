@@ -3527,6 +3527,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  margin-top: 24px;
   margin-bottom: 24px;
 }
 
@@ -3543,9 +3544,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-chart-card-compact {
-  min-height: 220px;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
+}
+
+.exec-chart-card-compact .exec-chart-header {
+  padding: 20px 24px 16px;
+}
+
+.exec-chart-card-compact .exec-chart-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .exec-chart-header {

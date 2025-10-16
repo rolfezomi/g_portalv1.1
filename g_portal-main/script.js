@@ -1,4 +1,15 @@
 // =========================
+// CHART.JS PLUGIN REGISTER
+// =========================
+
+// ChartJS Datalabels Plugin'i kaydet
+if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+  Chart.register(ChartDataLabels);
+  // Global olarak kapalı, sadece ihtiyaç olan chartlarda açıyoruz
+  Chart.defaults.set('plugins.datalabels', { display: false });
+}
+
+// =========================
 // MERKEZI KONFİGÜRASYON
 // =========================
 
@@ -3854,6 +3865,19 @@ function updateHourlyChart(measurements) {
           titleFont: { size: 13, weight: 'bold' },
           bodyFont: { size: 12 },
           cornerRadius: 8
+        },
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          offset: 2,
+          color: '#111827',
+          font: {
+            size: 11,
+            weight: '700',
+            family: "'Inter', -apple-system, sans-serif"
+          },
+          formatter: (value) => value > 0 ? value : ''
         }
       },
       scales: {
@@ -4015,20 +4039,7 @@ function updateWeeklyChart(measurements) {
       },
       plugins: {
         legend: {
-          display: true,
-          position: 'top',
-          align: 'end',
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle',
-            padding: 15,
-            font: {
-              size: 12,
-              weight: '600',
-              family: "'Inter', -apple-system, sans-serif"
-            },
-            color: '#666'
-          }
+          display: false
         },
         tooltip: {
           enabled: true,
@@ -4050,8 +4061,20 @@ function updateWeeklyChart(measurements) {
           callbacks: {
             title: (items) => items[0].label,
             label: (context) => `${context.parsed.y} ölçüm`
+          }
+        },
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          offset: 4,
+          color: '#111827',
+          font: {
+            size: 13,
+            weight: '700',
+            family: "'Inter', -apple-system, sans-serif"
           },
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          formatter: (value) => value > 0 ? value : ''
         }
       },
       scales: {
