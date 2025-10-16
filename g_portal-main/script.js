@@ -3045,10 +3045,10 @@ function updateMonthlyChart(measurements) {
   });
 }
 
-// Kategori dağılımı grafiği
+// Kategori dağılımı - Profesyonel liste görünümü
 function updateCategoryChart(measurements) {
-  const ctx = document.getElementById('exec-category-chart');
-  if (!ctx) return;
+  const container = document.getElementById('exec-category-breakdown');
+  if (!container) return;
 
   const categoryCount = {};
   measurements.forEach(m => {
@@ -3056,34 +3056,67 @@ function updateCategoryChart(measurements) {
     categoryCount[cat] = (categoryCount[cat] || 0) + 1;
   });
 
+  const total = measurements.length;
   const sortedCategories = Object.entries(categoryCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
+    .sort((a, b) => b[1] - a[1]);
 
-  if (executiveCharts.category) {
-    executiveCharts.category.destroy();
-  }
+  // Kategori ikonları ve renk sınıfları
+  const categoryIcons = {
+    'Ph': '💧',
+    'Klor': '🧪',
+    'İletkenlik': '⚡',
+    'Sertlik': '🔬',
+    'Mikro': '🦠',
+    'Mikrobiyoloji': '🦠',
+    'Kazan Mikser': '🌀',
+    'Kazan & Mikser': '🌀',
+    'Dolum': '🏭',
+    'Dolum Makinaları': '🏭'
+  };
 
-  executiveCharts.category = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: sortedCategories.map(c => c[0]),
-      datasets: [{
-        data: sortedCategories.map(c => c[1]),
-        backgroundColor: [
-          '#667eea', '#f093fb', '#4facfe', '#fa709a',
-          '#feca57', '#48dbfb', '#ff6b6b', '#5f27cd'
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { position: 'right' }
-      }
-    }
-  });
+  const categoryClasses = {
+    'Ph': 'category-ph',
+    'Klor': 'category-klor',
+    'İletkenlik': 'category-iletkenlik',
+    'Sertlik': 'category-sertlik',
+    'Mikro': 'category-mikro',
+    'Mikrobiyoloji': 'category-mikro',
+    'Kazan Mikser': 'category-kazan',
+    'Kazan & Mikser': 'category-kazan',
+    'Dolum': 'category-dolum',
+    'Dolum Makinaları': 'category-dolum'
+  };
+
+  container.innerHTML = sortedCategories.map(([category, count]) => {
+    const percentage = ((count / total) * 100).toFixed(1);
+    const icon = categoryIcons[category] || '📊';
+    const colorClass = categoryClasses[category] || 'category-ph';
+
+    return `
+      <div class="category-item">
+        <div class="category-item-header">
+          <div class="category-item-left">
+            <div class="category-item-icon ${colorClass}">
+              ${icon}
+            </div>
+            <div class="category-item-info">
+              <div class="category-item-name">${category}</div>
+              <div class="category-item-stats">
+                ${count} ölçüm • Son 30 gün
+              </div>
+            </div>
+          </div>
+          <div class="category-item-right">
+            <div class="category-item-count ${colorClass}">${count.toLocaleString('tr-TR')}</div>
+            <div class="category-item-percentage">${percentage}%</div>
+          </div>
+        </div>
+        <div class="category-progress-wrapper">
+          <div class="category-progress-bar ${colorClass}" style="width: ${percentage}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // Saatlik aktivite grafiği

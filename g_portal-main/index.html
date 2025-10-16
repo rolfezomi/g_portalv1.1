@@ -939,12 +939,13 @@
             </div>
           </div>
 
-          <div class="executive-chart-card">
+          <div class="executive-chart-card executive-category-card">
             <div class="chart-header">
               <h3>📊 Kategori Dağılımı</h3>
+              <span style="font-size:12px; color:#666;">Son 30 Gün</span>
             </div>
             <div class="chart-body">
-              <canvas id="exec-category-chart" height="80"></canvas>
+              <div id="exec-category-breakdown" class="category-breakdown"></div>
             </div>
           </div>
         </div>
@@ -979,25 +980,6 @@
             </div>
             <div class="chart-body">
               <div id="exec-top-points" class="top-points-list"></div>
-            </div>
-          </div>
-
-          <div class="executive-chart-card">
-            <div class="chart-header">
-              <h3>📈 Aylık Ölçüm Trendi</h3>
-              <select id="exec-monthly-category" onchange="updateMonthlyChartWithFilter(executiveDashboardCache.measurements)" class="input" style="width:auto; padding:6px 12px;">
-                <option value="all">Tüm Kategoriler</option>
-                <option value="Ph">Ph</option>
-                <option value="Klor">Klor</option>
-                <option value="İletkenlik">İletkenlik</option>
-                <option value="Sertlik">Sertlik</option>
-                <option value="Mikro">Mikrobiyoloji</option>
-                <option value="Kazan Mikser">Kazan & Mikser</option>
-                <option value="Dolum">Dolum Makinaları</option>
-              </select>
-            </div>
-            <div class="chart-body">
-              <canvas id="exec-monthly-chart" height="80"></canvas>
             </div>
           </div>
         </div>
