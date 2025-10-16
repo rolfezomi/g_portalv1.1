@@ -907,12 +907,18 @@ input:focus, select:focus, textarea:focus{
   }
 
   .user-info{
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .user-info span{
-    font-size: 13px;
-    padding: 6px 10px;
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+
+  /* Mobilde kullanıcı email'i gizle - sadece saat göster */
+  .user-info #logged-user {
+    display: none;
   }
 
   /* Mobilde realtime status daha kompakt */
@@ -928,6 +934,22 @@ input:focus, select:focus, textarea:focus{
 
   .realtime-status .status-text {
     font-size: 11px;
+  }
+
+  /* Mobilde logout butonu daha görünür ve dokunulabilir */
+  .user-info #logout-button {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 6px;
+    background: rgba(255, 59, 48, 0.15);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .user-info #logout-button:active {
+    transform: scale(0.95);
+    background: rgba(255, 59, 48, 0.25);
   }
 
   .content{

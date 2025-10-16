@@ -662,6 +662,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     } else if (currentUserRole === 'executive') {
       showFullAccessMenu(); // Trend Analizi
       showExecutiveMenu(); // Dashboard (Executive menü kısıtlamaları sonrasında uygulanır)
+      await loadRecent(); // Verileri yükle (Trend Analizi için gerekli)
       showSection('executive-dashboard'); // Executive için anasayfa Dashboard
     } else {
       showHomepage();
@@ -762,6 +763,7 @@ if (loginForm) {
         showFullAccessMenu(); // Trend Analizi
         showExecutiveMenu(); // Dashboard (Executive menü kısıtlamaları sonrasında uygulanır)
         await logActivity('LOGIN', 'Auth', { email });
+        loadRecent(); // Verileri yükle (Trend Analizi için gerekli)
         showSection('executive-dashboard'); // Executive için anasayfa Dashboard
       } else {
         await logActivity('LOGIN', 'Auth', { email });
