@@ -37,6 +37,11 @@ body{
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ---------- Utility Classes (Performance Optimization) ---------- */
+.u-hidden { display: none !important; }
+.u-flex { display: flex !important; }
+.u-block { display: block !important; }
+
 /* =========================
    LOGIN – profesyonel görünüm
    ========================= */
