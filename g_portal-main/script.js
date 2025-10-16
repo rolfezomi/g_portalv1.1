@@ -3393,8 +3393,41 @@ function updateExecutiveKPIs(measurements, logs) {
 
   // Bugünkü ölçüm
   const todayMeasurements = measurements.filter(m => m.date === today);
-  document.getElementById('exec-today-measurements').textContent = todayMeasurements.length.toLocaleString('tr-TR');
-  document.getElementById('exec-today-trend').textContent = 'Bugün';
+  const todayCount = todayMeasurements.length;
+
+  // Önceki günün ölçümü
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayDate = yesterday.toISOString().split('T')[0];
+  const yesterdayMeasurements = measurements.filter(m => m.date === yesterdayDate);
+  const yesterdayCount = yesterdayMeasurements.length;
+
+  // Değişimi hesapla
+  const diff = todayCount - yesterdayCount;
+  const trendElement = document.getElementById('exec-today-trend');
+
+  document.getElementById('exec-today-measurements').textContent = todayCount.toLocaleString('tr-TR');
+
+  // Trend göstergesini güncelle (sadece değişiklik varsa)
+  if (diff !== 0 && yesterdayCount > 0) {
+    const percentage = Math.abs(Math.round((diff / yesterdayCount) * 100));
+    const trendIcon = diff > 0 ? '↑' : '↓';
+    const trendColor = diff > 0 ? '#10b981' : '#ef4444';
+    const trendText = diff > 0 ? 'artış' : 'azalış';
+
+    trendElement.innerHTML = `
+      <span style="color: ${trendColor}; font-weight: 600;">
+        ${trendIcon} ${Math.abs(diff)} (${percentage}% ${trendText})
+      </span>
+    `;
+    trendElement.style.fontSize = '12px';
+  } else if (yesterdayCount === 0 && todayCount > 0) {
+    trendElement.innerHTML = '<span style="color: #10b981; font-weight: 600;">↑ Yeni</span>';
+    trendElement.style.fontSize = '12px';
+  } else {
+    trendElement.textContent = 'Bugün';
+    trendElement.style.fontSize = '';
+  }
 
   // Ortalama günlük ölçüm (son 30 gün)
   const last30DaysMeasurements = measurements.filter(m => m.date >= last30Days);
@@ -3775,23 +3808,119 @@ function updateWeeklyChart(measurements) {
     data: {
       labels: labels,
       datasets: [{
-        label: 'Ölçüm',
+        label: 'Ölçüm Sayısı',
         data: weeklyData,
-        borderColor: '#fa709a',
-        backgroundColor: 'rgba(250, 112, 154, 0.1)',
+        borderColor: 'rgba(94, 114, 228, 1)',
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const {ctx, chartArea} = chart;
+          if (!chartArea) return null;
+          const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+          gradient.addColorStop(0, 'rgba(94, 114, 228, 0.02)');
+          gradient.addColorStop(0.5, 'rgba(94, 114, 228, 0.12)');
+          gradient.addColorStop(1, 'rgba(94, 114, 228, 0.25)');
+          return gradient;
+        },
         borderWidth: 3,
         fill: true,
-        tension: 0.4
+        tension: 0.4,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: 'rgba(94, 114, 228, 1)',
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: 'rgba(94, 114, 228, 1)',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+        shadowOffsetX: 0,
+        shadowOffsetY: 4,
+        shadowBlur: 8,
+        shadowColor: 'rgba(94, 114, 228, 0.3)'
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
-        legend: { display: false }
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 15,
+            font: {
+              size: 12,
+              weight: '600',
+              family: "'Inter', -apple-system, sans-serif"
+            },
+            color: '#666'
+          }
+        },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          titleColor: '#333',
+          bodyColor: '#666',
+          borderColor: 'rgba(94, 114, 228, 0.2)',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          titleFont: {
+            size: 13,
+            weight: '600'
+          },
+          bodyFont: {
+            size: 14,
+            weight: '700'
+          },
+          callbacks: {
+            title: (items) => items[0].label,
+            label: (context) => `${context.parsed.y} ölçüm`
+          },
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }
       },
       scales: {
-        y: { beginAtZero: true, ticks: { precision: 0 } }
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              size: 11,
+              weight: '500',
+              family: "'Inter', -apple-system, sans-serif"
+            },
+            color: '#999'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            font: {
+              size: 11,
+              weight: '500',
+              family: "'Inter', -apple-system, sans-serif"
+            },
+            color: '#999',
+            padding: 8
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.04)',
+            drawBorder: false
+          }
+        }
+      },
+      animation: {
+        duration: 800,
+        easing: 'easeInOutQuart'
       }
     }
   });
@@ -4115,7 +4244,17 @@ function enterFullscreenMode() {
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 0;
     `;
+
+    // Chart header
+    const chartHeader = card.querySelector('.chart-header');
+    if (chartHeader) {
+      chartHeader.style.cssText = `
+        flex-shrink: 0;
+        padding: 14px 18px;
+      `;
+    }
 
     // Chart body flex yaparak tüm alanı kapla
     const chartBody = card.querySelector('.chart-body');
@@ -4123,10 +4262,11 @@ function enterFullscreenMode() {
       chartBody.style.cssText = `
         flex: 1;
         min-height: 0;
-        padding: 16px;
+        padding: 12px 16px 16px;
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
       `;
     }
 
@@ -4135,22 +4275,115 @@ function enterFullscreenMode() {
     if (canvas) {
       canvas.style.cssText = `
         max-height: 100%;
-        width: 100%;
+        max-width: 100%;
+        width: auto !important;
+        height: auto !important;
       `;
     }
   });
 
-  // 8. ACTIVITY TABLE WRAPPER - SCROLL (sadece tablo içinde)
+  // 8. EN ÇOK KONTROL EDİLEN NOKTALAR - SCROLL
+  const topPointsCard = document.querySelector('.executive-top-points-card');
+  if (topPointsCard) {
+    topPointsCard.style.cssText = `
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    `;
+
+    const topPointsHeader = topPointsCard.querySelector('.chart-header');
+    if (topPointsHeader) {
+      topPointsHeader.style.cssText = `
+        flex-shrink: 0;
+        padding: 14px 18px;
+      `;
+    }
+
+    const topPointsBody = topPointsCard.querySelector('.chart-body');
+    if (topPointsBody) {
+      topPointsBody.style.cssText = `
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 8px;
+      `;
+    }
+  }
+
+  // 9. AKTİVİTELER TABLOSU - SCROLL
+  const activityCard = document.querySelector('.executive-activity-card-compact');
+  if (activityCard) {
+    activityCard.style.cssText = `
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    `;
+
+    const activityHeader = activityCard.querySelector('.chart-header');
+    if (activityHeader) {
+      activityHeader.style.cssText = `
+        flex-shrink: 0;
+        padding: 14px 18px;
+      `;
+    }
+
+    const activityBody = activityCard.querySelector('.chart-body');
+    if (activityBody) {
+      activityBody.style.cssText = `
+        flex: 1;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      `;
+    }
+  }
+
   const activityWrapper = document.querySelector('.activity-table-wrapper');
   if (activityWrapper) {
     activityWrapper.style.cssText = `
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
       min-height: 0;
     `;
   }
 
-  // 9. KPI KARTLARI - KOMPAKT VE OKUNAKLI
+  // Aktivite tablosuna kompakt stil
+  const activityTable = document.querySelector('.activity-table');
+  if (activityTable) {
+    activityTable.style.cssText = `
+      width: 100%;
+      font-size: 12px;
+    `;
+
+    // Tablo satırlarını daha kompakt yap
+    const activityRows = activityTable.querySelectorAll('tbody tr');
+    activityRows.forEach(row => {
+      row.style.height = '32px';
+      const cells = row.querySelectorAll('td');
+      cells.forEach(cell => {
+        cell.style.padding = '6px 10px';
+      });
+    });
+  }
+
+  // 10. KPI KARTLARI - KOMPAKT VE OKUNAKLI
   const kpiCards = document.querySelectorAll('.executive-kpi-card');
   kpiCards.forEach(card => {
     const value = card.querySelector('.kpi-value');
@@ -4162,7 +4395,7 @@ function enterFullscreenMode() {
     const labelFontSize = Math.min(12, kpiHeight * 0.14);
 
     if (value) value.style.fontSize = valueFontSize + 'px';
-    if (label) value.style.fontSize = labelFontSize + 'px';
+    if (label) label.style.fontSize = labelFontSize + 'px';
     if (trend) trend.style.fontSize = (labelFontSize - 1) + 'px';
 
     card.style.cssText = `
@@ -4177,7 +4410,7 @@ function enterFullscreenMode() {
     `;
   });
 
-  // 10. KARTLARIN GÖRÜNMESİ - STAGGER ANİMASYON
+  // 11. KARTLARIN GÖRÜNMESİ - STAGGER ANİMASYON
   setTimeout(() => animateCardsEntry(), 100);
 
   // Otomatik yenileme başlat (30 saniyede bir)
