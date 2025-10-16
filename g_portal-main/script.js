@@ -441,7 +441,7 @@ function showSection(key) {
 
   currentSection = key;
 
-  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'dolum-makinalari', 'admin-panel', 'logs', 'users', 'trends'].forEach(s => {
+  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'dolum-makinalari', 'admin-panel', 'logs', 'users', 'trends', 'executive-dashboard'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });
@@ -456,7 +456,8 @@ function showSection(key) {
     'dolum-makinalari': initDolumMakinalariPage,
     logs: initLogsPage,
     users: initUsersPage,
-    trends: initTrendsPage
+    trends: initTrendsPage,
+    'executive-dashboard': updateExecutiveDashboard
   };
 
   if (initFuncs[key]) setTimeout(initFuncs[key], 0);
