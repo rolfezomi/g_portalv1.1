@@ -3434,6 +3434,13 @@ function updateExecutiveKPIs(measurements, logs) {
   const avgDaily = Math.round(last30DaysMeasurements.length / 30);
   document.getElementById('exec-avg-daily').textContent = avgDaily.toLocaleString('tr-TR');
   document.getElementById('exec-avg-trend').textContent = 'Son 30 gün';
+
+  // Aktif kullanıcılar (bugün ölçüm yapan)
+  const todayUsers = new Set(todayMeasurements.map(m => m.user).filter(u => u));
+  const activeUsersElement = document.getElementById('exec-active-users');
+  if (activeUsersElement) {
+    activeUsersElement.textContent = todayUsers.size;
+  }
 }
 
 // Grafikleri güncelle
@@ -3546,9 +3553,9 @@ function updateMonthlyChart(measurements) {
   });
 }
 
-// Kategori dağılımı - Profesyonel liste görünümü
+// Kategori dağılımı - Modern liste görünümü
 function updateCategoryChart(measurements) {
-  const container = document.getElementById('exec-category-breakdown');
+  const container = document.getElementById('exec-category-modern');
   if (!container) return;
 
   const categoryCount = {};
@@ -3575,43 +3582,22 @@ function updateCategoryChart(measurements) {
     'Dolum Makinaları': '🏭'
   };
 
-  const categoryClasses = {
-    'Ph': 'category-ph',
-    'Klor': 'category-klor',
-    'İletkenlik': 'category-iletkenlik',
-    'Sertlik': 'category-sertlik',
-    'Mikro': 'category-mikro',
-    'Mikrobiyoloji': 'category-mikro',
-    'Kazan Mikser': 'category-kazan',
-    'Kazan & Mikser': 'category-kazan',
-    'Dolum': 'category-dolum',
-    'Dolum Makinaları': 'category-dolum'
-  };
-
   container.innerHTML = sortedCategories.map(([category, count]) => {
     const percentage = ((count / total) * 100).toFixed(1);
     const icon = categoryIcons[category] || '📊';
-    const colorClass = categoryClasses[category] || 'category-ph';
 
     return `
-      <div class="category-item">
-        <div class="category-item-header">
-          <div class="category-item-left">
-            <div class="category-item-icon ${colorClass}">
-              ${icon}
-            </div>
-            <div class="category-item-info">
-              <div class="category-item-name">${category}</div>
-              <div class="category-item-stats">
-                ${count} ölçüm
-              </div>
-            </div>
+      <div class="exec-category-item-modern">
+        <div class="exec-category-left-modern">
+          <div class="exec-category-icon-modern" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+            ${icon}
           </div>
-          <div class="category-item-right">
-            <div class="category-item-count">${count.toLocaleString('tr-TR')}</div>
-            <div class="category-item-percentage">${percentage}%</div>
+          <div class="exec-category-info-modern">
+            <div class="exec-category-name-modern">${category}</div>
+            <div class="exec-category-count-modern">${count} ölçüm</div>
           </div>
         </div>
+        <div class="exec-category-percent-modern">${percentage}%</div>
       </div>
     `;
   }).join('');
@@ -3958,7 +3944,7 @@ function updateTopPoints(measurements) {
 
   const topPoints = Object.values(pointCount)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+    .slice(0, 5);
 
   const container = document.getElementById('exec-top-points');
   if (!container) return;
@@ -3971,13 +3957,13 @@ function updateTopPoints(measurements) {
   container.innerHTML = topPoints.map((item, index) => {
     const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other';
     return `
-      <div class="top-point-item">
-        <div class="top-point-rank ${rankClass}">${index + 1}</div>
-        <div class="top-point-info">
-          <div class="top-point-name">${item.point}</div>
-          <div class="top-point-category">${item.category}</div>
+      <div class="exec-top-item-modern">
+        <div class="exec-top-rank-modern ${rankClass}">${index + 1}</div>
+        <div class="exec-top-info-modern">
+          <div class="exec-top-name-modern">${item.point}</div>
+          <div class="exec-top-category-modern">${item.category}</div>
         </div>
-        <div class="top-point-count">${item.count.toLocaleString('tr-TR')}</div>
+        <div class="exec-top-count-modern">${item.count.toLocaleString('tr-TR')}</div>
       </div>
     `;
   }).join('');

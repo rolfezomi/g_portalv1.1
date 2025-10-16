@@ -897,167 +897,148 @@
           </div>
         </div>
 
-        <!-- KPI Grid - Modern 4 Kart -->
-        <div class="exec-kpi-modern">
-          <div class="exec-kpi-card-modern exec-kpi-primary">
-            <div class="exec-kpi-top">
-              <span class="exec-kpi-label">Bugünkü Ölçümler</span>
-              <div class="exec-kpi-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-              </div>
+        <!-- KPI Cards -->
+        <div class="executive-kpi-grid">
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <div class="exec-kpi-value" id="exec-today-measurements">0</div>
-            <div class="exec-kpi-bottom">
-              <span class="exec-kpi-trend" id="exec-today-trend">Bugün</span>
+            <div class="kpi-content">
+              <div class="kpi-label">Toplam Ölçüm</div>
+              <div class="kpi-value" id="exec-total-measurements">0</div>
+              <div class="kpi-trend" id="exec-total-trend">Bu ay</div>
             </div>
           </div>
 
-          <div class="exec-kpi-card-modern exec-kpi-secondary">
-            <div class="exec-kpi-top">
-              <span class="exec-kpi-label">Bu Ay Toplam</span>
-              <div class="exec-kpi-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </div>
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </div>
-            <div class="exec-kpi-value" id="exec-total-measurements">0</div>
-            <div class="exec-kpi-bottom">
-              <span class="exec-kpi-trend" id="exec-total-trend">Bu ay</span>
+            <div class="kpi-content">
+              <div class="kpi-label">Bugünkü Ölçüm</div>
+              <div class="kpi-value" id="exec-today-measurements">0</div>
+              <div class="kpi-trend" id="exec-today-trend">Bugün</div>
             </div>
           </div>
 
-          <div class="exec-kpi-card-modern exec-kpi-tertiary">
-            <div class="exec-kpi-top">
-              <span class="exec-kpi-label">Günlük Ortalama</span>
-              <div class="exec-kpi-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                  <polyline points="17 6 23 6 23 12"/>
-                </svg>
-              </div>
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             </div>
-            <div class="exec-kpi-value" id="exec-avg-daily">0</div>
-            <div class="exec-kpi-bottom">
-              <span class="exec-kpi-trend" id="exec-avg-trend">Son 30 gün</span>
-            </div>
-          </div>
-
-          <div class="exec-kpi-card-modern exec-kpi-accent">
-            <div class="exec-kpi-top">
-              <span class="exec-kpi-label">Aktif Kullanıcılar</span>
-              <div class="exec-kpi-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-              </div>
-            </div>
-            <div class="exec-kpi-value" id="exec-active-users">0</div>
-            <div class="exec-kpi-bottom">
-              <span class="exec-kpi-trend">Bugün</span>
+            <div class="kpi-content">
+              <div class="kpi-label">Ortalama/Gün</div>
+              <div class="kpi-value" id="exec-avg-daily">0</div>
+              <div class="kpi-trend" id="exec-avg-trend">Son 30 gün</div>
             </div>
           </div>
         </div>
 
-        <!-- Main Chart - Haftalık Trend (Full Width, Büyük) -->
-        <div class="exec-main-chart-container">
-          <div class="exec-chart-card-modern">
-            <div class="exec-chart-header">
-              <div>
-                <h2 class="exec-chart-title">Haftalık Performans Özeti</h2>
-                <p class="exec-chart-subtitle">Son 7 günlük ölçüm trendi ve analizi</p>
-              </div>
+        <!-- Charts Row 1 - Haftalık Özet (Full Width) -->
+        <div class="executive-charts-row executive-charts-row-full">
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>📅 Haftalık Özet</h3>
+              <span style="font-size:12px; color:#666;">Son 7 Gün - Günlük Ölçüm Trendi</span>
             </div>
-            <div class="exec-chart-body">
-              <canvas id="exec-weekly-chart" height="80"></canvas>
+            <div class="chart-body">
+              <canvas id="exec-weekly-chart" height="60"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- 2 Column Layout -->
-        <div class="exec-two-column">
-          <!-- Sol Kolon: Kategori Analizi -->
-          <div class="exec-column-left">
-            <div class="exec-chart-card-modern">
-              <div class="exec-chart-header">
-                <div>
-                  <h3 class="exec-chart-title">Kategori Analizi</h3>
-                  <p class="exec-chart-subtitle">Ölçüm dağılımı ve yüzdeler</p>
-                </div>
-              </div>
-              <div class="exec-chart-body">
-                <div id="exec-category-modern" class="exec-category-list"></div>
-              </div>
+        <!-- Charts Row 2 - Kategori + IBC -->
+        <div class="executive-charts-row">
+          <div class="executive-chart-card executive-category-card">
+            <div class="chart-header">
+              <h3>📊 Kategori Dağılımı</h3>
+              <span style="font-size:12px; color:#666;">Son 30 Gün</span>
+            </div>
+            <div class="chart-body">
+              <div id="exec-category-breakdown" class="category-breakdown"></div>
             </div>
           </div>
 
-          <!-- Sağ Kolon: Top Performans Metrikleri -->
-          <div class="exec-column-right">
-            <div class="exec-chart-card-modern">
-              <div class="exec-chart-header">
-                <div>
-                  <h3 class="exec-chart-title">En Çok Kontrol Edilen Noktalar</h3>
-                  <p class="exec-chart-subtitle">Top 5 kontrol noktası</p>
-                </div>
-              </div>
-              <div class="exec-chart-body">
-                <div id="exec-top-points" class="exec-top-list"></div>
-              </div>
+          <div class="executive-chart-card executive-ibc-card">
+            <div class="chart-header">
+              <h3>🎯 IBC Kontrol Noktası</h3>
+              <span style="font-size:12px; color:#666;">Bugün</span>
             </div>
-
-            <!-- Saatlik Aktivite - Mini Card -->
-            <div class="exec-chart-card-modern exec-mini-card">
-              <div class="exec-chart-header">
-                <div>
-                  <h3 class="exec-chart-title">Bugünkü Aktivite</h3>
-                  <p class="exec-chart-subtitle">Saatlik dağılım</p>
+            <div class="chart-body" style="display:flex; flex-direction:column; gap:16px; padding:20px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center;">
+                    <span style="font-size:24px;">4️⃣</span>
+                  </div>
+                  <div>
+                    <div style="font-size:13px; color:#666; font-weight:500;">SERTLIK</div>
+                    <div style="font-size:11px; color:#999;">IBC Kontrol</div>
+                  </div>
                 </div>
-              </div>
-              <div class="exec-chart-body">
-                <canvas id="exec-hourly-chart" height="60"></canvas>
+                <div style="text-align:right;">
+                  <div id="ibc-measurement-count" style="font-size:32px; font-weight:700; color:#667eea;">9</div>
+                  <div style="font-size:12px; color:#999;">Ölçüm</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Son Aktiviteler - Full Width Tablo -->
-        <div class="exec-activity-container">
-          <div class="exec-chart-card-modern">
-            <div class="exec-chart-header">
-              <div>
-                <h3 class="exec-chart-title">Son Aktiviteler</h3>
-                <p class="exec-chart-subtitle">En son yapılan ölçümler</p>
-              </div>
-              <button class="exec-btn-refresh" onclick="updateExecutiveDashboard(true)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"/>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                </svg>
+        <!-- Charts Row 3 -->
+        <div class="executive-charts-row">
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>⏰ Saatlik Aktivite</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-hourly-chart" height="80"></canvas>
+            </div>
+          </div>
+
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>👤 Kullanıcı Aktivitesi</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-user-chart" height="80"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 4 - Top Performers & Recent Activity -->
+        <div class="executive-charts-row">
+          <div class="executive-chart-card executive-top-points-card">
+            <div class="chart-header">
+              <h3>🏆 En Çok Kontrol Edilen Noktalar</h3>
+              <span style="font-size:12px; color:#666;">Son 30 Gün</span>
+            </div>
+            <div class="chart-body">
+              <div id="exec-top-points" class="top-points-list"></div>
+            </div>
+          </div>
+
+          <div class="executive-chart-card executive-activity-card-compact">
+            <div class="chart-header">
+              <h3>🕒 Son Aktiviteler</h3>
+              <button class="btn btn-ghost" onclick="updateExecutiveDashboard(true)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
                 Yenile
               </button>
             </div>
-            <div class="exec-chart-body" style="padding:0;">
-              <div class="exec-table-wrapper">
-                <table class="exec-table-modern" id="exec-activity-table-modern">
+            <div class="chart-body" style="padding:0; flex:1; min-height:0;">
+              <div class="activity-table-wrapper">
+                <table id="exec-recent-activity" class="activity-table">
                   <thead>
                     <tr>
-                      <th>Tarih & Saat</th>
+                      <th>Tarih</th>
+                      <th>Saat</th>
                       <th>Kategori</th>
-                      <th>Kontrol Noktası</th>
+                      <th>Nokta</th>
                       <th>Değer</th>
                       <th>Kullanıcı</th>
                     </tr>
                   </thead>
                   <tbody id="exec-activity-tbody">
-                    <tr><td colspan="5" style="text-align:center; padding:40px; color:#999;">Veriler yükleniyor...</td></tr>
+                    <tr><td colspan="6" style="text-align:center; padding:24px; color:#999;">Veriler yükleniyor...</td></tr>
                   </tbody>
                 </table>
               </div>
