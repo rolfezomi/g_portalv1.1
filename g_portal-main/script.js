@@ -347,9 +347,7 @@ const ADMIN_EMAIL = 'ugur.onar@glohe.com';
 let realtimeChannel = null;
 let realtimeLogsChannel = null;
 let isRealtimeConnected = false;
-let connectionCheckInterval = null;
-let connectionAttempts = 0;
-const MAX_CONNECTION_ATTEMPTS = 5; // 10 saniye (2 sn x 5)
+let connectionCheckTimeout = null;
 
 /**
  * Real-time subscription başlat
@@ -366,8 +364,7 @@ function setupRealtimeSubscription() {
     realtimeLogsChannel = null;
   }
 
-  // Bağlantı kontrolünü başlat
-  startConnectionCheck();
+  console.log('🔌 Real-time subscription başlatılıyor...');
 
   // Measurements tablosunu dinle
   realtimeChannel = supabaseClient
@@ -380,18 +377,40 @@ function setupRealtimeSubscription() {
         table: 'measurements'
       },
       (payload) => {
-        console.log('Real-time güncelleme alındı:', payload);
+        console.log('✅ Real-time güncelleme alındı:', payload);
+
+        // İlk veri geldiğinde bağlantıyı aktif say
+        if (!isRealtimeConnected) {
+          isRealtimeConnected = true;
+          updateConnectionStatus();
+          console.log('🟢 Real-time bağlantı aktif (veri alındı)');
+        }
+
         handleRealtimeChange(payload);
       }
     )
     .subscribe((status) => {
-      console.log('Real-time subscription durumu:', status);
-      isRealtimeConnected = (status === 'SUBSCRIBED');
-      updateConnectionStatus();
+      console.log('📡 Real-time status:', status);
 
-      // Bağlantı başarılı olduğunda deneme sayacını sıfırla
+      // SUBSCRIBED durumunda 2 saniye sonra otomatik yeşil yap
       if (status === 'SUBSCRIBED') {
-        connectionAttempts = 0;
+        // Önceki timeout varsa temizle
+        if (connectionCheckTimeout) {
+          clearTimeout(connectionCheckTimeout);
+        }
+
+        // 2 saniye sonra bağlantıyı aktif say (veri gelmese bile)
+        connectionCheckTimeout = setTimeout(() => {
+          if (!isRealtimeConnected) {
+            console.log('🟢 2 saniye geçti - Bağlantı aktif kabul ediliyor');
+            isRealtimeConnected = true;
+            updateConnectionStatus();
+          }
+        }, 2000);
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('⚠️ Real-time bağlantı hatası:', status);
+        isRealtimeConnected = false;
+        updateConnectionStatus();
       }
     });
 
@@ -406,46 +425,13 @@ function setupRealtimeSubscription() {
         table: 'logs'
       },
       (payload) => {
-        console.log('Real-time log alındı:', payload);
+        console.log('📋 Real-time log alındı:', payload);
         handleRealtimeLogChange(payload);
       }
     )
     .subscribe((status) => {
-      console.log('Real-time logs subscription durumu:', status);
+      console.log('📋 Logs status:', status);
     });
-}
-
-/**
- * Bağlantı durumu kontrolünü başlat (2 saniyede bir)
- */
-function startConnectionCheck() {
-  // Önceki interval varsa temizle
-  if (connectionCheckInterval) {
-    clearInterval(connectionCheckInterval);
-  }
-
-  connectionAttempts = 0;
-
-  connectionCheckInterval = setInterval(() => {
-    if (!isRealtimeConnected) {
-      connectionAttempts++;
-      console.log(`🔄 Bağlantı kontrolü: Deneme ${connectionAttempts}/${MAX_CONNECTION_ATTEMPTS}`);
-
-      // Maksimum deneme sayısına ulaşıldı
-      if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
-        console.warn('⚠️ Real-time bağlantı kurulamadı. Yeniden deneniyor...');
-
-        // Yeniden bağlanmayı dene
-        setupRealtimeSubscription();
-      }
-    } else {
-      // Bağlantı başarılı, deneme sayacını sıfırla
-      if (connectionAttempts > 0) {
-        console.log('✅ Real-time bağlantı başarılı!');
-        connectionAttempts = 0;
-      }
-    }
-  }, 2000); // Her 2 saniyede bir kontrol
 }
 
 /**
@@ -620,10 +606,10 @@ function updateConnectionStatus() {
  * Real-time subscription'ı durdur
  */
 function stopRealtimeSubscription() {
-  // Interval'i temizle
-  if (connectionCheckInterval) {
-    clearInterval(connectionCheckInterval);
-    connectionCheckInterval = null;
+  // Timeout'u temizle
+  if (connectionCheckTimeout) {
+    clearTimeout(connectionCheckTimeout);
+    connectionCheckTimeout = null;
   }
 
   if (realtimeChannel) {
