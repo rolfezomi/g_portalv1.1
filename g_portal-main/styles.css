@@ -3541,6 +3541,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   border: 1px solid #f0f0f0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .exec-chart-card-compact {
@@ -3610,7 +3612,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-chart-body {
-  padding: 28px;
+  padding: 20px 24px;
 }
 
 /* 2 Column Layout */
@@ -3632,14 +3634,28 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .exec-category-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+
+/* Kategori ve Top Points kartları - Kompakt */
+.exec-two-column .exec-chart-card-modern {
+  max-height: fit-content;
+}
+
+.exec-two-column .exec-chart-header {
+  padding: 18px 20px 14px;
+}
+
+.exec-two-column .exec-chart-body {
+  padding: 14px 20px 18px;
+  flex: 0 1 auto;
 }
 
 .exec-category-item-modern {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: #f9fafb;
   border-radius: 10px;
   transition: all 0.2s ease;
@@ -3703,14 +3719,14 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .exec-top-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .exec-top-item-modern {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 12px 14px;
   background: #f9fafb;
   border-radius: 10px;
   transition: all 0.2s ease;
