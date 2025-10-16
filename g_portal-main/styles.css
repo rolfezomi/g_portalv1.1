@@ -3381,12 +3381,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .exec-kpi-card-modern {
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 28px 32px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .exec-kpi-card-modern::before {

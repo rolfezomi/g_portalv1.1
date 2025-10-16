@@ -3419,11 +3419,11 @@ function setupDashboardRealtime() {
       executiveDashboardCache.measurements = null;
       await updateExecutiveDashboard(true);
 
-      // Değişiklik bildirimi göster
+      // Değişiklik bildirimi göster (subtle)
       showDashboardChangeNotification();
 
-      // İlgili kartları highlight et
-      highlightChangedCards(payload.eventType);
+      // Kartları highlight YAPMA - Sadece KPI artış/azalış bildiriminde animasyon
+      // highlightChangedCards(payload.eventType); // DEVRE DIŞI
     })
     .subscribe((status) => {
       console.log('📡 Dashboard subscription status:', status);
