@@ -3856,3 +3856,25 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     gap: 16px;
   }
 }
+
+/* Dashboard Son Güncelleme Zamanı */
+#dashboard-last-update {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+#dashboard-last-update:hover {
+  opacity: 1;
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}

@@ -3324,12 +3324,6 @@ async function updateExecutiveDashboard(forceRefresh = false) {
     let measurements = executiveDashboardCache.measurements;
 
     if (forceRefresh || !measurements) {
-      // Son güncelleme zamanını göster
-      const lastUpdate = document.getElementById('dashboard-last-update');
-      if (lastUpdate) {
-        lastUpdate.textContent = 'Son güncelleme: ' + new Date().toLocaleString('tr-TR');
-      }
-
       // Tüm measurements verilerini çek
       const { data, error } = await supabaseClient
         .from('measurements')
@@ -3373,6 +3367,24 @@ async function updateExecutiveDashboard(forceRefresh = false) {
 
     // Son aktiviteleri göster
     updateRecentActivity(measurements);
+
+    // Son güncelleme zamanını güncelle (her başarılı güncelleme sonrası)
+    const lastUpdate = document.getElementById('dashboard-last-update');
+    if (lastUpdate) {
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const formattedTime = now.toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      lastUpdate.textContent = `Son güncelleme: ${formattedDate} ${formattedTime}`;
+      lastUpdate.style.opacity = '0.8';
+    }
 
   } catch (err) {
     console.error('Dashboard güncelleme hatası:', err);
