@@ -3044,3 +3044,33 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     height: 6px;
   }
 }
+
+/* =========================
+   ÜST YÖNETİM - EN ÇOK KONTROL EDİLEN NOKTALAR VE SON AKTİVİTELER YAN YANA
+   ========================= */
+
+/* En çok kontrol edilen noktalar kartı daha dar */
+.executive-top-points-card {
+  max-width: 420px;
+}
+
+/* Son aktiviteler compact kart */
+.executive-activity-card-compact {
+  flex: 1;
+  min-width: 0;
+}
+
+.executive-activity-card-compact .activity-table-wrapper {
+  max-height: 450px;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 1200px) {
+  .executive-charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .executive-top-points-card {
+    max-width: 100%;
+  }
+}

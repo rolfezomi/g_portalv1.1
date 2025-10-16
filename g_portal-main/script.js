@@ -3119,17 +3119,24 @@ function updateCategoryChart(measurements) {
   }).join('');
 }
 
-// Saatlik aktivite grafiği
+// Saatlik aktivite grafiği - Bugün 06:00-22:00
 function updateHourlyChart(measurements) {
   const ctx = document.getElementById('exec-hourly-chart');
   if (!ctx) return;
 
-  const hourlyData = Array(24).fill(0);
-  measurements.forEach(m => {
+  // Bugünün tarihini al
+  const today = new Date().toISOString().split('T')[0];
+
+  // Sadece bugünün verilerini filtrele
+  const todayMeasurements = measurements.filter(m => m.date === today);
+
+  // 06:00 - 22:00 arası saatler için veri hazırla
+  const hourlyData = Array(17).fill(0); // 6'dan 22'ye kadar 17 saat
+  todayMeasurements.forEach(m => {
     if (m.time) {
       const hour = parseInt(m.time.split(':')[0]);
-      if (hour >= 0 && hour < 24) {
-        hourlyData[hour]++;
+      if (hour >= 6 && hour <= 22) {
+        hourlyData[hour - 6]++;
       }
     }
   });
@@ -3141,7 +3148,7 @@ function updateHourlyChart(measurements) {
   executiveCharts.hourly = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: Array.from({length: 24}, (_, i) => i + ':00'),
+      labels: Array.from({length: 17}, (_, i) => (i + 6) + ':00'),
       datasets: [{
         label: 'Ölçüm Sayısı',
         data: hourlyData,
