@@ -3830,54 +3830,80 @@ function updateRecentActivity(measurements) {
 }
 
 // Executive menu'yu göster/gizle (desktop + mobile)
-// Executive rolü için SADECE Dashboard ve Trend Analizi menüsü göster
+// SADECE Executive rolü için kısıtlı menü (Admin tüm menüleri görür)
 function showExecutiveMenu() {
-  // Tüm menü öğelerini gizle
-  const allMenuItems = document.querySelectorAll('.menu ul li');
-  allMenuItems.forEach(item => {
-    item.style.display = 'none';
-  });
-
-  // Sadece Trend Analizi ve Dashboard'u göster
-  const trendMenuItem = document.querySelector('[data-section-link="trends"]')?.closest('li');
+  // Dashboard menüsünü her zaman göster
   const dashboardMenuItem = document.getElementById('executive-dashboard-menu');
-
-  if (trendMenuItem) {
-    trendMenuItem.style.display = 'block';
-  }
   if (dashboardMenuItem) {
     dashboardMenuItem.style.display = 'block';
   }
 
-  // Mobile tabs için
-  const mobileTabs = document.getElementById('mobile-tabs');
-  if (mobileTabs) {
-    // Tüm mobile tabs'ı gizle
-    const allTabs = mobileTabs.querySelectorAll('.tab');
-    allTabs.forEach(tab => {
-      tab.style.display = 'none';
+  // Eğer kullanıcı SADECE executive ise (admin değilse) menüleri kısıtla
+  if (currentUserRole === 'executive') {
+    // Tüm menü öğelerini gizle
+    const allMenuItems = document.querySelectorAll('.menu ul li');
+    allMenuItems.forEach(item => {
+      item.style.display = 'none';
     });
 
-    // Dashboard tab'ı ekle (yoksa)
-    let dashboardTab = mobileTabs.querySelector('[data-section="executive-dashboard"]');
-    if (!dashboardTab) {
-      dashboardTab = document.createElement('button');
-      dashboardTab.type = 'button';
-      dashboardTab.className = 'tab';
-      dashboardTab.setAttribute('data-section', 'executive-dashboard');
-      dashboardTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Dashboard</span>';
-      dashboardTab.onclick = () => {
-        showSection('executive-dashboard');
-        activateMobileTab('executive-dashboard');
-      };
-      mobileTabs.appendChild(dashboardTab);
-    }
-    dashboardTab.style.display = 'flex';
+    // Sadece Trend Analizi ve Dashboard'u göster
+    const trendMenuItem = document.querySelector('[data-section-link="trends"]')?.closest('li');
 
-    // Trend Analizi tab'ı göster (varsa)
-    const trendsTab = mobileTabs.querySelector('[data-section="trends"]');
-    if (trendsTab) {
-      trendsTab.style.display = 'flex';
+    if (trendMenuItem) {
+      trendMenuItem.style.display = 'block';
+    }
+    if (dashboardMenuItem) {
+      dashboardMenuItem.style.display = 'block';
+    }
+
+    // Mobile tabs için kısıtlama
+    const mobileTabs = document.getElementById('mobile-tabs');
+    if (mobileTabs) {
+      // Tüm mobile tabs'ı gizle
+      const allTabs = mobileTabs.querySelectorAll('.tab');
+      allTabs.forEach(tab => {
+        tab.style.display = 'none';
+      });
+
+      // Dashboard tab'ı ekle (yoksa)
+      let dashboardTab = mobileTabs.querySelector('[data-section="executive-dashboard"]');
+      if (!dashboardTab) {
+        dashboardTab = document.createElement('button');
+        dashboardTab.type = 'button';
+        dashboardTab.className = 'tab';
+        dashboardTab.setAttribute('data-section', 'executive-dashboard');
+        dashboardTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Dashboard</span>';
+        dashboardTab.onclick = () => {
+          showSection('executive-dashboard');
+          activateMobileTab('executive-dashboard');
+        };
+        mobileTabs.appendChild(dashboardTab);
+      }
+      dashboardTab.style.display = 'flex';
+
+      // Trend Analizi tab'ı göster (varsa)
+      const trendsTab = mobileTabs.querySelector('[data-section="trends"]');
+      if (trendsTab) {
+        trendsTab.style.display = 'flex';
+      }
+    }
+  } else {
+    // Admin veya diğer roller için mobile tabs'a dashboard ekle (kısıtlama YOK)
+    const mobileTabs = document.getElementById('mobile-tabs');
+    if (mobileTabs) {
+      const existingTab = mobileTabs.querySelector('[data-section="executive-dashboard"]');
+      if (!existingTab) {
+        const dashboardTab = document.createElement('button');
+        dashboardTab.type = 'button';
+        dashboardTab.className = 'tab';
+        dashboardTab.setAttribute('data-section', 'executive-dashboard');
+        dashboardTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Dashboard</span>';
+        dashboardTab.onclick = () => {
+          showSection('executive-dashboard');
+          activateMobileTab('executive-dashboard');
+        };
+        mobileTabs.appendChild(dashboardTab);
+      }
     }
   }
 }
