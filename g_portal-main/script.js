@@ -3545,6 +3545,10 @@ function updateExecutiveKPIs(measurements, logs) {
 
   document.getElementById('exec-today-measurements').textContent = todayCount.toLocaleString('tr-TR');
 
+  // LocalStorage'dan önceki değeri al
+  const storageKey = `kpi_today_${today}`;
+  const lastKnownCount = parseInt(localStorage.getItem(storageKey) || '0');
+
   // Trend göstergesini güncelle (sadece değişiklik varsa) - PROFESYONEL BADGE
   if (diff !== 0 && yesterdayCount > 0) {
     const percentage = Math.abs(Math.round((diff / yesterdayCount) * 100));
@@ -3563,9 +3567,14 @@ function updateExecutiveKPIs(measurements, logs) {
       border-radius: 12px;
     `;
 
-    // Tek seferlik bildirim (sadece artış varsa)
-    if (diff > 0) {
-      showKPIChangeNotification('Bugünkü Ölçümler', `+${diff} artış`, percentage);
+    // Tek seferlik bildirim - SADECE GERÇEK DEĞİŞİM VARSA
+    if (todayCount !== lastKnownCount && Math.abs(todayCount - lastKnownCount) >= 1) {
+      if (todayCount > lastKnownCount) {
+        const realDiff = todayCount - lastKnownCount;
+        showKPIChangeNotification('Bugünkü Ölçümler', `+${realDiff} artış`, percentage);
+      }
+      // Değeri güncelle
+      localStorage.setItem(storageKey, todayCount.toString());
     }
   } else if (yesterdayCount === 0 && todayCount > 0) {
     trendElement.innerHTML = '▲ Yeni';
@@ -3577,9 +3586,19 @@ function updateExecutiveKPIs(measurements, logs) {
       padding: 6px 12px;
       border-radius: 12px;
     `;
+
+    // İlk kez ölçüm varsa kaydet
+    if (todayCount !== lastKnownCount) {
+      localStorage.setItem(storageKey, todayCount.toString());
+    }
   } else {
     trendElement.textContent = 'Bugün';
     trendElement.style.cssText = '';
+
+    // Değer varsa güncelle
+    if (todayCount > 0 && todayCount !== lastKnownCount) {
+      localStorage.setItem(storageKey, todayCount.toString());
+    }
   }
 
   // Ortalama günlük ölçüm (son 30 gün)
@@ -4048,7 +4067,9 @@ function updateWeeklyChart(measurements) {
           }
         },
         y: {
-          beginAtZero: true,
+          beginAtZero: false,
+          suggestedMin: 0,
+          suggestedMax: Math.max(...weeklyData) + 2,
           ticks: {
             precision: 0,
             font: {

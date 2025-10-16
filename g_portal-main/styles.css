@@ -3366,6 +3366,31 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .fullscreen-kiosk-mode .content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
+
+/* Tam Ekran Mod: Grafikler Yan Yana + Son Aktiviteler Gizli */
+.dashboard-fullscreen .exec-main-chart-container,
+.dashboard-fullscreen .exec-column-right {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.dashboard-fullscreen .exec-main-chart-container {
+  width: calc(60% - 12px);
+  margin-right: 24px;
+}
+
+.dashboard-fullscreen .exec-column-right {
+  width: calc(40% - 12px);
+}
+
+.dashboard-fullscreen .exec-two-column {
+  display: none !important;
+}
+
+.dashboard-fullscreen .exec-activity-container {
+  display: none !important;
+}
+
 /* ==============================================
    MODERN EXECUTIVE DASHBOARD - PROFESYONEL TASARIM
    ============================================== */
@@ -3381,8 +3406,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .exec-kpi-card-modern {
   background: #fff;
   border-radius: 16px;
-  padding: 28px 32px;
-  min-height: 180px;
+  padding: 32px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -3431,14 +3456,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-kpi-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
   color: #667eea;
+  font-size: 24px;
 }
 
 .exec-kpi-value {
@@ -3661,14 +3687,14 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .exec-top-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .exec-top-item-modern {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 14px;
+  padding: 14px 16px;
   background: #f9fafb;
   border-radius: 10px;
   transition: all 0.2s ease;
