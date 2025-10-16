@@ -4125,7 +4125,7 @@ function handleFullscreenChange() {
 function enterFullscreenMode() {
   if (isFullscreenMode) return;
 
-  console.log('🖥️ Fullscreen mode: ENTERING');
+  console.log('🖥️ Fullscreen mode: ENTERING - Modern Dashboard');
   isFullscreenMode = true;
 
   const portalScreen = document.getElementById('portal-screen');
@@ -4134,8 +4134,9 @@ function enterFullscreenMode() {
   const header = document.querySelector('.header');
   const menu = document.querySelector('.menu');
   const mobileTabs = document.querySelector('.mobile-tabs');
+  const toolbar = dashboard?.querySelector('.toolbar');
 
-  // 1. HEADER VE MENU GİZLE (INLINE STYLES)
+  // 1. HEADER VE MENU GİZLE
   if (header) {
     header.style.cssText = 'opacity: 0; transform: translateY(-100%); transition: all 0.5s ease; pointer-events: none;';
   }
@@ -4145,39 +4146,37 @@ function enterFullscreenMode() {
   if (mobileTabs) {
     mobileTabs.style.cssText = 'opacity: 0; transform: translateY(100%); transition: all 0.5s ease; pointer-events: none;';
   }
+  if (toolbar) {
+    toolbar.style.cssText = 'opacity: 0; height: 0; overflow: hidden; transition: all 0.3s ease;';
+  }
 
-  // 2. CONTENT AREA FULLSCREEN LAYOUT
+  // 2. CONTENT AREA FULLSCREEN
   if (content) {
     content.style.cssText = `
       margin-left: 0 !important;
       margin-top: 0 !important;
-      padding: 20px !important;
+      padding: 24px !important;
       width: 100vw !important;
       height: 100vh !important;
       max-height: 100vh !important;
       overflow: hidden !important;
-      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     `;
   }
 
   // 3. PORTAL SCREEN ARKA PLAN
   if (portalScreen) {
     portalScreen.style.cssText = `
-      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     `;
   }
 
-  // 4. DASHBOARD CONTAINER - DİNAMİK VIEWPORT HESAPLAMA
+  // 4. MODERN DASHBOARD - DİNAMİK VIEWPORT HESAPLAMA
   const vh = window.innerHeight;
   const vw = window.innerWidth;
 
-  // Kaç satır var?
-  const chartsRows = document.querySelectorAll('.executive-charts-row');
-  const totalRows = chartsRows.length + 1; // +1 KPI grid için
-
-  // Dinamik gap hesapla (viewport'a göre)
-  const gap = Math.max(8, Math.floor(vh * 0.01)); // Min 8px, max vh * 1%
-  const padding = 20;
+  const gap = Math.max(12, Math.floor(vh * 0.015));
+  const padding = 24;
 
   if (dashboard) {
     dashboard.style.cssText = `
@@ -4186,12 +4185,13 @@ function enterFullscreenMode() {
       display: flex;
       flex-direction: column;
       gap: ${gap}px;
+      padding-top: 0 !important;
     `;
   }
 
-  // 5. KPI GRİD - SABİT YÜKSEK, KOMPAKT
-  const kpiGrid = document.querySelector('.executive-kpi-grid');
-  const kpiHeight = Math.min(100, vh * 0.12); // Max 100px veya vh * 12%
+  // 5. MODERN KPI GRID
+  const kpiGrid = document.querySelector('.exec-kpi-modern');
+  const kpiHeight = Math.min(110, vh * 0.13);
 
   if (kpiGrid) {
     kpiGrid.style.cssText = `
@@ -4200,244 +4200,191 @@ function enterFullscreenMode() {
       gap: ${gap}px;
       height: ${kpiHeight}px;
       flex-shrink: 0;
-    `;
-  }
-
-  // 6. CHARTS ROW - DİNAMİK YÜKSEK HESAPLA
-  // Kalan alan = vh - (padding * 2) - (KPI height) - (gaps)
-  const availableHeight = vh - (padding * 2) - kpiHeight - (gap * totalRows);
-  const rowHeight = availableHeight / chartsRows.length;
-
-  chartsRows.forEach((row, rowIndex) => {
-    const isFullWidth = row.classList.contains('executive-charts-row-full');
-
-    if (isFullWidth) {
-      // Haftalık Özet - Tam genişlik, kısa yükseklik
-      row.style.cssText = `
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: ${gap}px;
-        height: ${rowHeight * 0.8}px;
-        flex-shrink: 0;
-      `;
-    } else if (rowIndex === chartsRows.length - 1) {
-      // Son satır: En Çok Kontrol + Aktiviteler
-      const leftColumnWidth = Math.min(350, vw * 0.25); // Max 350px veya vw * 25%
-      row.style.cssText = `
-        display: grid;
-        grid-template-columns: ${leftColumnWidth}px 1fr;
-        gap: ${gap}px;
-        height: ${rowHeight}px;
-        flex-shrink: 0;
-        overflow: hidden;
-      `;
-    } else {
-      // Diğer satırlar: 2 sütun
-      row.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: ${gap}px;
-        height: ${rowHeight}px;
-        flex-shrink: 0;
-      `;
-    }
-  });
-
-  // 7. CHART CARDLARI - TAM YÜKSEK KULLAN
-  const chartCards = document.querySelectorAll('.executive-chart-card');
-  chartCards.forEach(card => {
-    card.style.cssText = `
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
+      margin-bottom: ${gap}px;
     `;
 
-    // Chart header
-    const chartHeader = card.querySelector('.chart-header');
-    if (chartHeader) {
-      chartHeader.style.cssText = `
-        flex-shrink: 0;
-        padding: 14px 18px;
-      `;
-    }
+    // KPI kartlarını kompakt yap
+    const kpiCards = kpiGrid.querySelectorAll('.exec-kpi-card-modern');
+    kpiCards.forEach(card => {
+      card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
 
-    // Chart body flex yaparak tüm alanı kapla
-    const chartBody = card.querySelector('.chart-body');
-    if (chartBody) {
-      chartBody.style.cssText = `
-        flex: 1;
-        min-height: 0;
-        padding: 12px 16px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-      `;
-    }
+      const kpiValue = card.querySelector('.exec-kpi-value');
+      if (kpiValue) kpiValue.style.fontSize = '36px';
 
-    // Canvas'a max-height ekle
-    const canvas = card.querySelector('canvas');
-    if (canvas) {
-      canvas.style.cssText = `
-        max-height: 100%;
-        max-width: 100%;
-        width: auto !important;
-        height: auto !important;
-      `;
-    }
-  });
-
-  // 8. EN ÇOK KONTROL EDİLEN NOKTALAR - SCROLL
-  const topPointsCard = document.querySelector('.executive-top-points-card');
-  if (topPointsCard) {
-    topPointsCard.style.cssText = `
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-    `;
-
-    const topPointsHeader = topPointsCard.querySelector('.chart-header');
-    if (topPointsHeader) {
-      topPointsHeader.style.cssText = `
-        flex-shrink: 0;
-        padding: 14px 18px;
-      `;
-    }
-
-    const topPointsBody = topPointsCard.querySelector('.chart-body');
-    if (topPointsBody) {
-      topPointsBody.style.cssText = `
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        padding: 8px;
-      `;
-    }
-  }
-
-  // 9. AKTİVİTELER TABLOSU - SCROLL
-  const activityCard = document.querySelector('.executive-activity-card-compact');
-  if (activityCard) {
-    activityCard.style.cssText = `
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-    `;
-
-    const activityHeader = activityCard.querySelector('.chart-header');
-    if (activityHeader) {
-      activityHeader.style.cssText = `
-        flex-shrink: 0;
-        padding: 14px 18px;
-      `;
-    }
-
-    const activityBody = activityCard.querySelector('.chart-body');
-    if (activityBody) {
-      activityBody.style.cssText = `
-        flex: 1;
-        min-height: 0;
-        padding: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      `;
-    }
-  }
-
-  const activityWrapper = document.querySelector('.activity-table-wrapper');
-  if (activityWrapper) {
-    activityWrapper.style.cssText = `
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      min-height: 0;
-    `;
-  }
-
-  // Aktivite tablosuna kompakt stil
-  const activityTable = document.querySelector('.activity-table');
-  if (activityTable) {
-    activityTable.style.cssText = `
-      width: 100%;
-      font-size: 12px;
-    `;
-
-    // Tablo satırlarını daha kompakt yap
-    const activityRows = activityTable.querySelectorAll('tbody tr');
-    activityRows.forEach(row => {
-      row.style.height = '32px';
-      const cells = row.querySelectorAll('td');
-      cells.forEach(cell => {
-        cell.style.padding = '6px 10px';
-      });
+      const kpiLabel = card.querySelector('.exec-kpi-label');
+      if (kpiLabel) kpiLabel.style.fontSize = '11px';
     });
   }
 
-  // 10. KPI KARTLARI - KOMPAKT VE OKUNAKLI
-  const kpiCards = document.querySelectorAll('.executive-kpi-card');
-  kpiCards.forEach(card => {
-    const value = card.querySelector('.kpi-value');
-    const label = card.querySelector('.kpi-label');
-    const trend = card.querySelector('.kpi-trend');
+  // 6. MAIN CHART CONTAINER (Haftalık Özet)
+  const mainChartContainer = document.querySelector('.exec-main-chart-container');
+  const mainChartHeight = Math.min(180, vh * 0.22);
 
-    // Font boyutlarını viewport'a göre ayarla
-    const valueFontSize = Math.min(32, kpiHeight * 0.4);
-    const labelFontSize = Math.min(12, kpiHeight * 0.14);
-
-    if (value) value.style.fontSize = valueFontSize + 'px';
-    if (label) label.style.fontSize = labelFontSize + 'px';
-    if (trend) trend.style.fontSize = (labelFontSize - 1) + 'px';
-
-    card.style.cssText = `
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      height: 100%;
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
+  if (mainChartContainer) {
+    mainChartContainer.style.cssText = `
+      height: ${mainChartHeight}px;
+      flex-shrink: 0;
+      margin-bottom: ${gap}px;
     `;
-  });
 
-  // 11. KARTLARIN GÖRÜNMESİ - STAGGER ANİMASYON
+    const mainCard = mainChartContainer.querySelector('.exec-chart-card-modern');
+    if (mainCard) {
+      mainCard.style.cssText = `
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      `;
+
+      const chartBody = mainCard.querySelector('.exec-chart-body');
+      if (chartBody) {
+        chartBody.style.cssText = `
+          flex: 1;
+          min-height: 0;
+          padding: 20px 28px;
+        `;
+      }
+    }
+  }
+
+  // 7. TWO COLUMN LAYOUT
+  const twoColumn = document.querySelector('.exec-two-column');
+  const twoColumnHeight = vh - padding - kpiHeight - mainChartHeight - (gap * 4) - 200;
+
+  if (twoColumn) {
+    twoColumn.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: ${gap}px;
+      height: ${twoColumnHeight}px;
+      flex-shrink: 0;
+      margin-bottom: ${gap}px;
+    `;
+
+    // Sol sütun kartları
+    const leftColumn = twoColumn.querySelector('.exec-column-left');
+    if (leftColumn) {
+      leftColumn.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      `;
+
+      const categoryCard = leftColumn.querySelector('.exec-chart-card-modern');
+      if (categoryCard) {
+        categoryCard.style.cssText = `
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        `;
+
+        const categoryBody = categoryCard.querySelector('.exec-chart-body');
+        if (categoryBody) {
+          categoryBody.style.cssText = `
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+          `;
+        }
+      }
+    }
+
+    // Sağ sütun kartları
+    const rightColumn = twoColumn.querySelector('.exec-column-right');
+    if (rightColumn) {
+      rightColumn.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: ${gap}px;
+        height: 100%;
+      `;
+
+      const topCard = rightColumn.querySelector('.exec-chart-card-modern:not(.exec-mini-card)');
+      if (topCard) {
+        topCard.style.cssText = `
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        `;
+
+        const topBody = topCard.querySelector('.exec-chart-body');
+        if (topBody) {
+          topBody.style.cssText = `
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+          `;
+        }
+      }
+
+      const miniCard = rightColumn.querySelector('.exec-mini-card');
+      if (miniCard) {
+        miniCard.style.cssText = `
+          height: ${Math.min(160, twoColumnHeight * 0.35)}px;
+          flex-shrink: 0;
+        `;
+      }
+    }
+  }
+
+  // 8. ACTIVITY CONTAINER
+  const activityContainer = document.querySelector('.exec-activity-container');
+  const activityHeight = Math.min(180, vh * 0.2);
+
+  if (activityContainer) {
+    activityContainer.style.cssText = `
+      height: ${activityHeight}px;
+      flex-shrink: 0;
+      overflow: hidden;
+    `;
+
+    const activityCard = activityContainer.querySelector('.exec-chart-card-modern');
+    if (activityCard) {
+      activityCard.style.cssText = `
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      `;
+
+      const tableWrapper = activityCard.querySelector('.exec-table-wrapper');
+      if (tableWrapper) {
+        tableWrapper.style.cssText = `
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+        `;
+      }
+
+      const activityTable = activityCard.querySelector('.exec-table-modern');
+      if (activityTable) {
+        activityTable.style.fontSize = '12px';
+
+        const rows = activityTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+          row.style.height = '28px';
+          const cells = row.querySelectorAll('td');
+          cells.forEach(cell => {
+            cell.style.padding = '6px 12px';
+          });
+        });
+      }
+    }
+  }
+
+  // 9. ANİMASYONLARI BAŞLAT
   setTimeout(() => animateCardsEntry(), 100);
 
-  // Otomatik yenileme başlat (30 saniyede bir)
+  // 10. OTOMATİK YENİLEME BAŞLAT
   startFullscreenAutoRefresh();
-
-  console.log('✅ Fullscreen mode aktif - Kiosk presentation başlatıldı');
 }
 
-/**
- * Fullscreen modundan çıkış (ESC basıldığında)
- */
 function exitFullscreenMode() {
   if (!isFullscreenMode) return;
 
-  console.log('🖥️ Fullscreen mode: EXITING');
+  console.log('🖥️ Fullscreen mode: EXITING - Modern Dashboard');
   isFullscreenMode = false;
 
   const portalScreen = document.getElementById('portal-screen');
@@ -4446,13 +4393,14 @@ function exitFullscreenMode() {
   const header = document.querySelector('.header');
   const menu = document.querySelector('.menu');
   const mobileTabs = document.querySelector('.mobile-tabs');
+  const toolbar = dashboard?.querySelector('.toolbar');
 
-  // 1. TÜM INLINE STYLE'LARI TEMİZLE
+  // 1. TÜM ANA KONTEYNER STYLE'LARI TEMİZLE
   if (portalScreen) portalScreen.style.cssText = '';
   if (content) content.style.cssText = '';
   if (dashboard) dashboard.style.cssText = '';
 
-  // 2. HEADER VE MENU GERİ GETİR
+  // 2. HEADER, MENU VE TOOLBAR GERİ GETİR
   if (header) {
     header.style.cssText = 'opacity: 1; transform: translateY(0); transition: all 0.5s ease; pointer-events: auto;';
     setTimeout(() => { header.style.cssText = ''; }, 500);
@@ -4465,58 +4413,129 @@ function exitFullscreenMode() {
     mobileTabs.style.cssText = 'opacity: 1; transform: translateY(0); transition: all 0.5s ease; pointer-events: auto;';
     setTimeout(() => { mobileTabs.style.cssText = ''; }, 500);
   }
+  if (toolbar) {
+    toolbar.style.cssText = 'opacity: 1; height: auto; overflow: visible; transition: all 0.3s ease;';
+    setTimeout(() => { toolbar.style.cssText = ''; }, 300);
+  }
 
-  // 3. KPI VE CHART KARTLARINI SIFIRLA
-  const kpiCards = document.querySelectorAll('.executive-kpi-card');
-  kpiCards.forEach(card => {
-    card.style.cssText = '';
-    const value = card.querySelector('.kpi-value');
-    const label = card.querySelector('.kpi-label');
-    if (value) value.style.fontSize = '';
-    if (label) label.style.fontSize = '';
-  });
+  // 3. MODERN KPI GRID SIFIRLA
+  const kpiGrid = document.querySelector('.exec-kpi-modern');
+  if (kpiGrid) {
+    kpiGrid.style.cssText = '';
 
-  const chartCards = document.querySelectorAll('.executive-chart-card');
-  chartCards.forEach(card => {
-    card.style.cssText = '';
-  });
+    const kpiCards = kpiGrid.querySelectorAll('.exec-kpi-card-modern');
+    kpiCards.forEach(card => {
+      card.style.cssText = '';
 
-  // 4. GRID VE ROWS SIFIRLA
-  const kpiGrid = document.querySelector('.executive-kpi-grid');
-  if (kpiGrid) kpiGrid.style.cssText = '';
+      const kpiValue = card.querySelector('.exec-kpi-value');
+      if (kpiValue) kpiValue.style.fontSize = '';
 
-  const chartsRows = document.querySelectorAll('.executive-charts-row');
-  chartsRows.forEach(row => {
-    row.style.cssText = '';
-  });
+      const kpiLabel = card.querySelector('.exec-kpi-label');
+      if (kpiLabel) kpiLabel.style.fontSize = '';
+    });
+  }
 
-  const activityWrapper = document.querySelector('.activity-table-wrapper');
-  if (activityWrapper) activityWrapper.style.cssText = '';
+  // 4. MAIN CHART CONTAINER SIFIRLA
+  const mainChartContainer = document.querySelector('.exec-main-chart-container');
+  if (mainChartContainer) {
+    mainChartContainer.style.cssText = '';
 
-  // 5. KARTLARIN OPACITY'SİNİ SIFIRLA (animasyon için kullanılmışsa)
-  const allCards = document.querySelectorAll('.executive-kpi-card, .executive-chart-card');
-  allCards.forEach(card => {
+    const mainCard = mainChartContainer.querySelector('.exec-chart-card-modern');
+    if (mainCard) {
+      mainCard.style.cssText = '';
+
+      const chartBody = mainCard.querySelector('.exec-chart-body');
+      if (chartBody) chartBody.style.cssText = '';
+    }
+  }
+
+  // 5. TWO COLUMN LAYOUT SIFIRLA
+  const twoColumn = document.querySelector('.exec-two-column');
+  if (twoColumn) {
+    twoColumn.style.cssText = '';
+
+    const leftColumn = twoColumn.querySelector('.exec-column-left');
+    if (leftColumn) {
+      leftColumn.style.cssText = '';
+
+      const categoryCard = leftColumn.querySelector('.exec-chart-card-modern');
+      if (categoryCard) {
+        categoryCard.style.cssText = '';
+
+        const categoryBody = categoryCard.querySelector('.exec-chart-body');
+        if (categoryBody) categoryBody.style.cssText = '';
+      }
+    }
+
+    const rightColumn = twoColumn.querySelector('.exec-column-right');
+    if (rightColumn) {
+      rightColumn.style.cssText = '';
+
+      const topCard = rightColumn.querySelector('.exec-chart-card-modern:not(.exec-mini-card)');
+      if (topCard) {
+        topCard.style.cssText = '';
+
+        const topBody = topCard.querySelector('.exec-chart-body');
+        if (topBody) topBody.style.cssText = '';
+      }
+
+      const miniCard = rightColumn.querySelector('.exec-mini-card');
+      if (miniCard) miniCard.style.cssText = '';
+    }
+  }
+
+  // 6. ACTIVITY CONTAINER SIFIRLA
+  const activityContainer = document.querySelector('.exec-activity-container');
+  if (activityContainer) {
+    activityContainer.style.cssText = '';
+
+    const activityCard = activityContainer.querySelector('.exec-chart-card-modern');
+    if (activityCard) {
+      activityCard.style.cssText = '';
+
+      const tableWrapper = activityCard.querySelector('.exec-table-wrapper');
+      if (tableWrapper) tableWrapper.style.cssText = '';
+
+      const activityTable = activityCard.querySelector('.exec-table-modern');
+      if (activityTable) {
+        activityTable.style.fontSize = '';
+
+        const rows = activityTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+          row.style.cssText = '';
+          const cells = row.querySelectorAll('td');
+          cells.forEach(cell => {
+            cell.style.cssText = '';
+          });
+        });
+      }
+    }
+  }
+
+  // 7. TÜM MODERN KARTLARIN ANİMASYON STYLE'LARINI TEMİZLE
+  const allModernCards = document.querySelectorAll('.exec-kpi-card-modern, .exec-chart-card-modern');
+  allModernCards.forEach(card => {
     card.style.opacity = '';
     card.style.transform = '';
     card.style.transition = '';
   });
 
-  // Otomatik yenilemeyi durdur
+  // 8. OTOMATİK YENİLEMEYİ DURDUR
   stopFullscreenAutoRefresh();
 
-  console.log('✅ Normal desktop mode');
+  console.log('✅ Normal desktop mode - Modern Dashboard restored');
 }
 
 /**
- * Kartların sırayla animasyonlu girişi
+ * Kartların sırayla animasyonlu girişi - Modern Dashboard
  */
 function animateCardsEntry() {
-  const kpiCards = document.querySelectorAll('#page-executive-dashboard .executive-kpi-card');
-  const chartCards = document.querySelectorAll('#page-executive-dashboard .executive-chart-card');
+  const kpiCards = document.querySelectorAll('#page-executive-dashboard .exec-kpi-card-modern');
+  const chartCards = document.querySelectorAll('#page-executive-dashboard .exec-chart-card-modern');
 
-  console.log(`🎬 Animasyon başlıyor: ${kpiCards.length} KPI + ${chartCards.length} Chart kartı`);
+  console.log(`🎬 Animasyon başlıyor (Modern): ${kpiCards.length} KPI + ${chartCards.length} Chart kartı`);
 
-  // KPI kartları önce (0-3)
+  // Modern KPI kartları önce (0-3)
   kpiCards.forEach((card, index) => {
     // Başlangıç durumu
     card.style.opacity = '0';
@@ -4531,11 +4550,11 @@ function animateCardsEntry() {
       card.style.transition = 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
       card.style.opacity = '1';
       card.style.transform = 'translateY(0) scale(1)';
-      console.log(`✅ KPI ${index + 1} animasyon başladı`);
+      console.log(`✅ Modern KPI ${index + 1} animasyon başladı`);
     }, index * 150);
   });
 
-  // Grafik kartları sonra (daha geç başla)
+  // Modern grafik kartları sonra (daha geç başla)
   chartCards.forEach((card, index) => {
     // Başlangıç durumu
     card.style.opacity = '0';
@@ -4550,22 +4569,22 @@ function animateCardsEntry() {
       card.style.transition = 'all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1)';
       card.style.opacity = '1';
       card.style.transform = 'translateY(0) scale(1)';
-      console.log(`📊 Chart ${index + 1} animasyon başladı`);
+      console.log(`📊 Modern Chart ${index + 1} animasyon başladı`);
     }, 500 + index * 180); // KPI'lardan sonra başla
   });
 }
 
 /**
- * Grafik güncellendiğinde highlight animasyonu
+ * Grafik güncellendiğinde highlight animasyonu - Modern Dashboard
  */
 function highlightUpdatedChart(chartId) {
-  const chartCard = document.querySelector(`#${chartId}`)?.closest('.executive-chart-card, .executive-kpi-card');
+  const chartCard = document.querySelector(`#${chartId}`)?.closest('.exec-chart-card-modern, .exec-kpi-card-modern');
   if (!chartCard) {
-    console.warn(`⚠️ Chart card bulunamadı: ${chartId}`);
+    console.warn(`⚠️ Modern chart card bulunamadı: ${chartId}`);
     return;
   }
 
-  console.log(`📊 Chart güncelleniyor: ${chartId}`);
+  console.log(`📊 Modern chart güncelleniyor: ${chartId}`);
 
   // 1. PULSE ANIMASYONU (inline keyframe)
   const originalBoxShadow = chartCard.style.boxShadow || '';
