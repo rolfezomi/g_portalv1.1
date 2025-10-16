@@ -110,6 +110,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (currentUserRole === 'admin') {
       showFullAccessMenu(); // Trend Analizi
       showAdminMenu(); // Logs + User Management
+      showExecutiveMenu(); // Üst Yönetim Dashboard
     } else if (currentUserRole === 'full') {
       showFullAccessMenu(); // Sadece Trend Analizi
     } else if (currentUserRole === 'executive') {
@@ -192,6 +193,7 @@ if (loginForm) {
       if (currentUserRole === 'admin') {
         showFullAccessMenu(); // Trend Analizi
         showAdminMenu(); // Logs + User Management
+        showExecutiveMenu(); // Üst Yönetim Dashboard
       } else if (currentUserRole === 'full') {
         showFullAccessMenu(); // Sadece Trend Analizi
       } else if (currentUserRole === 'executive') {
