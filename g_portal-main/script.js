@@ -411,46 +411,53 @@ function handleRealtimeChange(payload) {
   const { eventType, new: newRecord, old: oldRecord } = payload;
 
   if (eventType === 'INSERT') {
-    console.log('Yeni kayıt eklendi:', newRecord);
+    console.log('✅ REAL-TIME: Yeni ölçüm eklendi -', newRecord.category, newRecord.point, newRecord.value);
+
     // Cache'e ekle
     cachedRecords.unshift(newRecord);
-    // Son kayıtları güncelle
+
+    // Tüm ilgili görünümleri güncelle
     updateRecentRecordsDisplay();
-    // Aktif section'a göre güncelle
+
     if (currentSection === 'home') {
       refreshHomepage();
     } else if (currentSection === newRecord.category) {
       refreshCurrentSection();
-    }
-    // Executive dashboard güncelle
-    if (currentSection === 'executive-dashboard') {
+    } else if (currentSection === 'executive-dashboard') {
       refreshExecutiveDashboard();
     }
-    // Trend analizi güncelle
+
+    // Trend analizi her zaman güncelle
     updateTrendFromStorage();
 
   } else if (eventType === 'UPDATE') {
-    console.log('Kayıt güncellendi:', newRecord);
+    console.log('🔄 REAL-TIME: Kayıt güncellendi -', newRecord.id);
+
     // Cache'i güncelle
     const index = cachedRecords.findIndex(r => r.id === newRecord.id);
     if (index !== -1) {
       cachedRecords[index] = newRecord;
     }
-    // İlgili görünümleri güncelle
+
+    // Tüm görünümleri yenile
     refreshCurrentSection();
     updateTrendFromStorage();
+
     if (currentSection === 'executive-dashboard') {
       refreshExecutiveDashboard();
     }
 
   } else if (eventType === 'DELETE') {
-    console.log('Kayıt silindi:', oldRecord);
+    console.log('❌ REAL-TIME: Kayıt silindi -', oldRecord.id);
+
     // Cache'den kaldır
     cachedRecords = cachedRecords.filter(r => r.id !== oldRecord.id);
-    // İlgili görünümleri güncelle
+
+    // Tüm görünümleri yenile
     refreshCurrentSection();
     updateRecentRecordsDisplay();
     updateTrendFromStorage();
+
     if (currentSection === 'executive-dashboard') {
       refreshExecutiveDashboard();
     }
@@ -607,16 +614,22 @@ window.addEventListener('DOMContentLoaded', async () => {
       showFullAccessMenu(); // Trend Analizi
       showAdminMenu(); // Logs + User Management
       showExecutiveMenu(); // Üst Yönetim Dashboard
+      showHomepage();
+      await loadRecent();
+      updateTrendFromStorage();
     } else if (currentUserRole === 'full') {
       showFullAccessMenu(); // Sadece Trend Analizi
+      showHomepage();
+      await loadRecent();
+      updateTrendFromStorage();
     } else if (currentUserRole === 'executive') {
-      showFullAccessMenu(); // Trend Analizi
-      showExecutiveMenu(); // Üst Yönetim Dashboard
+      showExecutiveMenu(); // Dashboard
+      showSection('executive-dashboard'); // Executive için anasayfa Dashboard
+    } else {
+      showHomepage();
+      await loadRecent();
+      updateTrendFromStorage();
     }
-
-    showHomepage();
-    await loadRecent();
-    updateTrendFromStorage();
 
     // Real-time subscription başlat
     setupRealtimeSubscription();
@@ -698,16 +711,23 @@ if (loginForm) {
         showFullAccessMenu(); // Trend Analizi
         showAdminMenu(); // Logs + User Management
         showExecutiveMenu(); // Üst Yönetim Dashboard
+        await logActivity('LOGIN', 'Auth', { email });
+        showHomepage();
+        loadRecent();
       } else if (currentUserRole === 'full') {
         showFullAccessMenu(); // Sadece Trend Analizi
+        await logActivity('LOGIN', 'Auth', { email });
+        showHomepage();
+        loadRecent();
       } else if (currentUserRole === 'executive') {
-        showFullAccessMenu(); // Trend Analizi
-        showExecutiveMenu(); // Üst Yönetim Dashboard
+        showExecutiveMenu(); // Dashboard
+        await logActivity('LOGIN', 'Auth', { email });
+        showSection('executive-dashboard'); // Executive için anasayfa Dashboard
+      } else {
+        await logActivity('LOGIN', 'Auth', { email });
+        showHomepage();
+        loadRecent();
       }
-
-      await logActivity('LOGIN', 'Auth', { email });
-      showHomepage();
-      loadRecent();
     } catch (err) {
       if (msg) {
         msg.style.color = '#d32f2f';
@@ -3774,133 +3794,90 @@ function updateTopPoints(measurements) {
   }).join('');
 }
 
-// Son aktiviteleri göster
-async function updateRecentActivity(measurements) {
+// Son aktiviteleri göster - Sadece measurements (10 satır, yatay)
+function updateRecentActivity(measurements) {
   const tbody = document.getElementById('exec-activity-tbody');
   if (!tbody) return;
 
-  try {
-    // Logs tablosundan aktiviteleri al (son 50 log)
-    const { data: logs, error } = await supabaseClient
-      .from('logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
+  // Son 10 ölçümü göster
+  const recent = measurements.slice(0, 10);
 
-    if (error) {
-      console.error('Logs yüklenemedi:', error);
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#999;">Loglar yüklenemedi</td></tr>';
-      return;
-    }
-
-    // Measurements ve logs'u birleştir
-    const activities = [];
-
-    // Ölçüm kayıtlarını ekle
-    measurements.slice(0, 25).forEach(m => {
-      activities.push({
-        type: 'MEASUREMENT',
-        date: m.date,
-        time: m.time,
-        category: m.category,
-        point: m.point,
-        value: m.value,
-        unit: m.unit,
-        user: m.user,
-        timestamp: new Date(`${m.date}T${m.time}`).getTime()
-      });
-    });
-
-    // Login/Logout loglarını ekle
-    logs.forEach(log => {
-      if (log.action === 'LOGIN' || log.action === 'LOGOUT') {
-        const createdAt = new Date(log.created_at);
-        activities.push({
-          type: log.action,
-          date: createdAt.toISOString().split('T')[0],
-          time: createdAt.toTimeString().split(' ')[0].substring(0, 5),
-          category: log.category || 'Auth',
-          point: '-',
-          value: null,
-          unit: null,
-          user: log.user_email,
-          timestamp: createdAt.getTime()
-        });
-      }
-    });
-
-    // Zamana göre sırala (en yeni önce)
-    activities.sort((a, b) => b.timestamp - a.timestamp);
-
-    // İlk 50 aktiviteyi göster
-    const recent = activities.slice(0, 50);
-
-    if (recent.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#999;">Henüz aktivite yok</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = recent.map(a => {
-      // İşlem tipine göre badge
-      let actionBadge = '';
-      if (a.type === 'LOGIN') {
-        actionBadge = '<span style="display:inline-block; padding:4px 8px; background:#4caf50; color:#fff; border-radius:6px; font-size:11px; font-weight:700;">GİRİŞ</span>';
-      } else if (a.type === 'LOGOUT') {
-        actionBadge = '<span style="display:inline-block; padding:4px 8px; background:#ff9800; color:#fff; border-radius:6px; font-size:11px; font-weight:700;">ÇIKIŞ</span>';
-      } else {
-        actionBadge = '<span style="display:inline-block; padding:4px 8px; background:#1976d2; color:#fff; border-radius:6px; font-size:11px; font-weight:700;">ÖLÇÜM</span>';
-      }
-
-      // Değer ve birimi profesyonel formatta göster
-      let valueDisplay = '-';
-      if (a.value) {
-        const value = typeof a.value === 'number' ? a.value.toLocaleString('tr-TR') : a.value;
-        const unit = a.unit ? `<span style="color:#666; font-size:12px; margin-left:4px;">${a.unit}</span>` : '';
-        valueDisplay = `<strong style="color:#1976d2;">${value}</strong>${unit}`;
-      }
-
-      return `
-        <tr>
-          <td>${actionBadge}</td>
-          <td>${a.date || '-'}</td>
-          <td>${a.time || '-'}</td>
-          <td><strong>${a.category || '-'}</strong></td>
-          <td>${a.point || '-'}</td>
-          <td>${valueDisplay}</td>
-          <td>${(a.user || '').split('@')[0]}</td>
-        </tr>
-      `;
-    }).join('');
-
-  } catch (err) {
-    console.error('Aktivite güncellemesi hatası:', err);
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#999;">Bir hata oluştu</td></tr>';
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#999;">Henüz aktivite yok</td></tr>';
+    return;
   }
+
+  tbody.innerHTML = recent.map(m => {
+    // Değer ve birimi profesyonel formatta göster
+    let valueDisplay = '-';
+    if (m.value) {
+      const value = typeof m.value === 'number' ? m.value.toLocaleString('tr-TR') : m.value;
+      const unit = m.unit ? `<span style="color:#666; font-size:12px; margin-left:4px;">${m.unit}</span>` : '';
+      valueDisplay = `<strong style="color:#1976d2;">${value}</strong>${unit}`;
+    }
+
+    return `
+      <tr>
+        <td>${m.date || '-'}</td>
+        <td>${m.time || '-'}</td>
+        <td><strong>${m.category || '-'}</strong></td>
+        <td>${m.point || '-'}</td>
+        <td>${valueDisplay}</td>
+        <td>${(m.user || '').split('@')[0]}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // Executive menu'yu göster/gizle (desktop + mobile)
+// Executive rolü için SADECE Dashboard ve Trend Analizi menüsü göster
 function showExecutiveMenu() {
-  const menu = document.getElementById('executive-dashboard-menu');
-  if (menu) {
-    menu.style.display = 'block';
+  // Tüm menü öğelerini gizle
+  const allMenuItems = document.querySelectorAll('.menu ul li');
+  allMenuItems.forEach(item => {
+    item.style.display = 'none';
+  });
+
+  // Sadece Trend Analizi ve Dashboard'u göster
+  const trendMenuItem = document.querySelector('[data-section-link="trends"]')?.closest('li');
+  const dashboardMenuItem = document.getElementById('executive-dashboard-menu');
+
+  if (trendMenuItem) {
+    trendMenuItem.style.display = 'block';
+  }
+  if (dashboardMenuItem) {
+    dashboardMenuItem.style.display = 'block';
   }
 
-  // Mobile tabs'a da ekle
+  // Mobile tabs için
   const mobileTabs = document.getElementById('mobile-tabs');
   if (mobileTabs) {
-    // Önce var mı kontrol et
-    const existingTab = mobileTabs.querySelector('[data-section="executive-dashboard"]');
-    if (!existingTab) {
-      const execTab = document.createElement('button');
-      execTab.type = 'button';
-      execTab.className = 'tab';
-      execTab.setAttribute('data-section', 'executive-dashboard');
-      execTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Dashboard</span>';
-      execTab.onclick = () => {
+    // Tüm mobile tabs'ı gizle
+    const allTabs = mobileTabs.querySelectorAll('.tab');
+    allTabs.forEach(tab => {
+      tab.style.display = 'none';
+    });
+
+    // Dashboard tab'ı ekle (yoksa)
+    let dashboardTab = mobileTabs.querySelector('[data-section="executive-dashboard"]');
+    if (!dashboardTab) {
+      dashboardTab = document.createElement('button');
+      dashboardTab.type = 'button';
+      dashboardTab.className = 'tab';
+      dashboardTab.setAttribute('data-section', 'executive-dashboard');
+      dashboardTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Dashboard</span>';
+      dashboardTab.onclick = () => {
         showSection('executive-dashboard');
         activateMobileTab('executive-dashboard');
       };
-      mobileTabs.appendChild(execTab);
+      mobileTabs.appendChild(dashboardTab);
+    }
+    dashboardTab.style.display = 'flex';
+
+    // Trend Analizi tab'ı göster (varsa)
+    const trendsTab = mobileTabs.querySelector('[data-section="trends"]');
+    if (trendsTab) {
+      trendsTab.style.display = 'flex';
     }
   }
 }
