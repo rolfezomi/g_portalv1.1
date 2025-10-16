@@ -768,6 +768,9 @@ if (loginForm) {
         showHomepage();
         loadRecent();
       }
+
+      // Real-time subscription başlat (login sonrası)
+      setupRealtimeSubscription();
     } catch (err) {
       if (msg) {
         msg.style.color = '#d32f2f';
