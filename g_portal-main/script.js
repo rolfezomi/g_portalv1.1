@@ -4037,58 +4037,72 @@ function enterFullscreenMode() {
     `;
   }
 
-  // 4. DASHBOARD CONTAINER - SCROLL KALDIR, GRID DÜZENİ
+  // 4. DASHBOARD CONTAINER - DİNAMİK VIEWPORT HESAPLAMA
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+
+  // Kaç satır var?
+  const chartsRows = document.querySelectorAll('.executive-charts-row');
+  const totalRows = chartsRows.length + 1; // +1 KPI grid için
+
+  // Dinamik gap hesapla (viewport'a göre)
+  const gap = Math.max(8, Math.floor(vh * 0.01)); // Min 8px, max vh * 1%
+  const padding = 20;
+
   if (dashboard) {
     dashboard.style.cssText = `
       height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: ${gap}px;
     `;
   }
 
-  // 5. KPI GRİD - YUKARI KAYAN ANIMASYON
+  // 5. KPI GRİD - SABİT YÜKSEK, KOMPAKT
   const kpiGrid = document.querySelector('.executive-kpi-grid');
+  const kpiHeight = Math.min(100, vh * 0.12); // Max 100px veya vh * 12%
+
   if (kpiGrid) {
     kpiGrid.style.cssText = `
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 12px;
+      gap: ${gap}px;
+      height: ${kpiHeight}px;
       flex-shrink: 0;
     `;
   }
 
-  // 6. CHARTS ROW - RESPONSIVE GRID
-  const chartsRows = document.querySelectorAll('.executive-charts-row');
+  // 6. CHARTS ROW - DİNAMİK YÜKSEK HESAPLA
+  // Kalan alan = vh - (padding * 2) - (KPI height) - (gaps)
+  const availableHeight = vh - (padding * 2) - kpiHeight - (gap * totalRows);
+  const rowHeight = availableHeight / chartsRows.length;
+
   chartsRows.forEach((row, rowIndex) => {
     if (rowIndex === 0 || rowIndex === 1) {
-      // İlk 2 satır: 2 sütun
+      // İlk 2 satır: 2 sütun, sabit yükseklik
       row.style.cssText = `
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-        margin-bottom: 12px;
+        gap: ${gap}px;
+        height: ${rowHeight}px;
         flex-shrink: 0;
       `;
     } else {
       // Son satır: En Çok Kontrol + Aktiviteler
+      const leftColumnWidth = Math.min(350, vw * 0.25); // Max 350px veya vw * 25%
       row.style.cssText = `
         display: grid;
-        grid-template-columns: 350px 1fr;
-        gap: 16px;
-        flex: 1;
-        min-height: 0;
+        grid-template-columns: ${leftColumnWidth}px 1fr;
+        gap: ${gap}px;
+        height: ${rowHeight}px;
+        flex-shrink: 0;
         overflow: hidden;
       `;
     }
   });
 
-  // 7. KARTLARIN GÖRÜNMESİ - STAGGER ANİMASYON
-  setTimeout(() => animateCardsEntry(), 100);
-
-  // 8. CHART CARD HEIGHT AYARI (scroll için)
+  // 7. CHART CARDLARI - TAM YÜKSEK KULLAN
   const chartCards = document.querySelectorAll('.executive-chart-card');
   chartCards.forEach(card => {
     card.style.cssText = `
@@ -4100,10 +4114,33 @@ function enterFullscreenMode() {
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      height: 100%;
     `;
+
+    // Chart body flex yaparak tüm alanı kapla
+    const chartBody = card.querySelector('.chart-body');
+    if (chartBody) {
+      chartBody.style.cssText = `
+        flex: 1;
+        min-height: 0;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+    }
+
+    // Canvas'a max-height ekle
+    const canvas = card.querySelector('canvas');
+    if (canvas) {
+      canvas.style.cssText = `
+        max-height: 100%;
+        width: 100%;
+      `;
+    }
   });
 
-  // 9. ACTIVITY TABLE WRAPPER - SCROLL
+  // 8. ACTIVITY TABLE WRAPPER - SCROLL (sadece tablo içinde)
   const activityWrapper = document.querySelector('.activity-table-wrapper');
   if (activityWrapper) {
     activityWrapper.style.cssText = `
@@ -4113,21 +4150,35 @@ function enterFullscreenMode() {
     `;
   }
 
-  // 10. KPI KARTLARI BÜYÜT
+  // 9. KPI KARTLARI - KOMPAKT VE OKUNAKLI
   const kpiCards = document.querySelectorAll('.executive-kpi-card');
   kpiCards.forEach(card => {
     const value = card.querySelector('.kpi-value');
     const label = card.querySelector('.kpi-label');
-    if (value) value.style.fontSize = '36px';
-    if (label) label.style.fontSize = '13px';
+    const trend = card.querySelector('.kpi-trend');
+
+    // Font boyutlarını viewport'a göre ayarla
+    const valueFontSize = Math.min(32, kpiHeight * 0.4);
+    const labelFontSize = Math.min(12, kpiHeight * 0.14);
+
+    if (value) value.style.fontSize = valueFontSize + 'px';
+    if (label) value.style.fontSize = labelFontSize + 'px';
+    if (trend) trend.style.fontSize = (labelFontSize - 1) + 'px';
 
     card.style.cssText = `
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.3);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
     `;
   });
+
+  // 10. KARTLARIN GÖRÜNMESİ - STAGGER ANİMASYON
+  setTimeout(() => animateCardsEntry(), 100);
 
   // Otomatik yenileme başlat (30 saniyede bir)
   startFullscreenAutoRefresh();
@@ -4412,25 +4463,24 @@ function stopFullscreenAutoRefresh() {
 // Fullscreen detection başlat
 initFullscreenDetection();
 
-// Test fonksiyonu - Manuel fullscreen tetikleme
+// Test fonksiyonu - Manuel fullscreen tetikleme (Buton toggle)
 window.testFullscreenMode = function() {
-  console.log('🧪 TEST: Manuel fullscreen tetikleniyor...');
-  console.log('🔍 Current section:', currentSection);
-  console.log('🔍 Dashboard element:', document.getElementById('page-executive-dashboard'));
-  console.log('🔍 isFullscreenMode:', isFullscreenMode);
-
   if (currentSection !== 'executive-dashboard') {
-    console.warn('⚠️ Dashboard açık değil! Önce Dashboard\'a git.');
-    alert('Önce Dashboard sayfasını açın!');
+    console.warn('⚠️ Dashboard açık değil!');
     return;
   }
 
+  // Buton text güncelle
+  const btnText = document.getElementById('fullscreen-btn-text');
+
   if (isFullscreenMode) {
-    console.log('⚠️ Zaten fullscreen moddasınız. Exit yapılıyor...');
+    console.log('🖥️ Normal moda dönülüyor...');
     exitFullscreenMode();
+    if (btnText) btnText.textContent = 'Tam Ekran';
   } else {
-    console.log('✅ Fullscreen mode başlatılıyor...');
+    console.log('🖥️ Tam ekran moduna geçiliyor...');
     enterFullscreenMode();
+    if (btnText) btnText.textContent = 'Çıkış';
   }
 };
 

@@ -887,8 +887,11 @@
         <div class="toolbar">
           <h2>📊 Dashboard</h2>
           <div class="right">
-            <button class="btn btn-primary" onclick="testFullscreenMode()" style="margin-right:12px;">
-              🖥️ Test Fullscreen
+            <button id="fullscreen-toggle-btn" class="btn btn-ghost" onclick="testFullscreenMode()" style="margin-right:12px; font-size:13px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+              </svg>
+              <span id="fullscreen-btn-text">Tam Ekran</span>
             </button>
             <span id="dashboard-last-update" style="font-size:13px; color:#666;"></span>
           </div>
