@@ -4000,18 +4000,134 @@ function enterFullscreenMode() {
 
   const portalScreen = document.getElementById('portal-screen');
   const dashboard = document.getElementById('page-executive-dashboard');
+  const content = document.querySelector('.content');
+  const header = document.querySelector('.header');
+  const menu = document.querySelector('.menu');
+  const mobileTabs = document.querySelector('.mobile-tabs');
 
-  // Fullscreen class ekle
-  portalScreen.classList.add('fullscreen-kiosk-mode');
-  dashboard.classList.add('dashboard-fullscreen');
+  // 1. HEADER VE MENU GİZLE (INLINE STYLES)
+  if (header) {
+    header.style.cssText = 'opacity: 0; transform: translateY(-100%); transition: all 0.5s ease; pointer-events: none;';
+  }
+  if (menu) {
+    menu.style.cssText = 'transform: translateX(-100%); transition: all 0.5s ease; opacity: 0; pointer-events: none;';
+  }
+  if (mobileTabs) {
+    mobileTabs.style.cssText = 'opacity: 0; transform: translateY(100%); transition: all 0.5s ease; pointer-events: none;';
+  }
 
-  // Animasyon: Kartların sırayla görünmesi
-  animateCardsEntry();
+  // 2. CONTENT AREA FULLSCREEN LAYOUT
+  if (content) {
+    content.style.cssText = `
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      padding: 20px !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      overflow: hidden !important;
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    `;
+  }
 
-  // Header ve menu gizle
-  document.querySelector('.header')?.classList.add('fullscreen-hidden');
-  document.querySelector('.menu')?.classList.add('fullscreen-hidden');
-  document.querySelector('.mobile-tabs')?.classList.add('fullscreen-hidden');
+  // 3. PORTAL SCREEN ARKA PLAN
+  if (portalScreen) {
+    portalScreen.style.cssText = `
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    `;
+  }
+
+  // 4. DASHBOARD CONTAINER - SCROLL KALDIR, GRID DÜZENİ
+  if (dashboard) {
+    dashboard.style.cssText = `
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    `;
+  }
+
+  // 5. KPI GRİD - YUKARI KAYAN ANIMASYON
+  const kpiGrid = document.querySelector('.executive-kpi-grid');
+  if (kpiGrid) {
+    kpiGrid.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    `;
+  }
+
+  // 6. CHARTS ROW - RESPONSIVE GRID
+  const chartsRows = document.querySelectorAll('.executive-charts-row');
+  chartsRows.forEach((row, rowIndex) => {
+    if (rowIndex === 0 || rowIndex === 1) {
+      // İlk 2 satır: 2 sütun
+      row.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+      `;
+    } else {
+      // Son satır: En Çok Kontrol + Aktiviteler
+      row.style.cssText = `
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 16px;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      `;
+    }
+  });
+
+  // 7. KARTLARIN GÖRÜNMESİ - STAGGER ANİMASYON
+  setTimeout(() => animateCardsEntry(), 100);
+
+  // 8. CHART CARD HEIGHT AYARI (scroll için)
+  const chartCards = document.querySelectorAll('.executive-chart-card');
+  chartCards.forEach(card => {
+    card.style.cssText = `
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    `;
+  });
+
+  // 9. ACTIVITY TABLE WRAPPER - SCROLL
+  const activityWrapper = document.querySelector('.activity-table-wrapper');
+  if (activityWrapper) {
+    activityWrapper.style.cssText = `
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    `;
+  }
+
+  // 10. KPI KARTLARI BÜYÜT
+  const kpiCards = document.querySelectorAll('.executive-kpi-card');
+  kpiCards.forEach(card => {
+    const value = card.querySelector('.kpi-value');
+    const label = card.querySelector('.kpi-label');
+    if (value) value.style.fontSize = '36px';
+    if (label) label.style.fontSize = '13px';
+
+    card.style.cssText = `
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    `;
+  });
 
   // Otomatik yenileme başlat (30 saniyede bir)
   startFullscreenAutoRefresh();
@@ -4030,19 +4146,64 @@ function exitFullscreenMode() {
 
   const portalScreen = document.getElementById('portal-screen');
   const dashboard = document.getElementById('page-executive-dashboard');
+  const content = document.querySelector('.content');
+  const header = document.querySelector('.header');
+  const menu = document.querySelector('.menu');
+  const mobileTabs = document.querySelector('.mobile-tabs');
 
-  // Exit animasyonu
-  dashboard.classList.add('dashboard-fullscreen-exit');
+  // 1. TÜM INLINE STYLE'LARI TEMİZLE
+  if (portalScreen) portalScreen.style.cssText = '';
+  if (content) content.style.cssText = '';
+  if (dashboard) dashboard.style.cssText = '';
 
-  setTimeout(() => {
-    portalScreen.classList.remove('fullscreen-kiosk-mode');
-    dashboard.classList.remove('dashboard-fullscreen', 'dashboard-fullscreen-exit');
+  // 2. HEADER VE MENU GERİ GETİR
+  if (header) {
+    header.style.cssText = 'opacity: 1; transform: translateY(0); transition: all 0.5s ease; pointer-events: auto;';
+    setTimeout(() => { header.style.cssText = ''; }, 500);
+  }
+  if (menu) {
+    menu.style.cssText = 'transform: translateX(0); transition: all 0.5s ease; opacity: 1; pointer-events: auto;';
+    setTimeout(() => { menu.style.cssText = ''; }, 500);
+  }
+  if (mobileTabs) {
+    mobileTabs.style.cssText = 'opacity: 1; transform: translateY(0); transition: all 0.5s ease; pointer-events: auto;';
+    setTimeout(() => { mobileTabs.style.cssText = ''; }, 500);
+  }
 
-    // Header ve menu göster
-    document.querySelector('.header')?.classList.remove('fullscreen-hidden');
-    document.querySelector('.menu')?.classList.remove('fullscreen-hidden');
-    document.querySelector('.mobile-tabs')?.classList.remove('fullscreen-hidden');
-  }, 600); // Exit animasyon süresi
+  // 3. KPI VE CHART KARTLARINI SIFIRLA
+  const kpiCards = document.querySelectorAll('.executive-kpi-card');
+  kpiCards.forEach(card => {
+    card.style.cssText = '';
+    const value = card.querySelector('.kpi-value');
+    const label = card.querySelector('.kpi-label');
+    if (value) value.style.fontSize = '';
+    if (label) label.style.fontSize = '';
+  });
+
+  const chartCards = document.querySelectorAll('.executive-chart-card');
+  chartCards.forEach(card => {
+    card.style.cssText = '';
+  });
+
+  // 4. GRID VE ROWS SIFIRLA
+  const kpiGrid = document.querySelector('.executive-kpi-grid');
+  if (kpiGrid) kpiGrid.style.cssText = '';
+
+  const chartsRows = document.querySelectorAll('.executive-charts-row');
+  chartsRows.forEach(row => {
+    row.style.cssText = '';
+  });
+
+  const activityWrapper = document.querySelector('.activity-table-wrapper');
+  if (activityWrapper) activityWrapper.style.cssText = '';
+
+  // 5. KARTLARIN OPACITY'SİNİ SIFIRLA (animasyon için kullanılmışsa)
+  const allCards = document.querySelectorAll('.executive-kpi-card, .executive-chart-card');
+  allCards.forEach(card => {
+    card.style.opacity = '';
+    card.style.transform = '';
+    card.style.transition = '';
+  });
 
   // Otomatik yenilemeyi durdur
   stopFullscreenAutoRefresh();
@@ -4057,28 +4218,44 @@ function animateCardsEntry() {
   const kpiCards = document.querySelectorAll('#page-executive-dashboard .executive-kpi-card');
   const chartCards = document.querySelectorAll('#page-executive-dashboard .executive-chart-card');
 
+  console.log(`🎬 Animasyon başlıyor: ${kpiCards.length} KPI + ${chartCards.length} Chart kartı`);
+
   // KPI kartları önce (0-3)
   kpiCards.forEach((card, index) => {
+    // Başlangıç durumu
     card.style.opacity = '0';
-    card.style.transform = 'translateY(30px) scale(0.95)';
+    card.style.transform = 'translateY(40px) scale(0.9)';
+    card.style.transition = 'none';
 
+    // Force reflow
+    card.offsetHeight;
+
+    // Animasyon başlat
     setTimeout(() => {
-      card.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      card.style.transition = 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
       card.style.opacity = '1';
       card.style.transform = 'translateY(0) scale(1)';
-    }, index * 120);
+      console.log(`✅ KPI ${index + 1} animasyon başladı`);
+    }, index * 150);
   });
 
   // Grafik kartları sonra (daha geç başla)
   chartCards.forEach((card, index) => {
+    // Başlangıç durumu
     card.style.opacity = '0';
-    card.style.transform = 'translateY(30px) scale(0.98)';
+    card.style.transform = 'translateY(50px) scale(0.95)';
+    card.style.transition = 'none';
 
+    // Force reflow
+    card.offsetHeight;
+
+    // Animasyon başlat
     setTimeout(() => {
-      card.style.transition = 'all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      card.style.transition = 'all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1)';
       card.style.opacity = '1';
       card.style.transform = 'translateY(0) scale(1)';
-    }, 400 + index * 150); // KPI'lardan sonra başla
+      console.log(`📊 Chart ${index + 1} animasyon başladı`);
+    }, 500 + index * 180); // KPI'lardan sonra başla
   });
 }
 
@@ -4086,25 +4263,120 @@ function animateCardsEntry() {
  * Grafik güncellendiğinde highlight animasyonu
  */
 function highlightUpdatedChart(chartId) {
-  if (!isFullscreenMode) return;
-
   const chartCard = document.querySelector(`#${chartId}`)?.closest('.executive-chart-card, .executive-kpi-card');
-  if (!chartCard) return;
+  if (!chartCard) {
+    console.warn(`⚠️ Chart card bulunamadı: ${chartId}`);
+    return;
+  }
 
-  // Önce eski highlight'ı temizle
-  chartCard.classList.remove('chart-updated-pulse');
+  console.log(`📊 Chart güncelleniyor: ${chartId}`);
 
-  // Reflow için timeout
+  // 1. PULSE ANIMASYONU (inline keyframe)
+  const originalBoxShadow = chartCard.style.boxShadow || '';
+  const originalTransform = chartCard.style.transform || '';
+
+  // Başlangıç frame
+  chartCard.style.transition = 'none';
+  chartCard.style.boxShadow = '0 0 0 0 rgba(76, 175, 80, 0)';
+  chartCard.style.transform = 'scale(1)';
+
+  // Force reflow
+  chartCard.offsetHeight;
+
+  // Animasyon başlat
+  let frame = 0;
+  const pulseAnimation = setInterval(() => {
+    frame++;
+
+    if (frame === 1) {
+      // Frame 1: Başlangıç
+      chartCard.style.transition = 'all 0.3s ease-out';
+      chartCard.style.boxShadow = '0 0 0 10px rgba(76, 175, 80, 0.4), 0 0 0 20px rgba(76, 175, 80, 0.2), 0 8px 32px rgba(76, 175, 80, 0.3)';
+      chartCard.style.transform = 'scale(1.03)';
+    } else if (frame === 3) {
+      // Frame 2: Genişleme
+      chartCard.style.boxShadow = '0 0 0 20px rgba(76, 175, 80, 0.2), 0 0 0 40px rgba(76, 175, 80, 0.1), 0 12px 48px rgba(76, 175, 80, 0.2)';
+      chartCard.style.transform = 'scale(1.05)';
+    } else if (frame === 5) {
+      // Frame 3: Geri dönüş
+      chartCard.style.boxShadow = '0 0 0 10px rgba(76, 175, 80, 0.1), 0 0 0 20px rgba(76, 175, 80, 0.05), 0 8px 32px rgba(76, 175, 80, 0.1)';
+      chartCard.style.transform = 'scale(1.02)';
+    } else if (frame === 7) {
+      // Frame 4: Normal
+      chartCard.style.boxShadow = originalBoxShadow;
+      chartCard.style.transform = originalTransform;
+      clearInterval(pulseAnimation);
+
+      // Transition'ı kaldır
+      setTimeout(() => {
+        chartCard.style.transition = '';
+      }, 300);
+    }
+  }, 200); // Her 200ms bir frame
+
+  // 2. GÜNCELLEME BADGE EKLE
+  const existingBadge = chartCard.querySelector('.update-badge');
+  if (existingBadge) existingBadge.remove();
+
+  const badge = document.createElement('div');
+  badge.className = 'update-badge';
+  badge.innerHTML = '✨ GÜNCELLENDİ';
+  badge.style.cssText = `
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    animation: badgeFadeInOut 3s ease-in-out forwards;
+    pointer-events: none;
+  `;
+
+  // Keyframe animasyonunu dinamik ekle (eğer yoksa)
+  if (!document.getElementById('badge-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'badge-animation-style';
+    style.innerHTML = `
+      @keyframes badgeFadeInOut {
+        0% {
+          opacity: 0;
+          transform: translateY(-10px) scale(0.8);
+        }
+        15% {
+          opacity: 1;
+          transform: translateY(0) scale(1.1);
+        }
+        20% {
+          transform: translateY(0) scale(1);
+        }
+        80% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-10px) scale(0.8);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  chartCard.style.position = 'relative';
+  chartCard.appendChild(badge);
+
+  // 3 saniye sonra badge'i kaldır
   setTimeout(() => {
-    chartCard.classList.add('chart-updated-pulse');
+    badge.remove();
+  }, 3000);
 
-    // 3 saniye sonra kaldır
-    setTimeout(() => {
-      chartCard.classList.remove('chart-updated-pulse');
-    }, 3000);
-  }, 50);
-
-  console.log(`📊 Chart güncellendi: ${chartId}`);
+  console.log(`✅ Highlight tamamlandı: ${chartId}`);
 }
 
 let fullscreenRefreshInterval = null;
