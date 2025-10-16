@@ -4412,4 +4412,31 @@ function stopFullscreenAutoRefresh() {
 // Fullscreen detection başlat
 initFullscreenDetection();
 
+// Test fonksiyonu - Manuel fullscreen tetikleme
+window.testFullscreenMode = function() {
+  console.log('🧪 TEST: Manuel fullscreen tetikleniyor...');
+  console.log('🔍 Current section:', currentSection);
+  console.log('🔍 Dashboard element:', document.getElementById('page-executive-dashboard'));
+  console.log('🔍 isFullscreenMode:', isFullscreenMode);
+
+  if (currentSection !== 'executive-dashboard') {
+    console.warn('⚠️ Dashboard açık değil! Önce Dashboard\'a git.');
+    alert('Önce Dashboard sayfasını açın!');
+    return;
+  }
+
+  if (isFullscreenMode) {
+    console.log('⚠️ Zaten fullscreen moddasınız. Exit yapılıyor...');
+    exitFullscreenMode();
+  } else {
+    console.log('✅ Fullscreen mode başlatılıyor...');
+    enterFullscreenMode();
+  }
+};
+
+// Global expose
+window.enterFullscreenMode = enterFullscreenMode;
+window.exitFullscreenMode = exitFullscreenMode;
+window.highlightUpdatedChart = highlightUpdatedChart;
+
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
