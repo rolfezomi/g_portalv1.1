@@ -3444,6 +3444,9 @@ function updateExecutiveCharts(measurements) {
   // Kategori dağılımı
   updateCategoryChart(measurements);
 
+  // IBC Kontrol Noktası
+  updateIBCCount(measurements);
+
   // Saatlik aktivite
   updateHourlyChart(measurements);
 
@@ -3452,6 +3455,21 @@ function updateExecutiveCharts(measurements) {
 
   // Haftalık özet
   updateWeeklyChart(measurements);
+}
+
+// IBC Kontrol Noktası sayısını güncelle
+function updateIBCCount(measurements) {
+  const today = new Date().toISOString().split('T')[0];
+  const ibcMeasurements = measurements.filter(m =>
+    m.date === today &&
+    m.point &&
+    m.point.toLowerCase().includes('ibc')
+  );
+
+  const countElement = document.getElementById('ibc-measurement-count');
+  if (countElement) {
+    countElement.textContent = ibcMeasurements.length;
+  }
 }
 
 // Aylık trend grafiğini kategori filtresiyle güncelle
@@ -3585,17 +3603,14 @@ function updateCategoryChart(measurements) {
             <div class="category-item-info">
               <div class="category-item-name">${category}</div>
               <div class="category-item-stats">
-                ${count} ölçüm • Son 30 gün
+                ${count} ölçüm
               </div>
             </div>
           </div>
           <div class="category-item-right">
-            <div class="category-item-count ${colorClass}">${count.toLocaleString('tr-TR')}</div>
+            <div class="category-item-count">${count.toLocaleString('tr-TR')}</div>
             <div class="category-item-percentage">${percentage}%</div>
           </div>
-        </div>
-        <div class="category-progress-wrapper">
-          <div class="category-progress-bar ${colorClass}" style="width: ${percentage}%"></div>
         </div>
       </div>
     `;
@@ -4208,16 +4223,18 @@ function enterFullscreenMode() {
   const rowHeight = availableHeight / chartsRows.length;
 
   chartsRows.forEach((row, rowIndex) => {
-    if (rowIndex === 0 || rowIndex === 1) {
-      // İlk 2 satır: 2 sütun, sabit yükseklik
+    const isFullWidth = row.classList.contains('executive-charts-row-full');
+
+    if (isFullWidth) {
+      // Haftalık Özet - Tam genişlik, kısa yükseklik
       row.style.cssText = `
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: ${gap}px;
-        height: ${rowHeight}px;
+        height: ${rowHeight * 0.8}px;
         flex-shrink: 0;
       `;
-    } else {
+    } else if (rowIndex === chartsRows.length - 1) {
       // Son satır: En Çok Kontrol + Aktiviteler
       const leftColumnWidth = Math.min(350, vw * 0.25); // Max 350px veya vw * 25%
       row.style.cssText = `
@@ -4227,6 +4244,15 @@ function enterFullscreenMode() {
         height: ${rowHeight}px;
         flex-shrink: 0;
         overflow: hidden;
+      `;
+    } else {
+      // Diğer satırlar: 2 sütun
+      row.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: ${gap}px;
+        height: ${rowHeight}px;
+        flex-shrink: 0;
       `;
     }
   });

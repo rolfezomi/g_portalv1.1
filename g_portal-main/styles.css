@@ -2545,6 +2545,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   margin-bottom: 20px;
 }
 
+/* Full width row for weekly chart */
+.executive-charts-row-full {
+  grid-template-columns: 1fr !important;
+}
+
 .executive-chart-card {
   background: #fff;
   border-radius: 16px;
@@ -2891,15 +2896,23 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .category-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px 0;
+  gap: 12px;
+  padding: 4px 0;
 }
 
 .category-item {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  position: relative;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.category-item:hover {
+  background: #f0f2f5;
+  transform: translateX(2px);
 }
 
 .category-item-header {
@@ -2907,25 +2920,26 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex: 1;
 }
 
 .category-item-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
 
 .category-item-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  font-size: 20px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   position: relative;
   overflow: hidden;
 }
@@ -2943,80 +2957,50 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .category-item-name {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 700;
   color: #222;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .category-item-stats {
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .category-item-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .category-item-count {
-  font-size: 24px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 800;
   line-height: 1;
+  color: #333;
 }
 
 .category-item-percentage {
-  font-size: 13px;
-  font-weight: 700;
-  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
   border-radius: 6px;
-  background: rgba(0,0,0,0.06);
+  background: rgba(0,0,0,0.05);
   color: #666;
+  min-width: 48px;
+  text-align: center;
 }
 
-.category-progress-wrapper {
-  width: 100%;
-  height: 10px;
-  background: #f0f0f0;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
-}
-
-.category-progress-bar {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.category-progress-bar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.3) 50%,
-    rgba(255,255,255,0) 100%);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
+/* Progress bar kaldırıldı - daha kompakt tasarım */
 
 /* Kategori renkleri */
 .category-ph {
