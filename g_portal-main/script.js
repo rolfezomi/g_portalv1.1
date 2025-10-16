@@ -3469,19 +3469,38 @@ function updateHourlyChart(measurements) {
   // Sadece bugünün verilerini filtrele
   const todayMeasurements = measurements.filter(m => m.date === today);
 
-  // 06:00 - 22:00 arası saatler için veri hazırla
-  const hourlyData = Array(17).fill(0); // 6'dan 22'ye kadar 17 saat
+  // 06:00 - 22:00 arası 30 dakikalık dilimler (33 dilim: 6:00, 6:30, 7:00, ..., 22:00)
+  const timeSlots = [];
+  const hourlyData = [];
+
+  for (let hour = 6; hour <= 22; hour++) {
+    for (let min = 0; min < 60; min += 30) {
+      if (hour === 22 && min > 0) break; // 22:00'da dur
+      const timeLabel = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+      timeSlots.push(timeLabel);
+      hourlyData.push(0);
+    }
+  }
+
+  // Ölçümleri 30 dakikalık dilimlere ayır
   todayMeasurements.forEach(m => {
     if (m.time) {
-      const hour = parseInt(m.time.split(':')[0]);
+      const [hour, minute] = m.time.split(':').map(Number);
       if (hour >= 6 && hour <= 22) {
-        hourlyData[hour - 6]++;
+        // Hangi 30 dakikalık dilime düşüyor?
+        const slotMinute = minute < 30 ? 0 : 30;
+        const slotLabel = `${String(hour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`;
+        const index = timeSlots.indexOf(slotLabel);
+        if (index !== -1) {
+          hourlyData[index]++;
+        }
       }
     }
   });
 
   // Optimized: Data update
   if (executiveCharts.hourly) {
+    executiveCharts.hourly.data.labels = timeSlots;
     executiveCharts.hourly.data.datasets[0].data = hourlyData;
     executiveCharts.hourly.update('none');
     return;
@@ -3490,22 +3509,67 @@ function updateHourlyChart(measurements) {
   executiveCharts.hourly = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: Array.from({length: 17}, (_, i) => (i + 6) + ':00'),
+      labels: timeSlots,
       datasets: [{
         label: 'Ölçüm Sayısı',
         data: hourlyData,
         backgroundColor: 'rgba(102, 126, 234, 0.8)',
-        borderRadius: 6
+        borderRadius: 6,
+        barThickness: 12
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              const label = context[0].label;
+              const [hour, minute] = label.split(':');
+              const nextMinute = parseInt(minute) + 30;
+              const nextHour = nextMinute >= 60 ? (parseInt(hour) + 1) : parseInt(hour);
+              const displayNextMin = nextMinute >= 60 ? '00' : String(nextMinute).padStart(2, '0');
+              return `${label} - ${String(nextHour).padStart(2, '0')}:${displayNextMin}`;
+            },
+            label: function(context) {
+              return `${context.parsed.y} ölçüm`;
+            }
+          },
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          padding: 12,
+          titleFont: { size: 13, weight: 'bold' },
+          bodyFont: { size: 12 },
+          cornerRadius: 8
+        }
       },
       scales: {
-        y: { beginAtZero: true, ticks: { precision: 0 } }
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            font: { size: 10 },
+            callback: function(value) {
+              // Her 2. etiketi göster (saat başlarını)
+              const label = this.getLabelForValue(value);
+              return label.endsWith(':00') ? label : '';
+            }
+          },
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            font: { size: 11 }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.06)'
+          }
+        }
       }
     }
   });
