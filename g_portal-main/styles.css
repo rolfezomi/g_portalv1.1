@@ -3129,29 +3129,50 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
    ÜST YÖNETİM - EN ÇOK KONTROL EDİLEN NOKTALAR VE SON AKTİVİTELER YAN YANA
    ========================= */
 
-/* En çok kontrol edilen noktalar kartı daha dar ve üstle hizalı */
+/* En çok kontrol edilen noktalar kartı - İkinci satır özel grid */
+.executive-charts-row:has(.executive-top-points-card) {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 20px;
+}
+
 .executive-top-points-card {
-  max-width: 420px;
   align-self: start;
 }
 
-/* Son aktiviteler compact kart */
+/* Son aktiviteler compact kart - Sağa kadar uzansın */
 .executive-activity-card-compact {
-  flex: 1;
   min-width: 0;
 }
 
 .executive-activity-card-compact .activity-table-wrapper {
   max-height: 450px;
+  overflow-x: auto;
+}
+
+/* Activity table tam genişlik */
+.executive-activity-card-compact .activity-table {
+  width: 100%;
+  min-width: 800px; /* Minimum genişlik */
 }
 
 /* Responsive düzenlemeler */
 @media (max-width: 1200px) {
-  .executive-charts-row {
+  .executive-charts-row:has(.executive-top-points-card) {
     grid-template-columns: 1fr;
   }
 
-  .executive-top-points-card {
-    max-width: 100%;
+  .executive-activity-card-compact .activity-table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .executive-charts-row:has(.executive-top-points-card) {
+    grid-template-columns: 1fr;
+  }
+
+  .executive-activity-card-compact .activity-table {
+    min-width: 500px;
   }
 }
