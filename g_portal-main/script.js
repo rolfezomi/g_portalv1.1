@@ -2856,47 +2856,64 @@ let executiveCharts = {
   weekly: null
 };
 
+let executiveDashboardCache = {
+  measurements: null,
+  lastFetch: null
+};
+
 // Executive dashboard'u göster
 async function showExecutiveDashboard() {
   currentSection = 'executive-dashboard';
-  await updateExecutiveDashboard();
+  await updateExecutiveDashboard(true);
 }
 
 // Dashboard verilerini güncelle
-async function updateExecutiveDashboard() {
+async function updateExecutiveDashboard(forceRefresh = false) {
   try {
-    // Son güncelleme zamanını göster
-    const lastUpdate = document.getElementById('dashboard-last-update');
-    if (lastUpdate) {
-      lastUpdate.textContent = 'Son güncelleme: ' + new Date().toLocaleString('tr-TR');
+    // Cache kontrolü - sadece ilk yüklemede veya yenile butonuna basıldığında veriyi çek
+    let measurements = executiveDashboardCache.measurements;
+
+    if (forceRefresh || !measurements) {
+      // Son güncelleme zamanını göster
+      const lastUpdate = document.getElementById('dashboard-last-update');
+      if (lastUpdate) {
+        lastUpdate.textContent = 'Son güncelleme: ' + new Date().toLocaleString('tr-TR');
+      }
+
+      // Tüm measurements verilerini çek
+      const { data, error } = await supabaseClient
+        .from('measurements')
+        .select('*')
+        .order('date', { ascending: false })
+        .order('time', { ascending: false });
+
+      if (error) {
+        console.error('Measurements yükleme hatası:', error);
+        showToast('Veriler yüklenirken hata oluştu.');
+        return;
+      }
+
+      measurements = data;
+      executiveDashboardCache.measurements = measurements;
+      executiveDashboardCache.lastFetch = new Date();
+
+      // Logs tablosundan kullanıcı aktivitelerini çek (sadece ilk yüklemede)
+      const { data: logs, error: logsError } = await supabaseClient
+        .from('logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      if (logsError) {
+        console.error('Logs yükleme hatası:', logsError);
+      }
+
+      // KPI'ları hesapla ve güncelle
+      updateExecutiveKPIs(measurements, logs || []);
+    } else {
+      // Cache'den KPI'ları güncelle
+      updateExecutiveKPIs(measurements, []);
     }
-
-    // Tüm measurements verilerini çek
-    const { data: measurements, error } = await supabaseClient
-      .from('measurements')
-      .select('*')
-      .order('date', { ascending: false })
-      .order('time', { ascending: false });
-
-    if (error) {
-      console.error('Measurements yükleme hatası:', error);
-      showToast('Veriler yüklenirken hata oluştu.');
-      return;
-    }
-
-    // Logs tablosundan kullanıcı aktivitelerini çek
-    const { data: logs, error: logsError } = await supabaseClient
-      .from('logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000);
-
-    if (logsError) {
-      console.error('Logs yükleme hatası:', logsError);
-    }
-
-    // KPI'ları hesapla ve güncelle
-    updateExecutiveKPIs(measurements, logs || []);
 
     // Grafikleri güncelle
     updateExecutiveCharts(measurements);
@@ -2917,7 +2934,6 @@ async function updateExecutiveDashboard() {
 function updateExecutiveKPIs(measurements, logs) {
   const today = new Date().toISOString().split('T')[0];
   const thisMonth = new Date().toISOString().slice(0, 7);
-  const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   // Toplam ölçüm (bu ay)
@@ -2929,15 +2945,6 @@ function updateExecutiveKPIs(measurements, logs) {
   const todayMeasurements = measurements.filter(m => m.date === today);
   document.getElementById('exec-today-measurements').textContent = todayMeasurements.length.toLocaleString('tr-TR');
   document.getElementById('exec-today-trend').textContent = 'Bugün';
-
-  // Aktif kullanıcılar (son 7 gün)
-  const activeUsers = new Set(
-    measurements
-      .filter(m => m.date >= last7Days)
-      .map(m => m.user)
-  );
-  document.getElementById('exec-active-users').textContent = activeUsers.size;
-  document.getElementById('exec-users-trend').textContent = 'Son 7 gün';
 
   // Ortalama günlük ölçüm (son 30 gün)
   const last30DaysMeasurements = measurements.filter(m => m.date >= last30Days);
@@ -3271,16 +3278,26 @@ function updateRecentActivity(measurements) {
     return;
   }
 
-  tbody.innerHTML = recent.map(m => `
-    <tr>
-      <td>${m.date || '-'}</td>
-      <td>${m.time || '-'}</td>
-      <td><strong>${m.category || '-'}</strong></td>
-      <td>${m.point || '-'}</td>
-      <td>${m.value || '-'} ${m.unit || ''}</td>
-      <td>${(m.user || '').split('@')[0]}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = recent.map(m => {
+    // Değer ve birimi profesyonel formatta göster
+    let valueDisplay = '-';
+    if (m.value) {
+      const value = typeof m.value === 'number' ? m.value.toLocaleString('tr-TR') : m.value;
+      const unit = m.unit ? `<span style="color:#666; font-size:12px; margin-left:4px;">${m.unit}</span>` : '';
+      valueDisplay = `<strong style="color:#1976d2;">${value}</strong>${unit}`;
+    }
+
+    return `
+      <tr>
+        <td>${m.date || '-'}</td>
+        <td>${m.time || '-'}</td>
+        <td><strong>${m.category || '-'}</strong></td>
+        <td>${m.point || '-'}</td>
+        <td>${valueDisplay}</td>
+        <td>${(m.user || '').split('@')[0]}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // Executive menu'yu göster/gizle
