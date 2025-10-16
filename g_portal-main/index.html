@@ -112,6 +112,18 @@
         </a></li>
 
         <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
+
+        <!-- Üst Yönetim (Sadece executive role için) -->
+        <li id="executive-dashboard-menu" style="display: none;"><a href="#" onclick="showSection('executive-dashboard'); setActive(this); return false;" data-section-link="executive-dashboard" data-tooltip="Üst Yönetim Dashboard">
+          <span class="icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+          </span>
+          <span>Üst Yönetim</span>
+        </a></li>
       </ul>
     </aside>
 
@@ -870,6 +882,166 @@
         </div>
       </section>
 
+      <!-- Üst Yönetim Dashboard -->
+      <section id="page-executive-dashboard" style="display:none;">
+        <div class="toolbar">
+          <h2>📊 Üst Yönetim Dashboard</h2>
+          <div class="right">
+            <span id="dashboard-last-update" style="font-size:13px; color:#666;"></span>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="executive-kpi-grid">
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Toplam Ölçüm</div>
+              <div class="kpi-value" id="exec-total-measurements">0</div>
+              <div class="kpi-trend" id="exec-total-trend">Bu ay</div>
+            </div>
+          </div>
+
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Bugünkü Ölçüm</div>
+              <div class="kpi-value" id="exec-today-measurements">0</div>
+              <div class="kpi-trend" id="exec-today-trend">Bugün</div>
+            </div>
+          </div>
+
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Aktif Kullanıcı</div>
+              <div class="kpi-value" id="exec-active-users">0</div>
+              <div class="kpi-trend" id="exec-users-trend">Son 7 gün</div>
+            </div>
+          </div>
+
+          <div class="executive-kpi-card">
+            <div class="kpi-icon" style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Ortalama/Gün</div>
+              <div class="kpi-value" id="exec-avg-daily">0</div>
+              <div class="kpi-trend" id="exec-avg-trend">Son 30 gün</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="executive-charts-row">
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>📈 Aylık Ölçüm Trendi</h3>
+              <select id="exec-monthly-category" onchange="updateExecutiveDashboard()" class="input" style="width:auto; padding:6px 12px;">
+                <option value="all">Tüm Kategoriler</option>
+                <option value="Ph">Ph</option>
+                <option value="Klor">Klor</option>
+                <option value="İletkenlik">İletkenlik</option>
+                <option value="Sertlik">Sertlik</option>
+                <option value="Mikro">Mikrobiyoloji</option>
+                <option value="Kazan Mikser">Kazan & Mikser</option>
+                <option value="Dolum">Dolum Makinaları</option>
+              </select>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-monthly-chart" height="80"></canvas>
+            </div>
+          </div>
+
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>📊 Kategori Dağılımı</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-category-chart" height="80"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="executive-charts-row">
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>⏰ Saatlik Aktivite</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-hourly-chart" height="80"></canvas>
+            </div>
+          </div>
+
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>👤 Kullanıcı Aktivitesi</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-user-chart" height="80"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Performers -->
+        <div class="executive-charts-row">
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>🏆 En Çok Kontrol Edilen Noktalar</h3>
+              <span style="font-size:12px; color:#666;">Son 30 Gün</span>
+            </div>
+            <div class="chart-body">
+              <div id="exec-top-points" class="top-points-list"></div>
+            </div>
+          </div>
+
+          <div class="executive-chart-card">
+            <div class="chart-header">
+              <h3>📅 Haftalık Özet</h3>
+              <span style="font-size:12px; color:#666;">Son 7 Gün</span>
+            </div>
+            <div class="chart-body">
+              <canvas id="exec-weekly-chart" height="80"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Table -->
+        <div class="executive-activity-card">
+          <div class="chart-header">
+            <h3>🕒 Son Aktiviteler</h3>
+            <button class="btn btn-ghost" onclick="updateExecutiveDashboard()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+              Yenile
+            </button>
+          </div>
+          <div class="activity-table-wrapper">
+            <table id="exec-recent-activity" class="activity-table">
+              <thead>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Saat</th>
+                  <th>Kategori</th>
+                  <th>Nokta</th>
+                  <th>Değer</th>
+                  <th>Kullanıcı</th>
+                </tr>
+              </thead>
+              <tbody id="exec-activity-tbody">
+                <tr><td colspan="6" style="text-align:center; padding:24px; color:#999;">Veriler yükleniyor...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- Admin Panel Ana Sayfa -->
       <section id="page-admin-panel" style="display:none;">
         <div class="toolbar"><h2>⚙️ Admin Panel</h2></div>
@@ -959,7 +1131,13 @@
         </div>
         <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08);">
           <div style="margin-bottom:20px;">
-            <p style="color:#666; font-size:14px;">Kullanıcıların portal erişim yetkilerini yönetin. <strong>Restricted</strong> kullanıcılar anasayfada son değerleri ve grafikleri göremez.</p>
+            <p style="color:#666; font-size:14px;">Kullanıcıların portal erişim yetkilerini yönetin.</p>
+            <ul style="color:#666; font-size:13px; margin:8px 0; padding-left:20px;">
+              <li><strong>Admin:</strong> Tüm yetkiler + Kullanıcı Yönetimi + Sistem Logları</li>
+              <li><strong>Executive (Üst Yönetim):</strong> Tüm yetkiler + Üst Yönetim Dashboard</li>
+              <li><strong>Full:</strong> Tüm ölçüm sayfaları + Trend Analizi</li>
+              <li><strong>Restricted:</strong> Sadece ölçüm sayfaları (Anasayfa grafikleri ve Trend Analizi kapalı)</li>
+            </ul>
           </div>
           <div id="users-table-container">
             <p style="opacity:0.6; text-align:center; padding:40px;">Kullanıcılar yükleniyor...</p>

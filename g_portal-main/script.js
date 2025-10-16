@@ -112,6 +112,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       showAdminMenu(); // Logs + User Management
     } else if (currentUserRole === 'full') {
       showFullAccessMenu(); // Sadece Trend Analizi
+    } else if (currentUserRole === 'executive') {
+      showFullAccessMenu(); // Trend Analizi
+      showExecutiveMenu(); // Üst Yönetim Dashboard
     }
 
     showHomepage();
@@ -191,6 +194,9 @@ if (loginForm) {
         showAdminMenu(); // Logs + User Management
       } else if (currentUserRole === 'full') {
         showFullAccessMenu(); // Sadece Trend Analizi
+      } else if (currentUserRole === 'executive') {
+        showFullAccessMenu(); // Trend Analizi
+        showExecutiveMenu(); // Üst Yönetim Dashboard
       }
 
       await logActivity('LOGIN', 'Auth', { email });
@@ -1058,12 +1064,14 @@ async function initUsersPage() {
 
       const roleColors = {
         'admin': '#d32f2f',
+        'executive': '#7b1fa2',
         'full': '#1976d2',
         'restricted': '#f57c00'
       };
 
       const roleIcons = {
         'admin': '⚙️',
+        'executive': '📊',
         'full': '✓',
         'restricted': '◐'
       };
@@ -1095,6 +1103,7 @@ async function initUsersPage() {
               <label class="role-label">Yetki Seviyesi</label>
               <select id="role-${email.replace(/[@.]/g, '_')}" class="role-select">
                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>⚙️ Admin - Tam Yetki + Yönetim</option>
+                <option value="executive" ${currentRole === 'executive' ? 'selected' : ''}>📊 Üst Yönetim - Dashboard + Raporlar</option>
                 <option value="full" ${currentRole === 'full' ? 'selected' : ''}>✓ Tam Yetki</option>
                 <option value="restricted" ${currentRole === 'restricted' ? 'selected' : ''}>◐ Kısıtlı Erişim</option>
               </select>
@@ -1126,6 +1135,7 @@ async function initUsersPage() {
 function getRoleLabel(role) {
   const labels = {
     'admin': 'Admin (Tam Yetki + Kullanıcı Yönetimi)',
+    'executive': 'Üst Yönetim (Dashboard + Raporlar)',
     'full': 'Tam Yetki',
     'restricted': 'Kısıtlı (Son Değerler ve Grafikler Gizli)'
   };
@@ -2833,5 +2843,453 @@ window.openDolumMakinalariEntryModal = openDolumMakinalariEntryModal;
 window.closeDolumMakinalariNozulModal = closeDolumMakinalariNozulModal;
 window.saveDolumMakinalariData = saveDolumMakinalariData;
 window.filterDolumMakinalariCards = filterDolumMakinalariCards;
+
+// ====== ÜST YÖNETİM DASHBOARD ======
+let executiveCharts = {
+  monthly: null,
+  category: null,
+  hourly: null,
+  user: null,
+  weekly: null
+};
+
+// Executive dashboard'u göster
+async function showExecutiveDashboard() {
+  currentSection = 'executive-dashboard';
+  await updateExecutiveDashboard();
+}
+
+// Dashboard verilerini güncelle
+async function updateExecutiveDashboard() {
+  try {
+    // Son güncelleme zamanını göster
+    const lastUpdate = document.getElementById('dashboard-last-update');
+    if (lastUpdate) {
+      lastUpdate.textContent = 'Son güncelleme: ' + new Date().toLocaleString('tr-TR');
+    }
+
+    // Tüm measurements verilerini çek
+    const { data: measurements, error } = await supabaseClient
+      .from('measurements')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('time', { ascending: false });
+
+    if (error) {
+      console.error('Measurements yükleme hatası:', error);
+      showToast('Veriler yüklenirken hata oluştu.');
+      return;
+    }
+
+    // Logs tablosundan kullanıcı aktivitelerini çek
+    const { data: logs, error: logsError } = await supabaseClient
+      .from('logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1000);
+
+    if (logsError) {
+      console.error('Logs yükleme hatası:', logsError);
+    }
+
+    // KPI'ları hesapla ve güncelle
+    updateExecutiveKPIs(measurements, logs || []);
+
+    // Grafikleri güncelle
+    updateExecutiveCharts(measurements);
+
+    // En çok kontrol edilen noktaları göster
+    updateTopPoints(measurements);
+
+    // Son aktiviteleri göster
+    updateRecentActivity(measurements);
+
+  } catch (err) {
+    console.error('Dashboard güncelleme hatası:', err);
+    showToast('Dashboard güncellenirken hata oluştu.');
+  }
+}
+
+// KPI'ları güncelle
+function updateExecutiveKPIs(measurements, logs) {
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  // Toplam ölçüm (bu ay)
+  const thisMonthMeasurements = measurements.filter(m => m.date && m.date.startsWith(thisMonth));
+  document.getElementById('exec-total-measurements').textContent = thisMonthMeasurements.length.toLocaleString('tr-TR');
+  document.getElementById('exec-total-trend').textContent = 'Bu ay';
+
+  // Bugünkü ölçüm
+  const todayMeasurements = measurements.filter(m => m.date === today);
+  document.getElementById('exec-today-measurements').textContent = todayMeasurements.length.toLocaleString('tr-TR');
+  document.getElementById('exec-today-trend').textContent = 'Bugün';
+
+  // Aktif kullanıcılar (son 7 gün)
+  const activeUsers = new Set(
+    measurements
+      .filter(m => m.date >= last7Days)
+      .map(m => m.user)
+  );
+  document.getElementById('exec-active-users').textContent = activeUsers.size;
+  document.getElementById('exec-users-trend').textContent = 'Son 7 gün';
+
+  // Ortalama günlük ölçüm (son 30 gün)
+  const last30DaysMeasurements = measurements.filter(m => m.date >= last30Days);
+  const avgDaily = Math.round(last30DaysMeasurements.length / 30);
+  document.getElementById('exec-avg-daily').textContent = avgDaily.toLocaleString('tr-TR');
+  document.getElementById('exec-avg-trend').textContent = 'Son 30 gün';
+}
+
+// Grafikleri güncelle
+function updateExecutiveCharts(measurements) {
+  const selectedCategory = document.getElementById('exec-monthly-category')?.value || 'all';
+
+  // Kategori filtresi uygula
+  let filteredData = measurements;
+  if (selectedCategory !== 'all') {
+    filteredData = measurements.filter(m => m.category === selectedCategory);
+  }
+
+  // Aylık trend grafiği
+  updateMonthlyChart(filteredData);
+
+  // Kategori dağılımı
+  updateCategoryChart(measurements);
+
+  // Saatlik aktivite
+  updateHourlyChart(measurements);
+
+  // Kullanıcı aktivitesi
+  updateUserChart(measurements);
+
+  // Haftalık özet
+  updateWeeklyChart(measurements);
+}
+
+// Aylık trend grafiği
+function updateMonthlyChart(measurements) {
+  const ctx = document.getElementById('exec-monthly-chart');
+  if (!ctx) return;
+
+  // Son 12 ayın verilerini hesapla
+  const monthlyData = {};
+  const now = new Date();
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.toISOString().slice(0, 7);
+    monthlyData[key] = 0;
+  }
+
+  measurements.forEach(m => {
+    if (m.date) {
+      const monthKey = m.date.slice(0, 7);
+      if (monthlyData.hasOwnProperty(monthKey)) {
+        monthlyData[monthKey]++;
+      }
+    }
+  });
+
+  const labels = Object.keys(monthlyData).map(key => {
+    const [y, m] = key.split('-');
+    return new Date(y, m - 1).toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' });
+  });
+  const data = Object.values(monthlyData);
+
+  if (executiveCharts.monthly) {
+    executiveCharts.monthly.destroy();
+  }
+
+  executiveCharts.monthly = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Ölçüm Sayısı',
+        data: data,
+        borderColor: '#2e7d32',
+        backgroundColor: 'rgba(46, 125, 50, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+// Kategori dağılımı grafiği
+function updateCategoryChart(measurements) {
+  const ctx = document.getElementById('exec-category-chart');
+  if (!ctx) return;
+
+  const categoryCount = {};
+  measurements.forEach(m => {
+    const cat = m.category || 'Diğer';
+    categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+  });
+
+  const sortedCategories = Object.entries(categoryCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+
+  if (executiveCharts.category) {
+    executiveCharts.category.destroy();
+  }
+
+  executiveCharts.category = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: sortedCategories.map(c => c[0]),
+      datasets: [{
+        data: sortedCategories.map(c => c[1]),
+        backgroundColor: [
+          '#667eea', '#f093fb', '#4facfe', '#fa709a',
+          '#feca57', '#48dbfb', '#ff6b6b', '#5f27cd'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'right' }
+      }
+    }
+  });
+}
+
+// Saatlik aktivite grafiği
+function updateHourlyChart(measurements) {
+  const ctx = document.getElementById('exec-hourly-chart');
+  if (!ctx) return;
+
+  const hourlyData = Array(24).fill(0);
+  measurements.forEach(m => {
+    if (m.time) {
+      const hour = parseInt(m.time.split(':')[0]);
+      if (hour >= 0 && hour < 24) {
+        hourlyData[hour]++;
+      }
+    }
+  });
+
+  if (executiveCharts.hourly) {
+    executiveCharts.hourly.destroy();
+  }
+
+  executiveCharts.hourly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({length: 24}, (_, i) => i + ':00'),
+      datasets: [{
+        label: 'Ölçüm Sayısı',
+        data: hourlyData,
+        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+// Kullanıcı aktivitesi grafiği
+function updateUserChart(measurements) {
+  const ctx = document.getElementById('exec-user-chart');
+  if (!ctx) return;
+
+  const userCount = {};
+  measurements.forEach(m => {
+    const user = m.user || 'Bilinmeyen';
+    userCount[user] = (userCount[user] || 0) + 1;
+  });
+
+  const sortedUsers = Object.entries(userCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  if (executiveCharts.user) {
+    executiveCharts.user.destroy();
+  }
+
+  executiveCharts.user = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sortedUsers.map(u => u[0].split('@')[0]),
+      datasets: [{
+        label: 'Ölçüm Sayısı',
+        data: sortedUsers.map(u => u[1]),
+        backgroundColor: 'rgba(79, 172, 254, 0.8)',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+// Haftalık özet grafiği
+function updateWeeklyChart(measurements) {
+  const ctx = document.getElementById('exec-weekly-chart');
+  if (!ctx) return;
+
+  const weeklyData = Array(7).fill(0);
+  const today = new Date();
+  const dayNames = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+
+  measurements.forEach(m => {
+    if (m.date) {
+      const mDate = new Date(m.date);
+      const diffDays = Math.floor((today - mDate) / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays < 7) {
+        weeklyData[6 - diffDays]++;
+      }
+    }
+  });
+
+  const labels = Array.from({length: 7}, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return dayNames[d.getDay()];
+  });
+
+  if (executiveCharts.weekly) {
+    executiveCharts.weekly.destroy();
+  }
+
+  executiveCharts.weekly = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Ölçüm',
+        data: weeklyData,
+        borderColor: '#fa709a',
+        backgroundColor: 'rgba(250, 112, 154, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+// En çok kontrol edilen noktalar
+function updateTopPoints(measurements) {
+  const pointCount = {};
+
+  measurements.forEach(m => {
+    const point = m.point || 'Bilinmeyen';
+    const category = m.category || 'Diğer';
+    const key = `${point}|${category}`;
+
+    if (!pointCount[key]) {
+      pointCount[key] = { point, category, count: 0 };
+    }
+    pointCount[key].count++;
+  });
+
+  const topPoints = Object.values(pointCount)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const container = document.getElementById('exec-top-points');
+  if (!container) return;
+
+  if (topPoints.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:24px; color:#999;">Henüz veri yok</div>';
+    return;
+  }
+
+  container.innerHTML = topPoints.map((item, index) => {
+    const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other';
+    return `
+      <div class="top-point-item">
+        <div class="top-point-rank ${rankClass}">${index + 1}</div>
+        <div class="top-point-info">
+          <div class="top-point-name">${item.point}</div>
+          <div class="top-point-category">${item.category}</div>
+        </div>
+        <div class="top-point-count">${item.count.toLocaleString('tr-TR')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Son aktiviteleri göster
+function updateRecentActivity(measurements) {
+  const tbody = document.getElementById('exec-activity-tbody');
+  if (!tbody) return;
+
+  const recent = measurements.slice(0, 50);
+
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#999;">Henüz aktivite yok</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = recent.map(m => `
+    <tr>
+      <td>${m.date || '-'}</td>
+      <td>${m.time || '-'}</td>
+      <td><strong>${m.category || '-'}</strong></td>
+      <td>${m.point || '-'}</td>
+      <td>${m.value || '-'} ${m.unit || ''}</td>
+      <td>${(m.user || '').split('@')[0]}</td>
+    </tr>
+  `).join('');
+}
+
+// Executive menu'yu göster/gizle
+function showExecutiveMenu() {
+  const menu = document.getElementById('executive-dashboard-menu');
+  if (menu) {
+    menu.style.display = 'block';
+  }
+}
+
+// Global fonksiyonları expose et
+window.updateExecutiveDashboard = updateExecutiveDashboard;
+window.showExecutiveDashboard = showExecutiveDashboard;
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
