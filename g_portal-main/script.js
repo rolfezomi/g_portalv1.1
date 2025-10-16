@@ -613,12 +613,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (currentUserRole === 'admin') {
       showFullAccessMenu(); // Trend Analizi
       showAdminMenu(); // Logs + User Management
-      showExecutiveMenu(); // Üst Yönetim Dashboard
+      showExecutiveMenu(); // Dashboard
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
     } else if (currentUserRole === 'full') {
-      showFullAccessMenu(); // Sadece Trend Analizi
+      showFullAccessMenu(); // Trend Analizi
+      showExecutiveMenu(); // Dashboard (Full access için de göster)
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
@@ -710,12 +711,13 @@ if (loginForm) {
       if (currentUserRole === 'admin') {
         showFullAccessMenu(); // Trend Analizi
         showAdminMenu(); // Logs + User Management
-        showExecutiveMenu(); // Üst Yönetim Dashboard
+        showExecutiveMenu(); // Dashboard
         await logActivity('LOGIN', 'Auth', { email });
         showHomepage();
         loadRecent();
       } else if (currentUserRole === 'full') {
-        showFullAccessMenu(); // Sadece Trend Analizi
+        showFullAccessMenu(); // Trend Analizi
+        showExecutiveMenu(); // Dashboard (Full access için de göster)
         await logActivity('LOGIN', 'Auth', { email });
         showHomepage();
         loadRecent();

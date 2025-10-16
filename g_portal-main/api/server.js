@@ -121,7 +121,7 @@ app.post('/api/users/update-role', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Email ve rol gereklidir' });
     }
 
-    if (!['admin', 'full', 'restricted'].includes(role)) {
+    if (!['admin', 'executive', 'full', 'restricted'].includes(role)) {
       return res.status(400).json({ error: 'Geçersiz rol' });
     }
 
