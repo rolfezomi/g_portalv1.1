@@ -3959,4 +3959,185 @@ window.showExecutiveDashboard = showExecutiveDashboard;
 window.updateMonthlyChartWithFilter = updateMonthlyChartWithFilter;
 window.executiveDashboardCache = executiveDashboardCache;
 
+// ====== FULLSCREEN MODE - KIOSK/PRESENTATION MODE ======
+let isFullscreenMode = false;
+let fullscreenAnimationTimeout = null;
+let chartUpdateHighlights = new Map(); // Hangi kartların güncellediğini takip et
+
+/**
+ * Fullscreen değişikliklerini dinle (F11, ESC)
+ */
+function initFullscreenDetection() {
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.addEventListener('MSFullscreenChangeEvent', handleFullscreenChange);
+}
+
+function handleFullscreenChange() {
+  const isFullscreen = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+
+  if (isFullscreen && currentSection === 'executive-dashboard') {
+    enterFullscreenMode();
+  } else if (!isFullscreen && isFullscreenMode) {
+    exitFullscreenMode();
+  }
+}
+
+/**
+ * Fullscreen moduna geçiş (F11 basıldığında)
+ */
+function enterFullscreenMode() {
+  if (isFullscreenMode) return;
+
+  console.log('🖥️ Fullscreen mode: ENTERING');
+  isFullscreenMode = true;
+
+  const portalScreen = document.getElementById('portal-screen');
+  const dashboard = document.getElementById('page-executive-dashboard');
+
+  // Fullscreen class ekle
+  portalScreen.classList.add('fullscreen-kiosk-mode');
+  dashboard.classList.add('dashboard-fullscreen');
+
+  // Animasyon: Kartların sırayla görünmesi
+  animateCardsEntry();
+
+  // Header ve menu gizle
+  document.querySelector('.header')?.classList.add('fullscreen-hidden');
+  document.querySelector('.menu')?.classList.add('fullscreen-hidden');
+  document.querySelector('.mobile-tabs')?.classList.add('fullscreen-hidden');
+
+  // Otomatik yenileme başlat (30 saniyede bir)
+  startFullscreenAutoRefresh();
+
+  console.log('✅ Fullscreen mode aktif - Kiosk presentation başlatıldı');
+}
+
+/**
+ * Fullscreen modundan çıkış (ESC basıldığında)
+ */
+function exitFullscreenMode() {
+  if (!isFullscreenMode) return;
+
+  console.log('🖥️ Fullscreen mode: EXITING');
+  isFullscreenMode = false;
+
+  const portalScreen = document.getElementById('portal-screen');
+  const dashboard = document.getElementById('page-executive-dashboard');
+
+  // Exit animasyonu
+  dashboard.classList.add('dashboard-fullscreen-exit');
+
+  setTimeout(() => {
+    portalScreen.classList.remove('fullscreen-kiosk-mode');
+    dashboard.classList.remove('dashboard-fullscreen', 'dashboard-fullscreen-exit');
+
+    // Header ve menu göster
+    document.querySelector('.header')?.classList.remove('fullscreen-hidden');
+    document.querySelector('.menu')?.classList.remove('fullscreen-hidden');
+    document.querySelector('.mobile-tabs')?.classList.remove('fullscreen-hidden');
+  }, 600); // Exit animasyon süresi
+
+  // Otomatik yenilemeyi durdur
+  stopFullscreenAutoRefresh();
+
+  console.log('✅ Normal desktop mode');
+}
+
+/**
+ * Kartların sırayla animasyonlu girişi
+ */
+function animateCardsEntry() {
+  const kpiCards = document.querySelectorAll('#page-executive-dashboard .executive-kpi-card');
+  const chartCards = document.querySelectorAll('#page-executive-dashboard .executive-chart-card');
+
+  // KPI kartları önce (0-3)
+  kpiCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(30px) scale(0.95)';
+
+    setTimeout(() => {
+      card.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0) scale(1)';
+    }, index * 120);
+  });
+
+  // Grafik kartları sonra (daha geç başla)
+  chartCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(30px) scale(0.98)';
+
+    setTimeout(() => {
+      card.style.transition = 'all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0) scale(1)';
+    }, 400 + index * 150); // KPI'lardan sonra başla
+  });
+}
+
+/**
+ * Grafik güncellendiğinde highlight animasyonu
+ */
+function highlightUpdatedChart(chartId) {
+  if (!isFullscreenMode) return;
+
+  const chartCard = document.querySelector(`#${chartId}`)?.closest('.executive-chart-card, .executive-kpi-card');
+  if (!chartCard) return;
+
+  // Önce eski highlight'ı temizle
+  chartCard.classList.remove('chart-updated-pulse');
+
+  // Reflow için timeout
+  setTimeout(() => {
+    chartCard.classList.add('chart-updated-pulse');
+
+    // 3 saniye sonra kaldır
+    setTimeout(() => {
+      chartCard.classList.remove('chart-updated-pulse');
+    }, 3000);
+  }, 50);
+
+  console.log(`📊 Chart güncellendi: ${chartId}`);
+}
+
+let fullscreenRefreshInterval = null;
+
+function startFullscreenAutoRefresh() {
+  // Mevcut interval varsa temizle
+  if (fullscreenRefreshInterval) {
+    clearInterval(fullscreenRefreshInterval);
+  }
+
+  // 30 saniyede bir otomatik yenile
+  fullscreenRefreshInterval = setInterval(() => {
+    if (isFullscreenMode && currentSection === 'executive-dashboard') {
+      console.log('🔄 Fullscreen auto-refresh...');
+      updateExecutiveDashboard();
+
+      // Tüm grafikleri highlight et (güncelleme göstergesi)
+      highlightUpdatedChart('exec-weekly-chart');
+      setTimeout(() => highlightUpdatedChart('exec-category-breakdown'), 200);
+      setTimeout(() => highlightUpdatedChart('exec-hourly-chart'), 400);
+      setTimeout(() => highlightUpdatedChart('exec-user-chart'), 600);
+    }
+  }, 30000); // 30 saniye
+}
+
+function stopFullscreenAutoRefresh() {
+  if (fullscreenRefreshInterval) {
+    clearInterval(fullscreenRefreshInterval);
+    fullscreenRefreshInterval = null;
+  }
+}
+
+// Fullscreen detection başlat
+initFullscreenDetection();
+
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---

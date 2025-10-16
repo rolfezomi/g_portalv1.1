@@ -3198,3 +3198,187 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     min-width: 500px;
   }
 }
+
+/* =========================
+   FULLSCREEN KIOSK MODE - F11 PRESENTATION
+   ========================= */
+
+/* Fullscreen mode aktif olduğunda */
+.fullscreen-kiosk-mode {
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+}
+
+.fullscreen-kiosk-mode .content {
+  margin-left: 0 !important;
+  padding: 40px !important;
+  max-width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
+}
+
+/* Header ve menü gizle */
+.fullscreen-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-100%) !important;
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+}
+
+/* Dashboard fullscreen layout */
+.dashboard-fullscreen {
+  animation: dashboardZoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dashboard-fullscreen .executive-kpi-grid {
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.dashboard-fullscreen .executive-kpi-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform-origin: center;
+}
+
+.dashboard-fullscreen .executive-chart-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dashboard-fullscreen .executive-charts-row {
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Dashboard zoom in animasyonu */
+@keyframes dashboardZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dashboard exit animasyonu */
+.dashboard-fullscreen-exit {
+  animation: dashboardZoomOut 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes dashboardZoomOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Chart güncelleme pulse animasyonu */
+.chart-updated-pulse {
+  animation: chartPulseGlow 2s ease-in-out;
+  position: relative;
+}
+
+@keyframes chartPulseGlow {
+  0%, 100% {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    transform: scale(1);
+  }
+  25% {
+    box-shadow: 0 0 0 8px rgba(76, 175, 80, 0.3),
+                0 0 0 16px rgba(76, 175, 80, 0.1),
+                0 8px 32px rgba(76, 175, 80, 0.2);
+    transform: scale(1.02);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(76, 175, 80, 0.2),
+                0 0 0 24px rgba(76, 175, 80, 0.05),
+                0 12px 48px rgba(76, 175, 80, 0.15);
+    transform: scale(1.03);
+  }
+  75% {
+    box-shadow: 0 0 0 8px rgba(76, 175, 80, 0.15),
+                0 0 0 16px rgba(76, 175, 80, 0.05),
+                0 8px 32px rgba(76, 175, 80, 0.1);
+    transform: scale(1.01);
+  }
+}
+
+/* Güncelleme badge (opsiyonel - kart üstünde "GÜNCELLENDI" göstergesi) */
+.chart-updated-pulse::before {
+  content: "GÜNCELLENDI";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  animation: updateBadgeFade 3s ease-in-out;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+@keyframes updateBadgeFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+}
+
+/* Fullscreen'de KPI kartları daha büyük font */
+.dashboard-fullscreen .kpi-value {
+  font-size: 38px !important;
+}
+
+.dashboard-fullscreen .kpi-label {
+  font-size: 14px !important;
+}
+
+.dashboard-fullscreen .chart-header h3 {
+  font-size: 20px !important;
+}
+
+/* Fullscreen scroll bar styling */
+.fullscreen-kiosk-mode .content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fullscreen-kiosk-mode .content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.fullscreen-kiosk-mode .content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.fullscreen-kiosk-mode .content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
