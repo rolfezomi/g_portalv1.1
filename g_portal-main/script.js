@@ -1,4 +1,192 @@
-// --- DECIMAL INPUT FIX (global helpers) ---
+// =========================
+// MERKEZI KONFİGÜRASYON
+// =========================
+
+const APP_CONFIG = {
+  // Kategori tanımları - Tek kaynak, tüm projede kullanılır
+  CATEGORIES: {
+    KLOR: {
+      key: 'klor',
+      name: 'Klor',
+      displayName: 'Klor',
+      icon: '💧',
+      color: { gradient: ['rgba(46,125,50,0.8)', 'rgba(27,94,32,1)'], border: '#1b5e20', point: '#2e7d32', pointHover: '#145214' }
+    },
+    SERTLIK: {
+      key: 'sertlik',
+      name: 'Sertlik',
+      displayName: 'Sertlik',
+      icon: '🔬',
+      color: { gradient: ['rgba(33,150,243,0.8)', 'rgba(25,118,210,1)'], border: '#1976d2', point: '#2196f3', pointHover: '#0d47a1' }
+    },
+    PH: {
+      key: 'ph',
+      name: 'Ph',
+      displayName: 'pH',
+      icon: '⚗️',
+      color: { gradient: ['rgba(156,39,176,0.8)', 'rgba(123,31,162,1)'], border: '#7b1fa2', point: '#9c27b0', pointHover: '#4a148c' }
+    },
+    ILETKENLIK: {
+      key: 'iletkenlik',
+      name: 'İletkenlik',
+      displayName: 'İletkenlik',
+      icon: '⚡',
+      color: { gradient: ['rgba(255,152,0,0.8)', 'rgba(245,124,0,1)'], border: '#f57c00', point: '#ff9800', pointHover: '#e65100' }
+    },
+    MIKRO: {
+      key: 'mikro',
+      name: 'Mikro Biyoloji',
+      displayName: 'Mikro Biyoloji',
+      icon: '🦠',
+      color: { gradient: ['rgba(233,30,99,0.8)', 'rgba(194,24,91,1)'], border: '#c2185b', point: '#e91e63', pointHover: '#880e4f' }
+    },
+    KAZAN_MIKSER: {
+      key: 'kazanmikser',
+      name: 'kazan-mikser',
+      displayName: 'Kazan & Mikser',
+      icon: '🌀',
+      color: { gradient: ['rgba(96,125,139,0.8)', 'rgba(69,90,100,1)'], border: '#455a64', point: '#607d8b', pointHover: '#263238' },
+      controlPoints: [
+        '1010 / 3 Tonluk Mikser',
+        '1011 / 7 Tonluk Mikser',
+        '1012 / 7 Tonluk Mikser',
+        '1013 / 2 Tonluk Mikser',
+        '1014 / UNIMIX',
+        '1015 / Emülsiyon Ünitesi',
+        '1018 / 1 Tonluk Seyyar Transfer Kazanı',
+        '1019 / 1 Tonluk Seyyar Transfer Kazanı',
+        '1020 / 500 Litrelik Seyyar Tip Mikser Kazanı',
+        '1021 / 500 Litrelik Seyyar Tip Mikser Kazanı',
+        '1022 / 250 Litrelik Seyyar Tip Mikser Kazanı',
+        '1023 / 250 Litrelik Seyyar Tip Mikser Kazanı',
+        '1061 / 500 Litrelik Seyyar Mikser',
+        '1108 / 250 Litrelik Seyyar Kazan',
+        '1109 / 250 Litrelik Seyyar Kazan',
+        '1135 / 500 Litrelik Seyyar Mikser',
+        '1142 / Pilot Mikser - Dolmak'
+      ]
+    },
+    DOLUM_MAKINALARI: {
+      key: 'dolummakinalari',
+      name: 'dolum-makinalari',
+      displayName: 'Dolum Makinaları',
+      icon: '🏭',
+      color: { gradient: ['rgba(121,85,72,0.8)', 'rgba(93,64,55,1)'], border: '#5d4037', point: '#795548', pointHover: '#3e2723' },
+      controlPoints: [
+        '1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI',
+        '1148 / ROLL-ON DOLUM VE KAPAMA MAKİNASI'
+      ]
+    }
+  },
+
+  // Helper fonksiyonlar
+  getCategoryByKey(key) {
+    return Object.values(this.CATEGORIES).find(cat => cat.key === key);
+  },
+
+  getCategoryByName(name) {
+    return Object.values(this.CATEGORIES).find(cat => cat.name === name);
+  },
+
+  getCategoryColor(key) {
+    const cat = this.getCategoryByKey(key);
+    return cat ? cat.color : this.CATEGORIES.KLOR.color;
+  },
+
+  // Legacy uyumluluk için mapping fonksiyonları
+  getCategoryMap() {
+    return {
+      home: 'Anasayfa',
+      klor: 'Klor',
+      sertlik: 'Sertlik',
+      ph: 'Ph',
+      iletkenlik: 'İletkenlik',
+      mikro: 'Mikro Biyoloji'
+    };
+  },
+
+  getCategoryKeyToName() {
+    return {
+      klor: 'Klor',
+      sertlik: 'Sertlik',
+      ph: 'Ph',
+      iletkenlik: 'İletkenlik',
+      mikro: 'Mikro Biyoloji',
+      kazanmikser: 'kazan-mikser',
+      dolummakinalari: 'dolum-makinalari'
+    };
+  }
+};
+
+// Legacy değişkenleri APP_CONFIG'e yönlendir (geriye uyumluluk)
+const categoryKeyToName = APP_CONFIG.getCategoryKeyToName();
+const colorMap = Object.values(APP_CONFIG.CATEGORIES).reduce((acc, cat) => {
+  acc[cat.key] = cat.color;
+  return acc;
+}, {});
+const kazanMikserControlPoints = APP_CONFIG.CATEGORIES.KAZAN_MIKSER.controlPoints;
+const dolumMakinalariControlPoints = APP_CONFIG.CATEGORIES.DOLUM_MAKINALARI.controlPoints;
+
+// =========================
+// GENERIC UTILITIES
+// =========================
+
+/**
+ * Generic card filter utility - Tüm kategoriler için kullanılabilir
+ * @param {string} gridId - Grid container ID
+ * @param {string} searchTerm - Arama terimi
+ * @param {string} resultCountId - Sonuç sayısı element ID
+ * @param {string} searchInfoId - Search info container ID
+ * @param {string} cardSelector - Card seçici (default: '.box, .card')
+ * @param {string} itemName - Öğe adı (default: 'kontrol noktası')
+ */
+function filterCards(gridId, searchTerm, resultCountId, searchInfoId, cardSelector = '.box, .card, .kazan-mikser-card, .dolum-makinalari-card', itemName = 'öğe') {
+  const grid = document.getElementById(gridId);
+  const searchInfo = document.getElementById(searchInfoId);
+  const resultCount = document.getElementById(resultCountId);
+
+  if (!grid) return;
+
+  const cards = grid.querySelectorAll(cardSelector);
+  const term = searchTerm.toLowerCase().trim();
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const pointData = (card.getAttribute('data-point') || '').toLowerCase();
+
+    if (term === '' || pointData.includes(term)) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // Sonuç sayısını göster
+  if (term !== '') {
+    if (searchInfo) searchInfo.style.display = '';
+    if (resultCount) {
+      if (visibleCount === 0) {
+        resultCount.textContent = '❌ Sonuç bulunamadı';
+        resultCount.style.color = '#d32f2f';
+      } else if (visibleCount === cards.length) {
+        resultCount.textContent = `✅ Tüm ${itemName}ler gösteriliyor (${visibleCount})`;
+        resultCount.style.color = '#1b5e20';
+      } else {
+        resultCount.textContent = `🔍 ${visibleCount} ${itemName} bulundu`;
+        resultCount.style.color = '#1976d2';
+      }
+    }
+  } else {
+    if (searchInfo) searchInfo.style.display = 'none';
+  }
+
+  return visibleCount;
+}
+
+// =========================
+// DECIMAL INPUT FIX (global helpers)
+// =========================
 const __initedDecimalInputs = new WeakSet();
 
 function initDecimalValueInput(el) {
@@ -1322,11 +1510,8 @@ if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const categoryMap = {
-      home: 'Anasayfa', klor: 'Klor', sertlik: 'Sertlik', 
-      ph: 'Ph', iletkenlik: 'İletkenlik', mikro: 'Mikro Biyoloji'
-    };
-    
+    const categoryMap = APP_CONFIG.getCategoryMap();
+
     const entry = {
       category: categoryMap[currentSection] || currentSection,
       point: document.getElementById('point').value,
@@ -1353,49 +1538,7 @@ function showToast(msg) {
 }
 
 // ====== TREND GRAFİĞİ ======
-const categoryKeyToName = {
-  klor: 'Klor', sertlik: 'Sertlik', ph: 'Ph',
-  iletkenlik: 'İletkenlik', mikro: 'Mikro Biyoloji',
-  kazanmikser: 'kazan-mikser',
-  dolummakinalari: 'dolum-makinalari'
-};
-
-// Kazan & Mikser sabit kontrol noktaları (HTML'den alınmıştır)
-const kazanMikserControlPoints = [
-  '1010 / 3 Tonluk Mikser',
-  '1011 / 7 Tonluk Mikser',
-  '1012 / 7 Tonluk Mikser',
-  '1013 / 2 Tonluk Mikser',
-  '1014 / UNIMIX',
-  '1015 / Emülsiyon Ünitesi',
-  '1018 / 1 Tonluk Seyyar Transfer Kazanı',
-  '1019 / 1 Tonluk Seyyar Transfer Kazanı',
-  '1020 / 500 Litrelik Seyyar Tip Mikser Kazanı',
-  '1021 / 500 Litrelik Seyyar Tip Mikser Kazanı',
-  '1022 / 250 Litrelik Seyyar Tip Mikser Kazanı',
-  '1023 / 250 Litrelik Seyyar Tip Mikser Kazanı',
-  '1061 / 500 Litrelik Seyyar Mikser',
-  '1108 / 250 Litrelik Seyyar Kazan',
-  '1109 / 250 Litrelik Seyyar Kazan',
-  '1135 / 500 Litrelik Seyyar Mikser',
-  '1142 / Pilot Mikser - Dolmak'
-];
-
-// Dolum Makinaları sabit kontrol noktaları
-const dolumMakinalariControlPoints = [
-  '1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI',
-  '1148 / ROLL-ON DOLUM VE KAPAMA MAKİNASI'
-];
-
-const colorMap = {
-  klor: { gradient: ['rgba(46,125,50,0.8)', 'rgba(27,94,32,1)'], border: '#1b5e20', point: '#2e7d32', pointHover: '#145214' },
-  sertlik: { gradient: ['rgba(33,150,243,0.8)', 'rgba(25,118,210,1)'], border: '#1976d2', point: '#2196f3', pointHover: '#0d47a1' },
-  ph: { gradient: ['rgba(156,39,176,0.8)', 'rgba(123,31,162,1)'], border: '#7b1fa2', point: '#9c27b0', pointHover: '#4a148c' },
-  iletkenlik: { gradient: ['rgba(255,152,0,0.8)', 'rgba(245,124,0,1)'], border: '#f57c00', point: '#ff9800', pointHover: '#e65100' },
-  mikro: { gradient: ['rgba(233,30,99,0.8)', 'rgba(194,24,91,1)'], border: '#c2185b', point: '#e91e63', pointHover: '#880e4f' },
-  kazanmikser: { gradient: ['rgba(96,125,139,0.8)', 'rgba(69,90,100,1)'], border: '#455a64', point: '#607d8b', pointHover: '#263238' },
-  dolummakinalari: { gradient: ['rgba(121,85,72,0.8)', 'rgba(93,64,55,1)'], border: '#5d4037', point: '#795548', pointHover: '#3e2723' }
-};
+// Not: Tüm category tanımları artık APP_CONFIG'de - yukarıda legacy uyumluluk sağlandı
 
 function buildTrendData(categoryKey) {
   const name = categoryKeyToName[categoryKey];
@@ -2542,45 +2685,9 @@ function openKazanMikserEntryModal(testType) {
   });
 }
 
+// Kazan-Mikser filter - Generic utility kullanıyor
 function filterKazanMikserCards(searchTerm) {
-  const grid = document.getElementById('kazan-mikser-grid');
-  const searchInfo = document.getElementById('kazan-mikser-search-info');
-  const resultCount = document.getElementById('kazan-mikser-result-count');
-
-  if (!grid) return;
-
-  // Hem eski box sınıfını hem de yeni kazan-mikser-card sınıfını destekle
-  const boxes = grid.querySelectorAll('.box, .kazan-mikser-card');
-  const term = searchTerm.toLowerCase().trim();
-  let visibleCount = 0;
-
-  boxes.forEach(box => {
-    const pointData = box.getAttribute('data-point').toLowerCase();
-
-    if (term === '' || pointData.includes(term)) {
-      box.style.display = '';
-      visibleCount++;
-    } else {
-      box.style.display = 'none';
-    }
-  });
-
-  // Sonuç sayısını göster
-  if (term !== '') {
-    searchInfo.style.display = '';
-    if (visibleCount === 0) {
-      resultCount.textContent = '❌ Sonuç bulunamadı';
-      resultCount.style.color = '#d32f2f';
-    } else if (visibleCount === boxes.length) {
-      resultCount.textContent = `✅ Tüm kontrol noktaları gösteriliyor (${visibleCount})`;
-      resultCount.style.color = '#1b5e20';
-    } else {
-      resultCount.textContent = `🔍 ${visibleCount} kontrol noktası bulundu`;
-      resultCount.style.color = '#1976d2';
-    }
-  } else {
-    searchInfo.style.display = 'none';
-  }
+  filterCards('kazan-mikser-grid', searchTerm, 'kazan-mikser-result-count', 'kazan-mikser-search-info', '.box, .kazan-mikser-card', 'kontrol noktası');
 }
 
 // Global scope'a fonksiyonları ekle
@@ -2799,44 +2906,9 @@ async function saveDolumMakinalariData(event) {
   }
 }
 
+// Dolum Makinaları filter - Generic utility kullanıyor
 function filterDolumMakinalariCards(searchTerm) {
-  const grid = document.getElementById('dolum-makinalari-grid');
-  const searchInfo = document.getElementById('dolum-makinalari-search-info');
-  const resultCount = document.getElementById('dolum-makinalari-result-count');
-
-  if (!grid) return;
-
-  const cards = grid.querySelectorAll('.dolum-makinalari-card');
-  const term = searchTerm.toLowerCase().trim();
-  let visibleCount = 0;
-
-  cards.forEach(card => {
-    const pointData = card.getAttribute('data-point').toLowerCase();
-
-    if (term === '' || pointData.includes(term)) {
-      card.style.display = '';
-      visibleCount++;
-    } else {
-      card.style.display = 'none';
-    }
-  });
-
-  // Sonuç sayısını göster
-  if (term !== '') {
-    searchInfo.style.display = '';
-    if (visibleCount === 0) {
-      resultCount.textContent = '❌ Sonuç bulunamadı';
-      resultCount.style.color = '#d32f2f';
-    } else if (visibleCount === cards.length) {
-      resultCount.textContent = `✅ Tüm makinalar gösteriliyor (${visibleCount})`;
-      resultCount.style.color = '#1b5e20';
-    } else {
-      resultCount.textContent = `🔍 ${visibleCount} makina bulundu`;
-      resultCount.style.color = '#1976d2';
-    }
-  } else {
-    searchInfo.style.display = 'none';
-  }
+  filterCards('dolum-makinalari-grid', searchTerm, 'dolum-makinalari-result-count', 'dolum-makinalari-search-info', '.dolum-makinalari-card', 'makina');
 }
 
 // Global scope'a fonksiyonları ekle
