@@ -184,6 +184,74 @@ function filterCards(gridId, searchTerm, resultCountId, searchInfoId, cardSelect
   return visibleCount;
 }
 
+/**
+ * Modal göster/gizle utility - CSS class kullanır (inline style yerine, daha hızlı)
+ * @param {string} modalId - Modal element ID
+ * @param {boolean} show - true = göster, false = gizle
+ */
+function toggleModal(modalId, show = true) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  if (show) {
+    modal.classList.remove('u-hidden');
+    modal.classList.add('u-flex');
+  } else {
+    modal.classList.remove('u-flex');
+    modal.classList.add('u-hidden');
+  }
+}
+
+/**
+ * Element göster/gizle utility - CSS class kullanır
+ * @param {string} elementId - Element ID
+ * @param {boolean} show - true = göster, false = gizle
+ * @param {string} displayType - Display tipi ('block', 'flex', 'inline-block')
+ */
+function toggleElement(elementId, show = true, displayType = 'block') {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+
+  if (show) {
+    element.classList.remove('u-hidden');
+    if (displayType === 'flex') element.classList.add('u-flex');
+    else if (displayType === 'inline-block') element.classList.add('u-inline-block');
+    else element.classList.add('u-block');
+  } else {
+    element.classList.remove('u-flex', 'u-block', 'u-inline-block');
+    element.classList.add('u-hidden');
+  }
+}
+
+/**
+ * Chart update/create helper - Performans için update kullanır, gerekirse yeniden yaratır
+ * @param {object} chartInstance - Mevcut chart instance veya null
+ * @param {HTMLElement} ctx - Canvas element
+ * @param {object} config - Chart.js config
+ * @param {object} newData - Yeni data (labels ve datasets)
+ * @returns {object} Chart instance
+ */
+function updateOrCreateChart(chartInstance, ctx, config, newData = null) {
+  if (!ctx) return null;
+
+  // Eğer chart yoksa, yeni oluştur
+  if (!chartInstance) {
+    return new Chart(ctx, config);
+  }
+
+  // Chart varsa ve sadece data değişiyorsa, update et (daha hızlı)
+  if (newData) {
+    chartInstance.data.labels = newData.labels;
+    chartInstance.data.datasets = newData.datasets;
+    chartInstance.update('none'); // 'none' = animasyon yok, çok hızlı
+    return chartInstance;
+  }
+
+  // Config tamamen değiştiyse, destroy edip yeniden oluştur
+  chartInstance.destroy();
+  return new Chart(ctx, config);
+}
+
 // =========================
 // DECIMAL INPUT FIX (global helpers)
 // =========================
@@ -283,8 +351,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   if (isLoggedIn && loginScreen && portalScreen) {
     document.body.classList.remove('login-active');
-    loginScreen.style.display = 'none';
-    portalScreen.style.display = 'block';
+    toggleElement('login-screen', false);
+    toggleElement('portal-screen', true, 'block');
 
     const username = localStorage.getItem('username');
     currentUserEmail = username;
@@ -367,8 +435,8 @@ if (loginForm) {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', email);
 
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('portal-screen').style.display = 'block';
+      toggleElement('login-screen', false);
+      toggleElement('portal-screen', true, 'block');
       document.body.classList.remove('login-active');
 
       const userEl = document.getElementById('logged-user');
@@ -1491,14 +1559,14 @@ function openModal(prefillPoint, readonly = false) {
   document.getElementById('time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
   document.getElementById('user').value = (document.getElementById('logged-user')?.textContent || 'Bilinmiyor').replace(/^Kullanıcı:\s*/, '');
   
-  overlay.style.display = 'block';
-  modal.style.display = 'flex';
+  toggleElement('entry-overlay', true, 'block');
+  toggleModal('entry-modal', true);
   valueInput.focus();
 }
 
 function closeModal() {
-  overlay.style.display = 'none';
-  modal.style.display = 'none';
+  toggleElement('entry-overlay', false);
+  toggleModal('entry-modal', false);
   if (form) form.reset();
 }
 
@@ -2603,14 +2671,13 @@ function openKazanMikserTestModal(point) {
   if (!modal || !title) return;
 
   title.textContent = `Analiz Tipi Seçimi - ${point}`;
-  modal.style.display = 'flex';
+  toggleModal('kazan-mikser-test-modal', true);
 
   logActivity('MODAL_OPEN', 'KazanMikser', { point, action: 'test_selection' });
 }
 
 function closeKazanMikserTestModal() {
-  const modal = document.getElementById('kazan-mikser-test-modal');
-  if (modal) modal.style.display = 'none';
+  toggleModal('kazan-mikser-test-modal', false);
 }
 
 function openKazanMikserEntryModal(testType) {
@@ -2676,7 +2743,7 @@ function openKazanMikserEntryModal(testType) {
   }
   testTypeInput.value = testType;
 
-  modal.style.display = 'flex';
+  toggleModal('entry-modal', true);
 
   logActivity('MODAL_OPEN', 'KazanMikser', {
     point: selectedKazanMikserPoint,
@@ -2728,14 +2795,13 @@ function openDolumMakinalariTestModal(point, nozulCount) {
   if (!modal || !title) return;
 
   title.textContent = `Analiz Tipi Seçimi - ${point}`;
-  modal.style.display = 'flex';
+  toggleModal('dolum-makinalari-test-modal', true);
 
   logActivity('MODAL_OPEN', 'DolumMakinalari', { point, nozulCount, action: 'test_selection' });
 }
 
 function closeDolumMakinalariTestModal() {
-  const modal = document.getElementById('dolum-makinalari-test-modal');
-  if (modal) modal.style.display = 'none';
+  toggleModal('dolum-makinalari-test-modal', false);
 }
 
 function openDolumMakinalariEntryModal(testType) {
@@ -2815,7 +2881,7 @@ function openDolumMakinalariEntryModal(testType) {
     });
   }, 100);
 
-  modal.style.display = 'flex';
+  toggleModal('dolum-makinalari-nozul-modal', true);
 
   logActivity('MODAL_OPEN', 'DolumMakinalari', {
     point: selectedDolumMakinalariPoint,
@@ -2826,8 +2892,7 @@ function openDolumMakinalariEntryModal(testType) {
 }
 
 function closeDolumMakinalariNozulModal() {
-  const modal = document.getElementById('dolum-makinalari-nozul-modal');
-  if (modal) modal.style.display = 'none';
+  toggleModal('dolum-makinalari-nozul-modal', false);
 }
 
 async function saveDolumMakinalariData(event) {
@@ -3213,8 +3278,11 @@ function updateHourlyChart(measurements) {
     }
   });
 
+  // Optimized: Data update
   if (executiveCharts.hourly) {
-    executiveCharts.hourly.destroy();
+    executiveCharts.hourly.data.datasets[0].data = hourlyData;
+    executiveCharts.hourly.update('none');
+    return;
   }
 
   executiveCharts.hourly = new Chart(ctx, {
@@ -3256,17 +3324,24 @@ function updateUserChart(measurements) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
+  const labels = sortedUsers.map(u => u[0].split('@')[0]);
+  const data = sortedUsers.map(u => u[1]);
+
+  // Optimized: Data update
   if (executiveCharts.user) {
-    executiveCharts.user.destroy();
+    executiveCharts.user.data.labels = labels;
+    executiveCharts.user.data.datasets[0].data = data;
+    executiveCharts.user.update('none');
+    return;
   }
 
   executiveCharts.user = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: sortedUsers.map(u => u[0].split('@')[0]),
+      labels: labels,
       datasets: [{
         label: 'Ölçüm Sayısı',
-        data: sortedUsers.map(u => u[1]),
+        data: data,
         backgroundColor: 'rgba(79, 172, 254, 0.8)',
         borderRadius: 6
       }]
@@ -3310,8 +3385,12 @@ function updateWeeklyChart(measurements) {
     return dayNames[d.getDay()];
   });
 
+  // Optimized: Update yerine destroy (eğer chart varsa data update et)
   if (executiveCharts.weekly) {
-    executiveCharts.weekly.destroy();
+    executiveCharts.weekly.data.labels = labels;
+    executiveCharts.weekly.data.datasets[0].data = weeklyData;
+    executiveCharts.weekly.update('none');
+    return;
   }
 
   executiveCharts.weekly = new Chart(ctx, {
