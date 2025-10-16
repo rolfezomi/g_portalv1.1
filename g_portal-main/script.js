@@ -345,17 +345,22 @@ const ADMIN_EMAIL = 'ugur.onar@glohe.com';
 
 // ====== REAL-TIME SUBSCRIPTION ======
 let realtimeChannel = null;
+let realtimeLogsChannel = null;
 let isRealtimeConnected = false;
 
 /**
  * Real-time subscription başlat
- * Veritabanındaki measurements tablosunu dinler ve değişiklikleri otomatik yansıtır
+ * Veritabanındaki measurements ve logs tablolarını dinler ve değişiklikleri otomatik yansıtır
  */
 function setupRealtimeSubscription() {
   // Mevcut kanal varsa önce kapat
   if (realtimeChannel) {
     supabaseClient.removeChannel(realtimeChannel);
     realtimeChannel = null;
+  }
+  if (realtimeLogsChannel) {
+    supabaseClient.removeChannel(realtimeLogsChannel);
+    realtimeLogsChannel = null;
   }
 
   // Measurements tablosunu dinle
@@ -377,6 +382,25 @@ function setupRealtimeSubscription() {
       console.log('Real-time subscription durumu:', status);
       isRealtimeConnected = (status === 'SUBSCRIBED');
       updateConnectionStatus();
+    });
+
+  // Logs tablosunu dinle (LOGIN/LOGOUT için)
+  realtimeLogsChannel = supabaseClient
+    .channel('logs_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'logs'
+      },
+      (payload) => {
+        console.log('Real-time log alındı:', payload);
+        handleRealtimeLogChange(payload);
+      }
+    )
+    .subscribe((status) => {
+      console.log('Real-time logs subscription durumu:', status);
     });
 }
 
@@ -507,6 +531,23 @@ function refreshExecutiveDashboard() {
 }
 
 /**
+ * Real-time log değişikliğini işle
+ */
+function handleRealtimeLogChange(payload) {
+  const { new: newLog } = payload;
+
+  // LOGIN veya LOGOUT loguysa dashboard'u güncelle
+  if (newLog && (newLog.action === 'LOGIN' || newLog.action === 'LOGOUT')) {
+    console.log('Yeni kullanıcı aktivitesi:', newLog);
+
+    // Dashboard aktifse hemen güncelle
+    if (currentSection === 'executive-dashboard') {
+      refreshExecutiveDashboard();
+    }
+  }
+}
+
+/**
  * Bağlantı durumunu göster
  */
 function updateConnectionStatus() {
@@ -534,6 +575,11 @@ function stopRealtimeSubscription() {
     isRealtimeConnected = false;
     updateConnectionStatus();
     console.log('Real-time subscription durduruldu');
+  }
+  if (realtimeLogsChannel) {
+    supabaseClient.removeChannel(realtimeLogsChannel);
+    realtimeLogsChannel = null;
+    console.log('Real-time logs subscription durduruldu');
   }
 }
 
@@ -3729,37 +3775,107 @@ function updateTopPoints(measurements) {
 }
 
 // Son aktiviteleri göster
-function updateRecentActivity(measurements) {
+async function updateRecentActivity(measurements) {
   const tbody = document.getElementById('exec-activity-tbody');
   if (!tbody) return;
 
-  const recent = measurements.slice(0, 50);
+  try {
+    // Logs tablosundan aktiviteleri al (son 50 log)
+    const { data: logs, error } = await supabaseClient
+      .from('logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-  if (recent.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#999;">Henüz aktivite yok</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = recent.map(m => {
-    // Değer ve birimi profesyonel formatta göster
-    let valueDisplay = '-';
-    if (m.value) {
-      const value = typeof m.value === 'number' ? m.value.toLocaleString('tr-TR') : m.value;
-      const unit = m.unit ? `<span style="color:#666; font-size:12px; margin-left:4px;">${m.unit}</span>` : '';
-      valueDisplay = `<strong style="color:#1976d2;">${value}</strong>${unit}`;
+    if (error) {
+      console.error('Logs yüklenemedi:', error);
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#999;">Loglar yüklenemedi</td></tr>';
+      return;
     }
 
-    return `
-      <tr>
-        <td>${m.date || '-'}</td>
-        <td>${m.time || '-'}</td>
-        <td><strong>${m.category || '-'}</strong></td>
-        <td>${m.point || '-'}</td>
-        <td>${valueDisplay}</td>
-        <td>${(m.user || '').split('@')[0]}</td>
-      </tr>
-    `;
-  }).join('');
+    // Measurements ve logs'u birleştir
+    const activities = [];
+
+    // Ölçüm kayıtlarını ekle
+    measurements.slice(0, 25).forEach(m => {
+      activities.push({
+        type: 'MEASUREMENT',
+        date: m.date,
+        time: m.time,
+        category: m.category,
+        point: m.point,
+        value: m.value,
+        unit: m.unit,
+        user: m.user,
+        timestamp: new Date(`${m.date}T${m.time}`).getTime()
+      });
+    });
+
+    // Login/Logout loglarını ekle
+    logs.forEach(log => {
+      if (log.action === 'LOGIN' || log.action === 'LOGOUT') {
+        const createdAt = new Date(log.created_at);
+        activities.push({
+          type: log.action,
+          date: createdAt.toISOString().split('T')[0],
+          time: createdAt.toTimeString().split(' ')[0].substring(0, 5),
+          category: log.category || 'Auth',
+          point: '-',
+          value: null,
+          unit: null,
+          user: log.user_email,
+          timestamp: createdAt.getTime()
+        });
+      }
+    });
+
+    // Zamana göre sırala (en yeni önce)
+    activities.sort((a, b) => b.timestamp - a.timestamp);
+
+    // İlk 50 aktiviteyi göster
+    const recent = activities.slice(0, 50);
+
+    if (recent.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#999;">Henüz aktivite yok</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = recent.map(a => {
+      // İşlem tipine göre badge
+      let actionBadge = '';
+      if (a.type === 'LOGIN') {
+        actionBadge = '<span style="display:inline-block; padding:4px 8px; background:#4caf50; color:#fff; border-radius:6px; font-size:11px; font-weight:700;">GİRİŞ</span>';
+      } else if (a.type === 'LOGOUT') {
+        actionBadge = '<span style="display:inline-block; padding:4px 8px; background:#ff9800; color:#fff; border-radius:6px; font-size:11px; font-weight:700;">ÇIKIŞ</span>';
+      } else {
+        actionBadge = '<span style="display:inline-block; padding:4px 8px; background:#1976d2; color:#fff; border-radius:6px; font-size:11px; font-weight:700;">ÖLÇÜM</span>';
+      }
+
+      // Değer ve birimi profesyonel formatta göster
+      let valueDisplay = '-';
+      if (a.value) {
+        const value = typeof a.value === 'number' ? a.value.toLocaleString('tr-TR') : a.value;
+        const unit = a.unit ? `<span style="color:#666; font-size:12px; margin-left:4px;">${a.unit}</span>` : '';
+        valueDisplay = `<strong style="color:#1976d2;">${value}</strong>${unit}`;
+      }
+
+      return `
+        <tr>
+          <td>${actionBadge}</td>
+          <td>${a.date || '-'}</td>
+          <td>${a.time || '-'}</td>
+          <td><strong>${a.category || '-'}</strong></td>
+          <td>${a.point || '-'}</td>
+          <td>${valueDisplay}</td>
+          <td>${(a.user || '').split('@')[0]}</td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Aktivite güncellemesi hatası:', err);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#999;">Bir hata oluştu</td></tr>';
+  }
 }
 
 // Executive menu'yu göster/gizle (desktop + mobile)
@@ -3779,7 +3895,7 @@ function showExecutiveMenu() {
       execTab.type = 'button';
       execTab.className = 'tab';
       execTab.setAttribute('data-section', 'executive-dashboard');
-      execTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Üst Yönetim</span>';
+      execTab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-text">Dashboard</span>';
       execTab.onclick = () => {
         showSection('executive-dashboard');
         activateMobileTab('executive-dashboard');
