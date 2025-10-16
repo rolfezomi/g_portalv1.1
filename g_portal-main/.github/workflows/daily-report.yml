@@ -1,0 +1,41 @@
+name: Günlük Su Kalitesi Raporu
+
+on:
+  schedule:
+    # Her gün saat 06:00 UTC (09:00 Türkiye saati)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Manuel tetikleme için
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Send daily report
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: npm run daily-report
+
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Günlük rapor başarıyla gönderildi!"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Rapor gönderilirken hata oluştu!"
