@@ -433,9 +433,29 @@ serve(async (req) => {
                 </tr>
               </table>
               <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.6;">
-                Bu rapor otomatik olarak her gün saat 09:00'da oluşturulmaktadır.<br/>
-                Raporla ilgili sorularınız için sistem yöneticinize başvurabilirsiniz.
+                Bu rapor otomatik olarak oluşturulmaktadır.<br/>
+                Raporla ilgili sorularınız için lütfen bizimle iletişime geçin.
               </p>
+
+              <!-- İletişim Bilgileri -->
+              <table role="presentation" style="width: 100%; max-width: 400px; margin: 16px auto; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 8px; color: #111827; font-size: 13px; font-weight: 700;">
+                      İletişim
+                    </p>
+                    <p style="margin: 0; color: #374151; font-size: 13px; font-weight: 600;">
+                      Uğur Onar
+                    </p>
+                    <p style="margin: 4px 0 0; color: #6b7280; font-size: 12px;">
+                      <a href="mailto:ugur.onar@glohe.com" style="color: #3b82f6; text-decoration: none; font-weight: 600;">
+                        ugur.onar@glohe.com
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
               <p style="margin: 12px 0 0; color: #9ca3af; font-size: 11px;">
                 © ${new Date().getFullYear()} Glohe Portal - Su Kalitesi Kontrol Sistemi
               </p>
