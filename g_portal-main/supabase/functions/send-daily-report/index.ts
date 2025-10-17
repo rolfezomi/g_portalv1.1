@@ -19,7 +19,6 @@ interface Measurement {
   date?: string
   time?: string
   inspector?: string
-  created_at?: string
 }
 
 serve(async (req) => {
@@ -34,11 +33,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Verileri çek - created_at'e göre sırala (daha güvenilir)
+    // Verileri çek - id'ye göre sırala (daha güvenilir)
     const { data: measurements, error } = await supabase
       .from('measurements')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(1000) // Performans için limit
 
     if (error) throw error
@@ -56,7 +55,6 @@ serve(async (req) => {
     // Helper function: Güvenli tarih karşılaştırma
     const getDateString = (m: Measurement): string => {
       if (m.date) return m.date
-      if (m.created_at) return m.created_at.split('T')[0]
       return ''
     }
 
@@ -369,8 +367,8 @@ serve(async (req) => {
                     </tr>
                   ` : recentActivities.map((activity: Measurement, index: number) => {
                     // Güvenli veri çekme
-                    const dateStr = activity.date || (activity.created_at ? activity.created_at.split('T')[0] : '-')
-                    const timeStr = activity.time || (activity.created_at ? activity.created_at.split('T')[1]?.substring(0, 5) : '-')
+                    const dateStr = activity.date || '-'
+                    const timeStr = activity.time || '-'
                     const pointName = activity.point || activity.control_point || '-'
                     const categoryName = activity.category ? (categoryNames[activity.category.toLowerCase()] || activity.category) : '-'
                     const resultValue = activity.result || activity.value || '-'
