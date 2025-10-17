@@ -4357,6 +4357,10 @@ function enterFullscreenMode() {
   console.log('🖥️ Fullscreen mode: ENTERING - Modern Dashboard');
   isFullscreenMode = true;
 
+  // Zoom %100 (normal boyut)
+  document.body.style.zoom = '100%';
+  document.documentElement.style.zoom = '100%';
+
   const portalScreen = document.getElementById('portal-screen');
   const dashboard = document.getElementById('page-executive-dashboard');
   const content = document.querySelector('.content');
@@ -4400,43 +4404,81 @@ function enterFullscreenMode() {
     `;
   }
 
-  // 4. MODERN DASHBOARD - DİNAMİK VIEWPORT HESAPLAMA (3 KPI IÇIN OPTİMİZE)
-  const vh = window.innerHeight;
-
-  // Gap ve padding'i minimize ediyoruz
-  const gap = 8; // Daha küçük gap
-  const padding = 16; // Minimal padding
-  const toolbarHeight = 60; // Toolbar yüksekliği (tahmin)
-
+  // 4. DASHBOARD CONTAINER'I HAZIRLA (Drag & Drop için)
   if (dashboard) {
     dashboard.style.cssText = `
+      position: relative;
       height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: ${gap}px;
-      padding: ${padding}px !important;
-      padding-top: 0 !important;
-      padding-bottom: ${padding}px !important;
+      overflow: auto;
+      padding: 20px !important;
     `;
   }
 
-  // HESAPLAMA: Kullanılabilir alan = 100vh - padding - gaps
-  const totalGaps = gap * 3; // KPI, Main, TwoColumn arası (3 gap)
-  const availableHeight = vh - (padding * 2) - totalGaps;
+  // 5. DRAG & DROP + RESIZE SİSTEMİNİ AKTİF ET
+  enableDragAndResize();
 
-  // Yüzde dağılımı (GAP HARİÇ):
-  // KPI: 10%, Main Chart: 16%, Two Column: 52%, Activity: 22%
-  const kpiHeight = Math.floor(availableHeight * 0.10);
-  const mainChartHeight = Math.floor(availableHeight * 0.16);
-  const twoColumnHeight = Math.floor(availableHeight * 0.52);
-  const activityHeight = Math.floor(availableHeight * 0.22);
+  // 6. ANİMASYONLARI BAŞLAT
+  setTimeout(() => animateCardsEntry(), 100);
 
-  console.log(`🖥️ Fullscreen layout: vh=${vh}, available=${availableHeight}, gaps=${totalGaps}, KPI=${kpiHeight}, Main=${mainChartHeight}, Two=${twoColumnHeight}, Activity=${activityHeight}`);
+  // 7. OTOMATİK YENİLEME BAŞLAT
+  startFullscreenAutoRefresh();
+}
 
-  // 5. MODERN KPI GRID (3 KPI)
-  const kpiGrid = document.querySelector('.exec-kpi-modern');
+function exitFullscreenMode() {
+  if (!isFullscreenMode) return;
 
+  console.log('🖥️ Fullscreen mode: EXITING - Modern Dashboard');
+  isFullscreenMode = false;
+
+  // ✅ ZOOM'U NORMALE DÖNÜŞTÜR
+  document.body.style.zoom = '';
+  document.documentElement.style.zoom = '';
+  console.log('🔍 Zoom sıfırlandı: 100%');
+
+  const portalScreen = document.getElementById('portal-screen');
+  const dashboard = document.getElementById('page-executive-dashboard');
+  const content = document.querySelector('.content');
+  const header = document.querySelector('.header');
+  const menu = document.querySelector('.menu');
+  const mobileTabs = document.querySelector('.mobile-tabs');
+  const toolbar = dashboard?.querySelector('.toolbar');
+
+  // 1. TÜM ANA KONTEYNER STYLE'LARI TEMİZLE
+  if (portalScreen) portalScreen.style.cssText = '';
+  if (content) content.style.cssText = '';
+  if (dashboard) dashboard.style.cssText = '';
+
+  // 2. HEADER, MENU VE TOOLBAR GERİ GETİR
+  if (header) {
+    header.style.cssText = 'opacity: 1; transform: translateY(0); transition: all 0.5s ease; pointer-events: auto;';
+    setTimeout(() => { header.style.cssText = ''; }, 500);
+  }
+  if (menu) {
+    menu.style.cssText = 'transform: translateX(0); transition: all 0.5s ease; opacity: 1; pointer-events: auto;';
+    setTimeout(() => { menu.style.cssText = ''; }, 500);
+  }
+  if (mobileTabs) {
+    mobileTabs.style.cssText = 'opacity: 1; transform: translateY(0); transition: all 0.5s ease; pointer-events: auto;';
+    setTimeout(() => { mobileTabs.style.cssText = ''; }, 500);
+  }
+  if (toolbar) {
+    toolbar.style.cssText = 'opacity: 1; height: auto; overflow: visible; transition: all 0.3s ease;';
+    setTimeout(() => { toolbar.style.cssText = ''; }, 300);
+  }
+
+  // 3. DRAG & DROP sistemini kapat
+  disableDragAndResize();
+
+  // 4. OTOMATİK YENİLEMEYİ DURDUR
+  stopFullscreenAutoRefresh();
+
+  console.log('✅ Normal desktop mode - Modern Dashboard restored');
+}
+
+/**
+ * Kartların sırayla animasyonlu girişi - Modern Dashboard
+ */
+function animateCardsEntry() {
   if (kpiGrid) {
     kpiGrid.style.cssText = `
       display: grid;
@@ -4689,10 +4731,13 @@ function enterFullscreenMode() {
     }
   }
 
-  // 9. ANİMASYONLARI BAŞLAT
+  // 9. DRAG & DROP + RESIZE SİSTEMİNİ AKTİF ET
+  enableDragAndResize();
+
+  // 10. ANİMASYONLARI BAŞLAT
   setTimeout(() => animateCardsEntry(), 100);
 
-  // 10. OTOMATİK YENİLEME BAŞLAT
+  // 11. OTOMATİK YENİLEME BAŞLAT
   startFullscreenAutoRefresh();
 }
 
@@ -4701,6 +4746,11 @@ function exitFullscreenMode() {
 
   console.log('🖥️ Fullscreen mode: EXITING - Modern Dashboard');
   isFullscreenMode = false;
+
+  // ✅ ZOOM'U NORMALE DÖNÜŞTÜR
+  document.body.style.zoom = '';
+  document.documentElement.style.zoom = '';
+  console.log('🔍 Zoom sıfırlandı: 100%');
 
   const portalScreen = document.getElementById('portal-screen');
   const dashboard = document.getElementById('page-executive-dashboard');
@@ -4827,7 +4877,10 @@ function exitFullscreenMode() {
     }
   }
 
-  // 7. TÜM MODERN KARTLARIN ANİMASYON STYLE'LARINI TEMİZLE
+  // 7. DRAG & DROP + RESIZE SİSTEMİNİ DEVRE DIŞI BIRAK
+  disableDragAndResize();
+
+  // 8. TÜM MODERN KARTLARIN ANİMASYON STYLE'LARINI TEMİZLE
   const allModernCards = document.querySelectorAll('.exec-kpi-card-modern, .exec-chart-card-modern');
   allModernCards.forEach(card => {
     card.style.opacity = '';
@@ -4835,7 +4888,7 @@ function exitFullscreenMode() {
     card.style.transition = '';
   });
 
-  // 8. OTOMATİK YENİLEMEYİ DURDUR
+  // 9. OTOMATİK YENİLEMEYİ DURDUR
   stopFullscreenAutoRefresh();
 
   console.log('✅ Normal desktop mode - Modern Dashboard restored');
@@ -5093,5 +5146,276 @@ window.testFullscreenMode = async function() {
 window.enterFullscreenMode = enterFullscreenMode;
 window.exitFullscreenMode = exitFullscreenMode;
 window.highlightUpdatedChart = highlightUpdatedChart;
+
+// ===== DRAG & DROP + RESIZE SİSTEMİ =====
+
+let draggableElements = [];
+let isDragging = false;
+let isResizing = false;
+let currentElement = null;
+let startX, startY, startWidth, startHeight, startLeft, startTop;
+
+/**
+ * Tüm kartları sürüklenebilir ve boyutlandırılabilir yap
+ */
+function enableDragAndResize() {
+  console.log('🎯 Drag & Drop + Resize aktif ediliyor...');
+
+  // Tüm kartları seç - HER KART AYRI AYRI
+  const allCards = [];
+
+  // KPI kartları
+  document.querySelectorAll('.exec-kpi-card-modern').forEach(card => allCards.push(card));
+
+  // Haftalık Performans grafiği
+  const weeklyChart = document.querySelector('.exec-main-chart-container');
+  if (weeklyChart) allCards.push(weeklyChart);
+
+  // Kategori Analizi ve Top Noktalar
+  document.querySelectorAll('.exec-two-column .exec-chart-card-modern').forEach(card => allCards.push(card));
+
+  // Bugünkü Aktivite
+  const activityContainer = document.querySelector('.exec-activity-container');
+  if (activityContainer) allCards.push(activityContainer);
+
+  allCards.forEach((card, index) => {
+    // Kartı absolute position yap
+    card.style.position = 'absolute';
+    card.style.cursor = 'move';
+    card.style.userSelect = 'none';
+    card.style.zIndex = '1';
+
+    // LocalStorage'dan pozisyon/boyut yükle VEYA varsayılan pozisyon ata
+    const saved = localStorage.getItem(`dashboard-card-${index}`);
+    if (saved) {
+      const { left, top, width, height } = JSON.parse(saved);
+      card.style.left = left;
+      card.style.top = top;
+      card.style.width = width;
+      card.style.height = height;
+    } else {
+      // Varsayılan grid düzeni (3 KPI, 1 büyük grafik, 2 orta kart, 1 aktivite tablosu)
+      const defaultPositions = [
+        // KPI Kartları (üst satır, 3 kart yan yana)
+        { left: '20px', top: '20px', width: '350px', height: '150px' },
+        { left: '390px', top: '20px', width: '350px', height: '150px' },
+        { left: '760px', top: '20px', width: '350px', height: '150px' },
+        // Ana grafik (Haftalık Performans - geniş)
+        { left: '20px', top: '190px', width: '1090px', height: '300px' },
+        // Kategori Analizi (sol orta)
+        { left: '20px', top: '510px', width: '530px', height: '350px' },
+        // Top Noktalar (sağ orta)
+        { left: '570px', top: '510px', width: '540px', height: '350px' },
+        // Bugünkü Aktivite (sol alt - geniş)
+        { left: '20px', top: '880px', width: '800px', height: '280px' }
+      ];
+
+      if (defaultPositions[index]) {
+        card.style.left = defaultPositions[index].left;
+        card.style.top = defaultPositions[index].top;
+        card.style.width = defaultPositions[index].width;
+        card.style.height = defaultPositions[index].height;
+      }
+    }
+
+    // Resize handle ekle
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    resizeHandle.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, transparent 50%, #667eea 50%);
+      cursor: nwse-resize;
+      z-index: 10;
+      border-bottom-right-radius: 8px;
+    `;
+    card.appendChild(resizeHandle);
+
+    // Drag event listeners
+    card.addEventListener('mousedown', startDrag);
+
+    // Resize event listeners
+    resizeHandle.addEventListener('mousedown', startResize);
+
+    draggableElements.push({ card, index });
+  });
+
+  // Global mouse events
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', stopDragOrResize);
+
+  // Reset Layout butonunu göster
+  const resetBtn = document.getElementById('reset-layout-btn');
+  if (resetBtn) resetBtn.style.display = 'inline-flex';
+
+  console.log(`✅ ${allCards.length} kart aktif edildi`);
+}
+
+/**
+ * Drag & Drop sistemini devre dışı bırak
+ */
+function disableDragAndResize() {
+  console.log('🔴 Drag & Drop + Resize devre dışı bırakılıyor...');
+
+  draggableElements.forEach(({ card, index }) => {
+    card.style.position = '';
+    card.style.cursor = '';
+    card.style.userSelect = '';
+    card.style.left = '';
+    card.style.top = '';
+    card.style.width = '';
+    card.style.height = '';
+
+    card.removeEventListener('mousedown', startDrag);
+
+    // Resize handle'ı kaldır
+    const handle = card.querySelector('.resize-handle');
+    if (handle) handle.remove();
+  });
+
+  document.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseup', stopDragOrResize);
+
+  // Reset Layout butonunu gizle
+  const resetBtn = document.getElementById('reset-layout-btn');
+  if (resetBtn) resetBtn.style.display = 'none';
+
+  draggableElements = [];
+  isDragging = false;
+  isResizing = false;
+  currentElement = null;
+}
+
+/**
+ * Sürüklemeyi başlat
+ */
+function startDrag(e) {
+  if (e.target.classList.contains('resize-handle')) return;
+
+  isDragging = true;
+  currentElement = e.currentTarget;
+
+  startX = e.clientX;
+  startY = e.clientY;
+
+  const rect = currentElement.getBoundingClientRect();
+  startLeft = rect.left;
+  startTop = rect.top;
+
+  currentElement.style.zIndex = '1000';
+  currentElement.style.transition = 'none';
+
+  e.preventDefault();
+}
+
+/**
+ * Boyutlandırmayı başlat
+ */
+function startResize(e) {
+  isResizing = true;
+  currentElement = e.currentTarget.parentElement;
+
+  startX = e.clientX;
+  startY = e.clientY;
+  startWidth = currentElement.offsetWidth;
+  startHeight = currentElement.offsetHeight;
+
+  currentElement.style.transition = 'none';
+
+  e.stopPropagation();
+  e.preventDefault();
+}
+
+/**
+ * Mouse hareket event handler
+ */
+function onMouseMove(e) {
+  if (isDragging && currentElement) {
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    currentElement.style.left = `${startLeft + deltaX}px`;
+    currentElement.style.top = `${startTop + deltaY}px`;
+  }
+
+  if (isResizing && currentElement) {
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    const newWidth = Math.max(200, startWidth + deltaX);
+    const newHeight = Math.max(150, startHeight + deltaY);
+
+    currentElement.style.width = `${newWidth}px`;
+    currentElement.style.height = `${newHeight}px`;
+  }
+}
+
+/**
+ * Sürüklemeyi veya boyutlandırmayı durdur
+ */
+function stopDragOrResize(e) {
+  if (isDragging && currentElement) {
+    // Pozisyonu kaydet
+    const index = draggableElements.findIndex(el => el.card === currentElement);
+    if (index !== -1) {
+      const saved = {
+        left: currentElement.style.left,
+        top: currentElement.style.top,
+        width: currentElement.style.width,
+        height: currentElement.style.height
+      };
+      localStorage.setItem(`dashboard-card-${index}`, JSON.stringify(saved));
+    }
+
+    currentElement.style.zIndex = '';
+    currentElement.style.transition = '';
+  }
+
+  if (isResizing && currentElement) {
+    // Boyutu kaydet
+    const index = draggableElements.findIndex(el => el.card === currentElement);
+    if (index !== -1) {
+      const saved = {
+        left: currentElement.style.left,
+        top: currentElement.style.top,
+        width: currentElement.style.width,
+        height: currentElement.style.height
+      };
+      localStorage.setItem(`dashboard-card-${index}`, JSON.stringify(saved));
+    }
+
+    currentElement.style.transition = '';
+  }
+
+  isDragging = false;
+  isResizing = false;
+  currentElement = null;
+}
+
+/**
+ * Dashboard düzenini sıfırla (varsayılan pozisyonlara dön)
+ */
+window.resetDashboardLayout = function() {
+  if (!confirm('Dashboard düzeni varsayılan haline sıfırlanacak. Onaylıyor musunuz?')) {
+    return;
+  }
+
+  // Tüm kayıtlı pozisyonları sil
+  for (let i = 0; i < 10; i++) {
+    localStorage.removeItem(`dashboard-card-${i}`);
+  }
+
+  // Tam ekran modunu yenile
+  if (isFullscreenMode) {
+    disableDragAndResize();
+    enableDragAndResize();
+    showToast('✅ Dashboard düzeni sıfırlandı');
+  }
+
+  console.log('🔄 Dashboard layout reset edildi');
+};
 
 // --- DECIMAL INPUT FIX (eklenen yardımcı) ---
