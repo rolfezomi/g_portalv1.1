@@ -106,8 +106,9 @@ serve(async (req) => {
       throw new Error('RESEND_API_KEY environment variable is not set')
     }
 
-    // Bugünün tarihi
+    // Bugünün tarihi (Turkish Time - UTC+3)
     const now = new Date()
+    now.setHours(now.getHours() + 3)  // UTC+3 Turkish time
     const today = now.toISOString().split('T')[0]
 
     console.log('Checking measurements for date:', today)

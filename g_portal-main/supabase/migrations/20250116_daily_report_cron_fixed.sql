@@ -22,10 +22,10 @@ SELECT cron.schedule(
   $$
   SELECT
     net.http_post(
-        url := 'https://tkkonrkwsuoigrysewgk.supabase.co/functions/v1/send-daily-report',
+        url := 'https://mignlffeyougoefuyayr.supabase.co/functions/v1/send-daily-report',
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
-          'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
+          'Authorization', 'Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY'
         ),
         body := '{}'::jsonb
     ) AS request_id;

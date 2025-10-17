@@ -29,3 +29,15 @@ functions-serve/
 # Local development
 .cache/
 dist/
+
+# Supabase binaries and temp files
+*.exe
+*.tar.gz
+supabase/.temp/
+.temp/
+
+# Invalid file names
+NUL
+
+# Documentation (optional - uncomment if you don't want to track)
+# *.md

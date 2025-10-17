@@ -11,14 +11,14 @@ const corsHeaders = {
 
 interface Measurement {
   id: number
-  point?: string
-  control_point?: string
   category?: string
-  result?: string
+  point?: string
   value?: string
+  unit?: string
   date?: string
   time?: string
-  inspector?: string
+  user?: string
+  note?: string
 }
 
 serve(async (req) => {
@@ -36,7 +36,7 @@ serve(async (req) => {
     // Verileri çek - id'ye göre sırala (daha güvenilir)
     const { data: measurements, error } = await supabase
       .from('measurements')
-      .select('*')
+      .select('id, category, point, value, unit, date, time, user, note')
       .order('id', { ascending: false })
       .limit(1000) // Performans için limit
 
@@ -45,12 +45,14 @@ serve(async (req) => {
       throw new Error('Veritabanında hiç ölçüm verisi bulunamadı.')
     }
 
-    // Tarih hesaplamaları
+    // Tarih hesaplamaları (Turkish Time - UTC+3)
     const now = new Date()
+    now.setHours(now.getHours() + 3)  // UTC+3 Turkish time
     const today = now.toISOString().split('T')[0]
     const thisMonth = today.substring(0, 7)
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      .toISOString().split('T')[0]
+
+    const thirtyDaysAgoDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const thirtyDaysAgo = thirtyDaysAgoDate.toISOString().split('T')[0]
 
     // Helper function: Güvenli tarih karşılaştırma
     const getDateString = (m: Measurement): string => {
@@ -125,10 +127,10 @@ serve(async (req) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
 
-    // En çok ölçüm yapılan noktalar - point veya control_point kontrolü
+    // En çok ölçüm yapılan noktalar - sadece point kullan
     const pointCounts: Record<string, number> = {}
     measurements.forEach((m: Measurement) => {
-      const pointName = m.point || m.control_point
+      const pointName = m.point
       if (pointName && pointName !== 'N/A' && pointName.trim() !== '') {
         pointCounts[pointName] = (pointCounts[pointName] || 0) + 1
       }
@@ -142,7 +144,7 @@ serve(async (req) => {
     const recentActivities = measurements
       .filter((m: Measurement) => {
         const dateStr = getDateString(m)
-        const pointName = m.point || m.control_point
+        const pointName = m.point
         return dateStr && pointName && pointName !== 'N/A'
       })
       .slice(0, 10)
@@ -369,12 +371,12 @@ serve(async (req) => {
                     // Güvenli veri çekme
                     const dateStr = activity.date || '-'
                     const timeStr = activity.time || '-'
-                    const pointName = activity.point || activity.control_point || '-'
+                    const pointName = activity.point || '-'
                     const categoryName = activity.category ? (categoryNames[activity.category.toLowerCase()] || activity.category) : '-'
-                    const resultValue = String(activity.result || activity.value || '-')
+                    const resultValue = String(activity.value || '-')
 
-                    // Sonuç renklendirmesi
-                    const resultLower = resultValue.toLowerCase()
+                    // Sonuç renklendirmesi - String garantisi
+                    const resultLower = String(resultValue).toLowerCase()
                     const isPass = resultLower.includes('uygun') ||
                                    resultLower.includes('pass') ||
                                    resultLower.includes('başarılı')
