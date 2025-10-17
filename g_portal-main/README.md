@@ -338,8 +338,11 @@ MAJOR: Büyük değişiklik
 
 ## 📄 Lisans
 
-© 2025 Glohe Portal - Su Kalitesi Kontrol Sistemi
-Tüm hakları saklıdır.
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
+
+**Copyright © 2025 Glohe - Uğur Onar**
+
+Detaylar için [LICENSE](LICENSE) dosyasına bakınız.
 
 ---
 
