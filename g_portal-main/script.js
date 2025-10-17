@@ -5184,6 +5184,7 @@ function enableDragAndResize() {
     card.style.cursor = 'move';
     card.style.userSelect = 'none';
     card.style.zIndex = '1';
+    card.style.touchAction = 'none'; // Touch olaylarını JavaScript ile kontrol et
 
     // LocalStorage'dan pozisyon/boyut yükle VEYA varsayılan pozisyon ata
     const saved = localStorage.getItem(`dashboard-card-${index}`);
@@ -5218,27 +5219,30 @@ function enableDragAndResize() {
       }
     }
 
-    // Resize handle ekle
+    // Resize handle ekle (tablet/mobil için daha büyük)
     const resizeHandle = document.createElement('div');
     resizeHandle.className = 'resize-handle';
     resizeHandle.style.cssText = `
       position: absolute;
       bottom: 0;
       right: 0;
-      width: 20px;
-      height: 20px;
+      width: 30px;
+      height: 30px;
       background: linear-gradient(135deg, transparent 50%, #667eea 50%);
       cursor: nwse-resize;
       z-index: 10;
       border-bottom-right-radius: 8px;
+      touch-action: none;
     `;
     card.appendChild(resizeHandle);
 
-    // Drag event listeners
+    // Drag event listeners (mouse + touch)
     card.addEventListener('mousedown', startDrag);
+    card.addEventListener('touchstart', startDrag, { passive: false });
 
-    // Resize event listeners
+    // Resize event listeners (mouse + touch)
     resizeHandle.addEventListener('mousedown', startResize);
+    resizeHandle.addEventListener('touchstart', startResize, { passive: false });
 
     draggableElements.push({ card, index });
   });
@@ -5246,6 +5250,10 @@ function enableDragAndResize() {
   // Global mouse events
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', stopDragOrResize);
+
+  // Global touch events
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', stopDragOrResize);
 
   // Reset Layout butonunu göster
   const resetBtn = document.getElementById('reset-layout-btn');
@@ -5270,6 +5278,7 @@ function disableDragAndResize() {
     card.style.height = '';
 
     card.removeEventListener('mousedown', startDrag);
+    card.removeEventListener('touchstart', startDrag);
 
     // Resize handle'ı kaldır
     const handle = card.querySelector('.resize-handle');
@@ -5278,6 +5287,8 @@ function disableDragAndResize() {
 
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', stopDragOrResize);
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend', stopDragOrResize);
 
   // Reset Layout butonunu gizle
   const resetBtn = document.getElementById('reset-layout-btn');
@@ -5290,7 +5301,7 @@ function disableDragAndResize() {
 }
 
 /**
- * Sürüklemeyi başlat
+ * Sürüklemeyi başlat (mouse veya touch)
  */
 function startDrag(e) {
   if (e.target.classList.contains('resize-handle')) return;
@@ -5298,8 +5309,12 @@ function startDrag(e) {
   isDragging = true;
   currentElement = e.currentTarget;
 
-  startX = e.clientX;
-  startY = e.clientY;
+  // Touch veya mouse koordinatlarını al
+  const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+  startX = clientX;
+  startY = clientY;
 
   const rect = currentElement.getBoundingClientRect();
   startLeft = rect.left;
@@ -5312,14 +5327,18 @@ function startDrag(e) {
 }
 
 /**
- * Boyutlandırmayı başlat
+ * Boyutlandırmayı başlat (mouse veya touch)
  */
 function startResize(e) {
   isResizing = true;
   currentElement = e.currentTarget.parentElement;
 
-  startX = e.clientX;
-  startY = e.clientY;
+  // Touch veya mouse koordinatlarını al
+  const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+  startX = clientX;
+  startY = clientY;
   startWidth = currentElement.offsetWidth;
   startHeight = currentElement.offsetHeight;
 
@@ -5350,6 +5369,36 @@ function onMouseMove(e) {
 
     currentElement.style.width = `${newWidth}px`;
     currentElement.style.height = `${newHeight}px`;
+  }
+}
+
+/**
+ * Touch hareket event handler
+ */
+function onTouchMove(e) {
+  if (isDragging && currentElement) {
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    currentElement.style.left = `${startLeft + deltaX}px`;
+    currentElement.style.top = `${startTop + deltaY}px`;
+
+    e.preventDefault(); // Sayfa kaydırmasını engelle
+  }
+
+  if (isResizing && currentElement) {
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    const newWidth = Math.max(200, startWidth + deltaX);
+    const newHeight = Math.max(150, startHeight + deltaY);
+
+    currentElement.style.width = `${newWidth}px`;
+    currentElement.style.height = `${newHeight}px`;
+
+    e.preventDefault(); // Sayfa kaydırmasını engelle
   }
 }
 
