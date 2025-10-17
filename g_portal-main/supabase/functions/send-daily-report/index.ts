@@ -371,15 +371,16 @@ serve(async (req) => {
                     const timeStr = activity.time || '-'
                     const pointName = activity.point || activity.control_point || '-'
                     const categoryName = activity.category ? (categoryNames[activity.category.toLowerCase()] || activity.category) : '-'
-                    const resultValue = activity.result || activity.value || '-'
+                    const resultValue = String(activity.result || activity.value || '-')
 
                     // Sonuç renklendirmesi
-                    const isPass = resultValue.toLowerCase().includes('uygun') ||
-                                   resultValue.toLowerCase().includes('pass') ||
-                                   resultValue.toLowerCase().includes('başarılı')
-                    const isFail = resultValue.toLowerCase().includes('uygun değil') ||
-                                   resultValue.toLowerCase().includes('fail') ||
-                                   resultValue.toLowerCase().includes('başarısız')
+                    const resultLower = resultValue.toLowerCase()
+                    const isPass = resultLower.includes('uygun') ||
+                                   resultLower.includes('pass') ||
+                                   resultLower.includes('başarılı')
+                    const isFail = resultLower.includes('uygun değil') ||
+                                   resultLower.includes('fail') ||
+                                   resultLower.includes('başarısız')
 
                     let bgColor = '#e5e7eb'
                     let textColor = '#374151'
