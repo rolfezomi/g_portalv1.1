@@ -21,6 +21,9 @@ EXCEPTION
   WHEN OTHERS THEN NULL;
 END $$;
 
+-- IMPORTANT: Replace YOUR_SUPABASE_SERVICE_ROLE_KEY with your actual service role key
+-- Get it from: Supabase Dashboard → Settings → API → service_role key
+
 -- Create cron job for 12:00 (noon check)
 -- Cron: '0 9 * * 1-5' = 12:00 Turkish time (09:00 UTC), weekdays only
 SELECT cron.schedule(
@@ -30,7 +33,7 @@ SELECT cron.schedule(
   SELECT
     net.http_post(
       url:='https://mignlffeyougoefuyayr.supabase.co/functions/v1/check-daily-measurement-status',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTEzMzg0NSwiZXhwIjoyMDc0NzA5ODQ1fQ.HiFKb2UY8VfzDjQHfRrBlcxqznSPQd5K_ea6iQf55Ek"}'::jsonb,
+      headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"}'::jsonb,
       body:='{}'::jsonb
     ) AS request_id;
   $$
@@ -45,7 +48,7 @@ SELECT cron.schedule(
   SELECT
     net.http_post(
       url:='https://mignlffeyougoefuyayr.supabase.co/functions/v1/check-daily-measurement-status',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTEzMzg0NSwiZXhwIjoyMDc0NzA5ODQ1fQ.HiFKb2UY8VfzDjQHfRrBlcxqznSPQd5K_ea6iQf55Ek"}'::jsonb,
+      headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"}'::jsonb,
       body:='{}'::jsonb
     ) AS request_id;
   $$

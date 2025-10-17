@@ -37,6 +37,8 @@ END $$;
 -- 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00, 18:00 Turkish time
 -- (10 times per day on weekdays)
 
+-- IMPORTANT: Replace YOUR_SUPABASE_SERVICE_ROLE_KEY with your actual service role key
+-- Get it from: Supabase Dashboard → Settings → API → service_role key
 SELECT cron.schedule(
   'hourly-weekday-water-quality-report',
   '0 6-15 * * 1-5', -- Every hour during business hours on weekdays
@@ -44,7 +46,7 @@ SELECT cron.schedule(
   SELECT
     net.http_post(
       url:='https://mignlffeyougoefuyayr.supabase.co/functions/v1/send-daily-report',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTEzMzg0NSwiZXhwIjoyMDc0NzA5ODQ1fQ.HiFKb2UY8VfzDjQHfRrBlcxqznSPQd5K_ea6iQf55Ek"}'::jsonb,
+      headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"}'::jsonb,
       body:='{}'::jsonb
     ) AS request_id;
   $$
