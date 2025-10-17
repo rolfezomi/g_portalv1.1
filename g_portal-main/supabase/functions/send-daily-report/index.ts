@@ -158,12 +158,24 @@ serve(async (req) => {
 
     const htmlContent = `
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
   <title>Günlük Su Kalitesi Raporu</title>
   <style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     @media only screen and (max-width: 600px) {
       .kpi-card { width: 100% !important; display: block !important; margin-bottom: 12px !important; }
       .mobile-hide { display: none !important; }
@@ -171,19 +183,19 @@ serve(async (req) => {
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
-  <table role="presentation" class="body" style="width: 100%; border-collapse: collapse;">
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" class="body" style="width: 100%; border-collapse: collapse; border-spacing: 0;">
     <tr>
       <td align="center" style="padding: 20px 10px;">
-        <table role="presentation" style="max-width: 680px; width: 100%; border-collapse: collapse; background: white; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+        <table role="presentation" style="max-width: 680px; width: 100%; border-collapse: collapse; border-spacing: 0; background: #ffffff;">
 
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 32px; text-align: center;">
-              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+            <td style="background-color: #667eea; padding: 40px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
                 📊 Günlük Su Kalitesi Raporu
               </h1>
-              <p style="margin: 12px 0 0; color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 500;">
+              <p style="margin: 12px 0 0; color: #ffffff; font-size: 16px; font-weight: 500;">
                 ${reportDate}
               </p>
             </td>
@@ -191,21 +203,21 @@ serve(async (req) => {
 
           <!-- KPI Cards -->
           <tr>
-            <td style="padding: 24px 24px 32px;">
-              <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <td style="padding: 24px;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0;">
                 <tr>
                   <!-- Bugünkü Ölçümler -->
                   <td class="kpi-card" style="width: 33.33%; padding: 0 6px; vertical-align: top;">
-                    <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 12px; overflow: hidden;">
+                    <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; background-color: #3b82f6;">
                       <tr>
                         <td style="padding: 20px; text-align: center;">
-                          <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                          <p style="margin: 0; color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                             Bugünkü Ölçümler
                           </p>
-                          <p style="margin: 12px 0 0; color: white; font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -1px;">
+                          <p style="margin: 12px 0 0; color: #ffffff; font-size: 42px; font-weight: 800; line-height: 1;">
                             ${todayMeasurements.length.toLocaleString('tr-TR')}
                           </p>
-                          <p style="margin: 8px 0 0; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9);">
+                          <p style="margin: 8px 0 0; font-size: 13px; font-weight: 600; color: #ffffff;">
                             <span style="color: ${trendColor};">${trendIcon} ${diff > 0 ? '+' : ''}${diff}</span> dün
                           </p>
                         </td>
@@ -215,16 +227,16 @@ serve(async (req) => {
 
                   <!-- Aylık Toplam -->
                   <td class="kpi-card" style="width: 33.33%; padding: 0 6px; vertical-align: top;">
-                    <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; overflow: hidden;">
+                    <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; background-color: #10b981;">
                       <tr>
                         <td style="padding: 20px; text-align: center;">
-                          <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                          <p style="margin: 0; color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                             Bu Ay Toplam
                           </p>
-                          <p style="margin: 12px 0 0; color: white; font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -1px;">
+                          <p style="margin: 12px 0 0; color: #ffffff; font-size: 42px; font-weight: 800; line-height: 1;">
                             ${monthMeasurements.length.toLocaleString('tr-TR')}
                           </p>
-                          <p style="margin: 8px 0 0; color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 600;">
+                          <p style="margin: 8px 0 0; color: #ffffff; font-size: 13px; font-weight: 600;">
                             ${new Date().toLocaleDateString('tr-TR', { month: 'long' })}
                           </p>
                         </td>
@@ -234,16 +246,16 @@ serve(async (req) => {
 
                   <!-- Günlük Ortalama -->
                   <td class="kpi-card" style="width: 33.33%; padding: 0 6px; vertical-align: top;">
-                    <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 12px; overflow: hidden;">
+                    <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; background-color: #f59e0b;">
                       <tr>
                         <td style="padding: 20px; text-align: center;">
-                          <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                          <p style="margin: 0; color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                             Günlük Ortalama
                           </p>
-                          <p style="margin: 12px 0 0; color: white; font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -1px;">
+                          <p style="margin: 12px 0 0; color: #ffffff; font-size: 42px; font-weight: 800; line-height: 1;">
                             ${Math.round(last30DaysMeasurements.length / 30).toLocaleString('tr-TR')}
                           </p>
-                          <p style="margin: 8px 0 0; color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 600;">
+                          <p style="margin: 8px 0 0; color: #ffffff; font-size: 13px; font-weight: 600;">
                             Son 30 Gün
                           </p>
                         </td>
@@ -261,7 +273,7 @@ serve(async (req) => {
               <h2 style="margin: 0 0 16px; color: #111827; font-size: 18px; font-weight: 700;">
                 📈 Kategori Dağılımı
               </h2>
-              <table role="presentation" style="width: 100%; border-collapse: collapse; background: #f9fafb; border-radius: 12px; overflow: hidden;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; background-color: #f9fafb;">
                 ${categories.length === 0 ? `
                   <tr>
                     <td style="padding: 24px; text-align: center; color: #6b7280; font-size: 14px;">
@@ -271,7 +283,7 @@ serve(async (req) => {
                 ` : categories.map((cat, idx) => `
                   <tr>
                     <td style="padding: 14px 16px; border-bottom: ${idx === categories.length - 1 ? 'none' : '1px solid #e5e7eb'};">
-                      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                      <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0;">
                         <tr>
                           <td style="width: 36px; font-size: 22px; vertical-align: middle;">${cat.icon}</td>
                           <td style="font-size: 14px; font-weight: 600; color: #374151; vertical-align: middle;">
@@ -298,10 +310,10 @@ serve(async (req) => {
               <h2 style="margin: 0 0 16px; color: #111827; font-size: 18px; font-weight: 700;">
                 🏆 En Çok Ölçüm Yapılan Noktalar (Top 5)
               </h2>
-              <table role="presentation" style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0;">
                 ${topPoints.length === 0 ? `
                   <tr>
-                    <td style="padding: 24px; text-align: center; color: #6b7280; font-size: 14px; background: #f9fafb; border-radius: 12px;">
+                    <td style="padding: 24px; text-align: center; color: #6b7280; font-size: 14px; background-color: #f9fafb;">
                       Henüz kontrol noktası verisi yok.
                     </td>
                   </tr>
@@ -312,10 +324,10 @@ serve(async (req) => {
                   return `
                     <tr>
                       <td style="padding: 0; ${index < topPoints.length - 1 ? 'padding-bottom: 8px;' : ''}">
-                        <table role="presentation" style="width: 100%; border-collapse: collapse; background: ${rankBgColors[index]}; border-radius: 8px; overflow: hidden;">
+                        <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; background-color: ${rankBgColors[index]};">
                           <tr>
                             <td style="padding: 12px 16px;">
-                              <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                              <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0;">
                                 <tr>
                                   <td style="width: 36px; font-size: 24px; vertical-align: middle;">${rankLabels[index]}</td>
                                   <td style="font-size: 14px; font-weight: 600; color: #111827; vertical-align: middle;">
@@ -343,9 +355,9 @@ serve(async (req) => {
               <h2 style="margin: 0 0 16px; color: #111827; font-size: 18px; font-weight: 700;">
                 📋 Son Aktiviteler (Son 10 Ölçüm)
               </h2>
-              <table role="presentation" style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; background-color: #ffffff; border: 1px solid #e5e7eb;">
                 <thead>
-                  <tr style="background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);">
+                  <tr style="background-color: #f9fafb;">
                     <th style="padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
                       Tarih/Saat
                     </th>
@@ -396,8 +408,8 @@ serve(async (req) => {
                     }
 
                     return `
-                      <tr style="background: ${index % 2 === 0 ? '#ffffff' : '#fafafa'};">
-                        <td style="padding: 12px 16px; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6; white-space: nowrap;">
+                      <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fafafa'};">
+                        <td style="padding: 12px 16px; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6;">
                           ${dateStr}<br/>
                           <span style="color: #9ca3af; font-size: 12px;">${timeStr}</span>
                         </td>
@@ -408,7 +420,7 @@ serve(async (req) => {
                           ${categoryName}
                         </td>
                         <td style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #f3f4f6;">
-                          <span style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; background: ${bgColor}; color: ${textColor}; white-space: nowrap;">
+                          <span style="display: inline-block; padding: 4px 12px; font-size: 12px; font-weight: 700; background-color: ${bgColor}; color: ${textColor};">
                             ${resultValue}
                           </span>
                         </td>
@@ -422,15 +434,19 @@ serve(async (req) => {
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px; background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%); text-align: center; border-top: 1px solid #e5e7eb;">
-              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+            <td style="padding: 24px; background-color: #f9fafb; text-align: center; border-top: 1px solid #e5e7eb;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-spacing: 0; margin-bottom: 16px;">
                 <tr>
                   <td style="text-align: center; padding: 8px;">
-                    <div style="display: inline-block; background: white; padding: 12px 20px; border-radius: 8px; border: 1px solid #e5e7eb;">
-                      <p style="margin: 0; color: #374151; font-size: 13px; font-weight: 600;">
-                        📊 Toplam ${measurements.length.toLocaleString('tr-TR')} ölçüm analiz edildi
-                      </p>
-                    </div>
+                    <table role="presentation" style="display: inline-block; background-color: #ffffff; padding: 12px 20px; border: 1px solid #e5e7eb;">
+                      <tr>
+                        <td>
+                          <p style="margin: 0; color: #374151; font-size: 13px; font-weight: 600;">
+                            📊 Toplam ${measurements.length.toLocaleString('tr-TR')} ölçüm analiz edildi
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -440,7 +456,7 @@ serve(async (req) => {
               </p>
 
               <!-- İletişim Bilgileri -->
-              <table role="presentation" style="width: 100%; max-width: 400px; margin: 16px auto; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+              <table role="presentation" style="width: 100%; max-width: 400px; margin: 16px auto 0; border-collapse: collapse; border-spacing: 0; background-color: #ffffff; border: 1px solid #e5e7eb;">
                 <tr>
                   <td style="padding: 16px; text-align: center;">
                     <p style="margin: 0 0 8px; color: #111827; font-size: 13px; font-weight: 700;">
