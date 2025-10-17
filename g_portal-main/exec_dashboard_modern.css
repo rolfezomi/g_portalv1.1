@@ -459,6 +459,143 @@
   color: #991b1b;
 }
 
+/* Ultra Modern Table - Enhanced Design */
+.exec-table-ultra {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.exec-table-ultra thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.exec-table-ultra thead th {
+  padding: 16px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border: none;
+}
+
+.exec-table-ultra thead th:first-child {
+  padding-left: 20px;
+}
+
+.exec-table-ultra thead th:last-child {
+  padding-right: 20px;
+}
+
+.exec-table-ultra tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+}
+
+.exec-table-ultra tbody tr:last-child {
+  border-bottom: none;
+}
+
+.exec-table-ultra tbody tr:hover {
+  background: linear-gradient(90deg, #f9fafb 0%, #ffffff 100%);
+  transform: scale(1.002);
+}
+
+.exec-table-ultra tbody td {
+  padding: 14px;
+  color: #374151;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.exec-table-ultra tbody td:first-child {
+  padding-left: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.exec-table-ultra tbody td:last-child {
+  padding-right: 20px;
+}
+
+/* CANLI Indicator with Pulse Animation */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+/* Loading State for Table */
+.table-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.table-loading p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
 /* Responsive */
 @media (max-width: 1400px) {
   .exec-kpi-modern {
