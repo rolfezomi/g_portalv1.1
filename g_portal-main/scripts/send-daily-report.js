@@ -332,10 +332,12 @@ async function sendDailyReport() {
   try {
     console.log('📊 Günlük rapor hazırlanıyor...');
 
-    // Bugünün tarihi
-    const today = new Date().toISOString().split('T')[0];
-    const thisMonth = new Date().toISOString().slice(0, 7);
-    const reportDate = new Date().toLocaleDateString('tr-TR', {
+    // Bugünün tarihi (Turkish Time - UTC+3)
+    const nowTR = new Date();
+    nowTR.setHours(nowTR.getHours() + 3);
+    const today = nowTR.toISOString().split('T')[0];
+    const thisMonth = nowTR.toISOString().slice(0, 7);
+    const reportDate = nowTR.toLocaleDateString('tr-TR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -358,6 +360,7 @@ async function sendDailyReport() {
     const last30DaysMeasurements = measurements.filter(m => m.date >= last30Days);
 
     const yesterday = new Date();
+    yesterday.setHours(yesterday.getHours() + 3);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayDate = yesterday.toISOString().split('T')[0];
     const yesterdayMeasurements = measurements.filter(m => m.date === yesterdayDate);
