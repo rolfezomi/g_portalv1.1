@@ -1,440 +1,491 @@
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('@supabase/supabase-js')
 
-// Supabase Client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+async function sendDailyReport() {
+  try {
+    console.log('📊 Detaylı günlük rapor gönderimi başlıyor...')
 
-// HTML Email Template
-function generateReportHTML(data) {
-  const { kpis, categories, topPoints, recentActivities, reportDate } = data;
+    // Supabase client
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
 
-  return `
+    // Tüm verileri çek
+    const { data: measurements, error } = await supabase
+      .from('measurements')
+      .select('id, category, point, value, unit, date, time, user, note')
+      .order('id', { ascending: false })
+      .limit(1000)
+
+    if (error) throw error
+    if (!measurements || measurements.length === 0) {
+      throw new Error('Veritabanında hiç ölçüm verisi bulunamadı.')
+    }
+
+    console.log(`✅ ${measurements.length} ölçüm verisi çekildi`)
+
+    // Tarih hesaplamaları (Turkish Time - UTC+3)
+    const nowTR = new Date()
+    nowTR.setHours(nowTR.getHours() + 3)
+    const today = nowTR.toISOString().split('T')[0]
+    const currentTime = `${String(nowTR.getHours()).padStart(2, '0')}:${String(nowTR.getMinutes()).padStart(2, '0')}`
+
+    // Bugünkü tüm ölçümler
+    const todayMeasurements = measurements.filter(m => m.date === today)
+
+    // Aylık ölçümler (bu ay)
+    const currentMonth = today.substring(0, 7) // YYYY-MM
+    const monthlyMeasurements = measurements.filter(m => m.date && m.date.startsWith(currentMonth))
+
+    // Son 30 gün
+    const thirtyDaysAgo = new Date(nowTR.getTime() - 30 * 24 * 60 * 60 * 1000)
+    thirtyDaysAgo.setHours(thirtyDaysAgo.getHours() + 3)
+    const thirtyDaysAgoDate = thirtyDaysAgo.toISOString().split('T')[0]
+    const last30DaysMeasurements = measurements.filter(m => m.date >= thirtyDaysAgoDate)
+
+    console.log(`📅 Bugün: ${todayMeasurements.length} ölçüm`)
+    console.log(`📆 Bu Ay: ${monthlyMeasurements.length} ölçüm`)
+    console.log(`📊 Son 30 Gün: ${last30DaysMeasurements.length} ölçüm`)
+
+    // Rapor tarihi
+    const reportDate = nowTR.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
+
+    // 1. BUGÜNKÜ KATEGORİ ANALİZİ
+    const categoryAnalysis = {}
+    const categoryPoints = {}
+    todayMeasurements.forEach(m => {
+      const cat = m.category || 'Diğer'
+      const point = m.point || 'Bilinmeyen'
+
+      if (!categoryAnalysis[cat]) {
+        categoryAnalysis[cat] = 0
+        categoryPoints[cat] = new Set()
+      }
+      categoryAnalysis[cat]++
+      categoryPoints[cat].add(point)
+    })
+
+    // Kategori ikonları
+    const categoryIcons = {
+      'ph': '⚗️',
+      'klor': '🧪',
+      'sıcaklık': '🌡️',
+      'bulanıklık': '💧',
+      'oksijen': '🫧',
+      'iletkenlik': '⚡',
+      'diğer': '📊'
+    }
+
+    const todayCategories = Object.entries(categoryAnalysis)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => {
+        const icon = categoryIcons[name.toLowerCase()] || '📊'
+        const pointCount = categoryPoints[name].size
+        return `
+        <tr>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb;">
+            <span style="font-size: 20px; margin-right: 8px;">${icon}</span>
+            <span style="color: #374151; font-size: 14px; font-weight: 600;">
+              ${name.charAt(0).toUpperCase() + name.slice(1)}
+            </span>
+          </td>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+            <span style="color: #059669; font-weight: 700; font-size: 16px;">
+              ${count}
+            </span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">ölçüm</span>
+          </td>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+            <span style="color: #0891b2; font-weight: 700; font-size: 16px;">
+              ${pointCount}
+            </span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">nokta</span>
+          </td>
+        </tr>
+        `
+      }).join('')
+
+    // 2. BUGÜN KONTROL EDİLEN NOKTALAR
+    const todayPoints = {}
+    todayMeasurements.forEach(m => {
+      const point = m.point || 'Bilinmeyen'
+      todayPoints[point] = (todayPoints[point] || 0) + 1
+    })
+
+    const todayTopPoints = Object.entries(todayPoints)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([point, count], index) => `
+        <tr>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb;">
+            <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; color: #059669; margin-right: 8px;">
+              ${index + 1}
+            </span>
+            <span style="color: #374151; font-size: 14px; font-weight: 600;">
+              ${point}
+            </span>
+          </td>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+            <span style="color: #059669; font-weight: 700; font-size: 16px;">
+              ${count}
+            </span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">kez</span>
+          </td>
+        </tr>
+      `).join('')
+
+    // 3. BUGÜNKÜ KULLANICI PERFORMANSI
+    const userPerformance = {}
+    const userCategories = {}
+    todayMeasurements.forEach(m => {
+      const user = m.user || 'Bilinmeyen'
+      const cat = m.category || 'Diğer'
+
+      if (!userPerformance[user]) {
+        userPerformance[user] = 0
+        userCategories[user] = new Set()
+      }
+      userPerformance[user]++
+      userCategories[user].add(cat)
+    })
+
+    const sortedUsers = Object.entries(userPerformance)
+      .sort((a, b) => b[1] - a[1])
+
+    const topUser = sortedUsers.length > 0 ? sortedUsers[0][0] : null
+
+    const userPerformanceList = sortedUsers.map(([user, count]) => {
+      const categoryCount = userCategories[user].size
+      const isTop = user === topUser
+      return `
+        <tr>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb;">
+            <span style="color: #374151; font-size: 14px; font-weight: 600;">
+              ${user}
+            </span>
+            ${isTop ? '<span style="margin-left: 8px; font-size: 16px;">🏆</span>' : ''}
+          </td>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+            <span style="color: #059669; font-weight: 700; font-size: 16px;">
+              ${count}
+            </span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">ölçüm</span>
+          </td>
+          <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+            <span style="color: #0891b2; font-weight: 700; font-size: 16px;">
+              ${categoryCount}
+            </span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">kategori</span>
+          </td>
+        </tr>
+      `
+    }).join('')
+
+    // 4. EN ÇOK KONTROL EDİLEN NOKTALAR (TÜM ZAMANLAR)
+    const allTimePoints = {}
+    measurements.forEach(m => {
+      const point = m.point || 'Bilinmeyen'
+      allTimePoints[point] = (allTimePoints[point] || 0) + 1
+    })
+
+    const rankBadges = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣']
+    const topAllTimePoints = Object.entries(allTimePoints)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([point, count], index) => `
+        <tr>
+          <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">
+            <span style="font-size: 24px; margin-right: 8px;">
+              ${rankBadges[index]}
+            </span>
+            <span style="color: #111827; font-size: 15px; font-weight: 700;">
+              ${point}
+            </span>
+          </td>
+          <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+            <span style="color: #059669; font-weight: 800; font-size: 18px;">
+              ${count}
+            </span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">toplam</span>
+          </td>
+        </tr>
+      `).join('')
+
+    // 5. SON 10 AKTİVİTE
+    const recentActivities = measurements.slice(0, 10).map(m => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+          <div style="color: #6b7280; font-size: 12px;">
+            ${m.date || 'N/A'}
+          </div>
+          <div style="color: #374151; font-size: 13px; font-weight: 600; margin-top: 2px;">
+            ${m.time || 'N/A'}
+          </div>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+          <span style="background: #ecfdf5; color: #059669; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+            ${(m.category || 'N/A').charAt(0).toUpperCase() + (m.category || 'N/A').slice(1)}
+          </span>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 13px;">
+          ${m.point || 'N/A'}
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+          <span style="color: #059669; font-weight: 700; font-size: 14px;">
+            ${m.value || 'N/A'}
+          </span>
+          <span style="color: #6b7280; font-size: 11px; margin-left: 2px;">
+            ${m.unit || ''}
+          </span>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+          ${m.user || 'N/A'}
+        </td>
+      </tr>
+    `).join('')
+
+    // 30 günlük ortalama hesaplama
+    const avgLast30Days = last30DaysMeasurements.length > 0
+      ? Math.round(last30DaysMeasurements.length / 30)
+      : 0
+
+    const htmlContent = `
 <!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Günlük Su Kalitesi Raporu</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
-      padding: 40px 20px;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    .header {
-      background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
-      padding: 40px 32px;
-      text-align: center;
-      color: white;
-    }
-    .header h1 {
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
-    }
-    .header p {
-      font-size: 14px;
-      opacity: 0.95;
-    }
-    .content {
-      padding: 32px;
-    }
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-    .kpi-card {
-      background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
-      border-radius: 12px;
-      padding: 20px;
-      border-left: 4px solid #0891b2;
-    }
-    .kpi-card.success {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-      border-left-color: #10b981;
-    }
-    .kpi-card.warning {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border-left-color: #f59e0b;
-    }
-    .kpi-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #6b7280;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
-    }
-    .kpi-value {
-      font-size: 32px;
-      font-weight: 900;
-      color: #111827;
-      line-height: 1;
-    }
-    .kpi-trend {
-      font-size: 12px;
-      font-weight: 600;
-      color: #10b981;
-      margin-top: 8px;
-    }
-    .section-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #f3f4f6;
-    }
-    .category-list {
-      margin-bottom: 32px;
-    }
-    .category-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-    .category-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .category-icon {
-      font-size: 24px;
-    }
-    .category-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: #111827;
-    }
-    .category-count {
-      font-size: 12px;
-      color: #6b7280;
-    }
-    .category-percent {
-      font-size: 16px;
-      font-weight: 800;
-      color: #0891b2;
-      padding: 4px 12px;
-      background: white;
-      border-radius: 6px;
-    }
-    .top-list {
-      margin-bottom: 32px;
-    }
-    .top-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-    .top-rank {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 14px;
-      color: white;
-    }
-    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-    .rank-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); }
-    .rank-3 { background: linear-gradient(135deg, #fb923c, #f97316); }
-    .rank-other { background: linear-gradient(135deg, #059669, #0891b2); }
-    .top-name {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 600;
-      color: #111827;
-    }
-    .top-count {
-      font-size: 18px;
-      font-weight: 800;
-      color: #0891b2;
-    }
-    .table-wrapper {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-      margin-bottom: 32px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    thead {
-      background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
-    }
-    th {
-      padding: 12px 16px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 700;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 2px solid #e5e7eb;
-    }
-    td {
-      padding: 12px 16px;
-      color: #374151;
-      border-bottom: 1px solid #f3f4f6;
-    }
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-    tbody tr:hover {
-      background: #fafbfc;
-    }
-    .footer {
-      background: #f9fafb;
-      padding: 24px 32px;
-      text-align: center;
-      color: #6b7280;
-      font-size: 12px;
-    }
-    .footer strong {
-      color: #111827;
-    }
-    @media only screen and (max-width: 600px) {
-      .kpi-grid {
-        grid-template-columns: 1fr;
-      }
-      .container {
-        margin: 0;
-        border-radius: 0;
-      }
-    }
+  <title>Detaylı Su Kalitesi Raporu</title>
+  <!--[if mso]>
+  <style type="text/css">
+    table {border-collapse: collapse; border-spacing: 0;}
+    .outlook-group-fix {width: 100% !important;}
   </style>
+  <![endif]-->
 </head>
-<body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1>💧 GLOHE PORTAL • Günlük Su Kalitesi Raporu</h1>
-      <p>${reportDate}</p>
-    </div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 
-    <!-- Content -->
-    <div class="content">
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-label">Bugünkü Ölçümler</div>
-          <div class="kpi-value">${kpis.todayCount}</div>
-          <div class="kpi-trend">${kpis.todayTrend}</div>
-        </div>
-        <div class="kpi-card success">
-          <div class="kpi-label">Bu Ay Toplam</div>
-          <div class="kpi-value">${kpis.monthCount}</div>
-          <div class="kpi-trend">Bu ay</div>
-        </div>
-        <div class="kpi-card warning">
-          <div class="kpi-label">Günlük Ortalama</div>
-          <div class="kpi-value">${kpis.avgDaily}</div>
-          <div class="kpi-trend">Son 30 gün</div>
-        </div>
-      </div>
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #059669 0%, #0891b2 100%); padding: 40px 40px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">
+                📊 GLOHE PORTAL • Detaylı Rapor
+              </h1>
+              <p style="margin: 14px 0 0 0; color: #ffffff; font-size: 16px; font-weight: 500; opacity: 0.95; letter-spacing: 0.3px;">
+                ${reportDate} • ${currentTime}
+              </p>
+            </td>
+          </tr>
 
-      <!-- Kategori Analizi -->
-      <h2 class="section-title">Kategori Dağılımı</h2>
-      <div class="category-list">
-        ${categories.map(cat => `
-          <div class="category-item">
-            <div class="category-left">
-              <div class="category-icon">${cat.icon}</div>
-              <div>
-                <div class="category-name">${cat.name}</div>
-                <div class="category-count">${cat.count} ölçüm</div>
+          <!-- KPI Cards -->
+          <tr>
+            <td style="padding: 30px 40px 20px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <!-- Today Card -->
+                  <td width="32%" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 8px; padding: 20px; border-left: 4px solid #10b981;">
+                    <p style="margin: 0 0 8px 0; font-size: 10px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.5px;">
+                      BUGÜN
+                    </p>
+                    <p style="margin: 0; font-size: 32px; font-weight: 900; color: #047857; line-height: 1;">
+                      ${todayMeasurements.length}
+                    </p>
+                    <p style="margin: 6px 0 0 0; font-size: 11px; color: #059669; font-weight: 600;">
+                      Ölçüm
+                    </p>
+                  </td>
+                  <td width="2%"></td>
+                  <!-- Monthly Card -->
+                  <td width="32%" style="background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); border-radius: 8px; padding: 20px; border-left: 4px solid #0891b2;">
+                    <p style="margin: 0 0 8px 0; font-size: 10px; font-weight: 700; color: #164e63; text-transform: uppercase; letter-spacing: 0.5px;">
+                      BU AY
+                    </p>
+                    <p style="margin: 0; font-size: 32px; font-weight: 900; color: #155e75; line-height: 1;">
+                      ${monthlyMeasurements.length}
+                    </p>
+                    <p style="margin: 6px 0 0 0; font-size: 11px; color: #0891b2; font-weight: 600;">
+                      Ölçüm
+                    </p>
+                  </td>
+                  <td width="2%"></td>
+                  <!-- Average Card -->
+                  <td width="32%" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; padding: 20px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0 0 8px 0; font-size: 10px; font-weight: 700; color: #78350f; text-transform: uppercase; letter-spacing: 0.5px;">
+                      ORT. (30 GÜN)
+                    </p>
+                    <p style="margin: 0; font-size: 32px; font-weight: 900; color: #b45309; line-height: 1;">
+                      ${avgLast30Days}
+                    </p>
+                    <p style="margin: 6px 0 0 0; font-size: 11px; color: #d97706; font-weight: 600;">
+                      /gün
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Category Analysis -->
+          ${todayCategories.length > 0 ? `
+          <tr>
+            <td style="padding: 20px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 700; color: #111827;">
+                📊 Bugünkü Kategori Analizi
+              </h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <tr style="background: #f9fafb;">
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kategori
+                  </th>
+                  <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Ölçüm Sayısı
+                  </th>
+                  <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Nokta Sayısı
+                  </th>
+                </tr>
+                ${todayCategories}
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
+          <!-- Today's Top Points -->
+          ${todayTopPoints.length > 0 ? `
+          <tr>
+            <td style="padding: 20px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 700; color: #111827;">
+                📍 Bugün Kontrol Edilen Noktalar
+              </h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <tr style="background: #f9fafb;">
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kontrol Noktası
+                  </th>
+                  <th style="padding: 12px 10px; text-align: right; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kontrol Sayısı
+                  </th>
+                </tr>
+                ${todayTopPoints}
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
+          <!-- User Performance -->
+          ${userPerformanceList.length > 0 ? `
+          <tr>
+            <td style="padding: 20px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 700; color: #111827;">
+                👥 Bugünkü Kullanıcı Performansı
+              </h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <tr style="background: #f9fafb;">
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kullanıcı
+                  </th>
+                  <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Ölçüm Sayısı
+                  </th>
+                  <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kategori Çeşitliliği
+                  </th>
+                </tr>
+                ${userPerformanceList}
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
+          <!-- All-Time Top Points -->
+          ${topAllTimePoints.length > 0 ? `
+          <tr>
+            <td style="padding: 20px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 700; color: #111827;">
+                🏅 En Çok Kontrol Edilen Noktalar (Tüm Zamanlar)
+              </h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border: 2px solid #f59e0b; border-radius: 8px; overflow: hidden;">
+                ${topAllTimePoints}
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
+          <!-- Recent Activities -->
+          ${recentActivities.length > 0 ? `
+          <tr>
+            <td style="padding: 20px 40px 30px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 700; color: #111827;">
+                🕐 Son 10 Aktivite
+              </h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <tr style="background: #f9fafb;">
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Tarih/Saat
+                  </th>
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kategori
+                  </th>
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Nokta
+                  </th>
+                  <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Değer
+                  </th>
+                  <th style="padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb;">
+                    Kullanıcı
+                  </th>
+                </tr>
+                ${recentActivities}
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
+          <!-- No Data Warning -->
+          ${todayMeasurements.length === 0 ? `
+          <tr>
+            <td style="padding: 20px 40px;">
+              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; text-align: center;">
+                <p style="margin: 0; color: #92400e; font-size: 14px; font-weight: 600;">
+                  ⚠️ Bugün henüz ölçüm kaydı bulunmuyor
+                </p>
               </div>
-            </div>
-            <div class="category-percent">${cat.percent}%</div>
-          </div>
-        `).join('')}
-      </div>
+            </td>
+          </tr>
+          ` : ''}
 
-      <!-- Top 5 Kontrol Noktaları -->
-      <h2 class="section-title">En Çok Kontrol Edilen Noktalar</h2>
-      <div class="top-list">
-        ${topPoints.map((point, index) => `
-          <div class="top-item">
-            <div class="top-rank rank-${index === 0 ? '1' : index === 1 ? '2' : index === 2 ? '3' : 'other'}">${index + 1}</div>
-            <div class="top-name">${point.name}</div>
-            <div class="top-count">${point.count}</div>
-          </div>
-        `).join('')}
-      </div>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #059669; font-size: 13px; font-weight: 700;">
+                💧 GLOHE PORTAL
+              </p>
+              <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 12px;">
+                © ${new Date().getFullYear()} Su Kalitesi Kontrol Sistemi
+              </p>
+              <p style="margin: 8px 0 0 0; color: #d1d5db; font-size: 11px;">
+                Detaylı günlük rapor • Her gün otomatik olarak gönderilir
+              </p>
+            </td>
+          </tr>
 
-      <!-- Son Aktiviteler -->
-      <h2 class="section-title">Son 10 Aktivite</h2>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Tarih & Saat</th>
-              <th>Kategori</th>
-              <th>Kontrol Noktası</th>
-              <th>Değer</th>
-              <th>Kullanıcı</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${recentActivities.map(activity => `
-              <tr>
-                <td>${activity.datetime}</td>
-                <td>${activity.category}</td>
-                <td>${activity.point}</td>
-                <td><strong>${activity.value}</strong></td>
-                <td>${activity.user}</td>
-              </tr>
-            `).join('')}
-          </tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <p style="color: #059669; font-weight: 700; font-size: 14px; margin-bottom: 4px;">💧 GLOHE PORTAL</p>
-      <p><strong>Su Kalitesi Kontrol Sistemi</strong></p>
-      <p style="margin-top: 8px;">Bu rapor otomatik olarak oluşturulmuştur.</p>
-    </div>
-  </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
-  `;
-}
-
-// Ana Fonksiyon
-async function sendDailyReport() {
-  try {
-    console.log('📊 Günlük rapor hazırlanıyor...');
-
-    // Bugünün tarihi (Turkish Time - UTC+3)
-    const nowTR = new Date();
-    nowTR.setHours(nowTR.getHours() + 3);
-    const today = nowTR.toISOString().split('T')[0];
-    const thisMonth = nowTR.toISOString().slice(0, 7);
-    const reportDate = nowTR.toLocaleDateString('tr-TR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    // Tüm ölçümleri çek
-    const { data: measurements, error } = await supabase
-      .from('measurements')
-      .select('*')
-      .order('date', { ascending: false })
-      .order('time', { ascending: false });
-
-    if (error) throw error;
-
-    // KPI Hesaplamaları
-    const todayMeasurements = measurements.filter(m => m.date === today);
-    const monthMeasurements = measurements.filter(m => m.date && m.date.startsWith(thisMonth));
-    const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const last30DaysMeasurements = measurements.filter(m => m.date >= last30Days);
-
-    const yesterday = new Date();
-    yesterday.setHours(yesterday.getHours() + 3);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayDate = yesterday.toISOString().split('T')[0];
-    const yesterdayMeasurements = measurements.filter(m => m.date === yesterdayDate);
-
-    const diff = todayMeasurements.length - yesterdayMeasurements.length;
-    const todayTrend = diff > 0
-      ? `▲ +${diff} artış`
-      : diff < 0
-      ? `▼ ${Math.abs(diff)} azalış`
-      : 'Değişim yok';
-
-    const kpis = {
-      todayCount: todayMeasurements.length,
-      monthCount: monthMeasurements.length,
-      avgDaily: Math.round(last30DaysMeasurements.length / 30),
-      todayTrend
-    };
-
-    // Kategori Dağılımı
-    const categoryIcons = {
-      'klor': '💧',
-      'ph': '⚗️',
-      'iletkenlik': '⚡',
-      'sertlik': '🔬',
-      'kazan-mikser': '📊'
-    };
-
-    const categoryCounts = {};
-    measurements.forEach(m => {
-      const cat = m.category || 'Diğer';
-      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-    });
-
-    const totalMeasurements = measurements.length;
-    const categories = Object.entries(categoryCounts)
-      .map(([name, count]) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        count,
-        percent: ((count / totalMeasurements) * 100).toFixed(1),
-        icon: categoryIcons[name.toLowerCase()] || '📊'
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Top 5 Kontrol Noktaları
-    const pointCounts = {};
-    measurements.forEach(m => {
-      const point = m.point || 'Bilinmeyen';
-      pointCounts[point] = (pointCounts[point] || 0) + 1;
-    });
-
-    const topPoints = Object.entries(pointCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Son 10 Aktivite
-    const recentActivities = measurements.slice(0, 10).map(m => ({
-      datetime: `${m.date} ${m.time}`,
-      category: (m.category || 'N/A').charAt(0).toUpperCase() + (m.category || 'N/A').slice(1),
-      point: m.point || 'N/A',
-      value: m.value || 'N/A',
-      user: m.user || 'Sistem'
-    }));
-
-    // HTML Oluştur
-    const htmlContent = generateReportHTML({
-      kpis,
-      categories,
-      topPoints,
-      recentActivities,
-      reportDate
-    });
+    `
 
     // Resend ile mail gönder
     console.log('📧 Email gönderiliyor...')
@@ -448,7 +499,7 @@ async function sendDailyReport() {
       body: JSON.stringify({
         from: 'Glohe Portal <onboarding@resend.dev>',
         to: [process.env.RECIPIENT_EMAIL],
-        subject: `💧 GLOHE PORTAL • Günlük Su Kalitesi Raporu - ${reportDate}`,
+        subject: `📊 GLOHE PORTAL • Detaylı Su Kalitesi Raporu - ${reportDate} ${currentTime}`,
         html: htmlContent,
       }),
     })
@@ -463,6 +514,9 @@ async function sendDailyReport() {
     console.log('✅ Email başarıyla gönderildi!')
     console.log(`📬 Email ID: ${emailResult.id}`)
     console.log(`📨 Alıcı: ${process.env.RECIPIENT_EMAIL}`)
+    console.log(`📊 Bugünkü ölçüm: ${todayMeasurements.length}`)
+    console.log(`📆 Aylık ölçüm: ${monthlyMeasurements.length}`)
+    console.log(`📈 30 günlük ortalama: ${avgLast30Days}/gün`)
 
     process.exit(0)
 
@@ -473,4 +527,4 @@ async function sendDailyReport() {
 }
 
 // Çalıştır
-sendDailyReport();
+sendDailyReport()
