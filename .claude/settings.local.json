@@ -24,7 +24,21 @@
       "Bash(../supabase.exe functions deploy send-daily-report)",
       "Bash(../supabase.exe db push)",
       "Bash(SUPABASE_ACCESS_TOKEN=\"sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5\" \"C:\\Users\\Onars\\scoop\\shims\\supabase.exe\" functions list:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy check-daily-measurement-status\")",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions list\")",
+      "Bash(curl:*)",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy send-daily-report\")",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && cd g_portal-main && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy send-daily-report\")",
+      "Bash(C:UsersOnarsscoopshimssupabase.exe login --token sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5)",
+      "Bash(C:UsersOnarsscoopshimssupabase.exe functions deploy send-daily-report)",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy send-daily-report --no-verify-jwt\")",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy send-daily-report --project-ref mignlffeyougoefuyayr\")",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe link --project-ref mignlffeyougoefuyayr 2>&1\")",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && C:\\Users\\Onars\\scoop\\shims\\supabase.exe secrets set RESEND_API_KEY=re_CMLybm5j_HrqsFZruALwPFYPACRAahjho --project-ref mignlffeyougoefuyayr\")",
+      "Bash(cmd.exe /c \"C:\\Users\\Onars\\scoop\\shims\\supabase.exe secrets list --project-ref mignlffeyougoefuyayr 2>&1\")",
+      "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && cd ../../.. && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy send-daily-report --project-ref mignlffeyougoefuyayr 2>&1\")",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
