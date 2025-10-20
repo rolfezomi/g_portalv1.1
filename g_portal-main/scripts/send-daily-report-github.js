@@ -20,13 +20,17 @@ async function sendDailyReport() {
     console.log('✅ Supabase client created')
 
     // Verileri çek
+    console.log('📥 Fetching measurements from Supabase...')
     const { data: measurements, error } = await supabase
       .from('measurements')
       .select('id, category, point, value, unit, date, time, user, note')
       .order('id', { ascending: false })
       .limit(1000)
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Supabase query error:', JSON.stringify(error, null, 2))
+      throw error
+    }
     if (!measurements || measurements.length === 0) {
       throw new Error('Veritabanında hiç ölçüm verisi bulunamadı.')
     }
@@ -107,6 +111,7 @@ async function sendDailyReport() {
 
   } catch (error) {
     console.error('❌ Hata:', error.message)
+    console.error('❌ Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
     process.exit(1)
   }
 }
