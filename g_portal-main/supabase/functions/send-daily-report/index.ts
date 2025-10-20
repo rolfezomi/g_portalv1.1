@@ -1,5 +1,6 @@
 // Supabase Edge Function - Günlük Su Kalitesi Mail Raporu
 // Deno runtime kullanır
+// Updated: 2025-10-20 - New Resend API Key
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
