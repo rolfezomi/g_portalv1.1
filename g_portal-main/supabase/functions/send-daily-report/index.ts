@@ -503,9 +503,6 @@ serve(async (req) => {
       totalMeasurements: measurements.length
     })
 
-    // GEÇICI TEST: Basit HTML ile dene
-    const testHtml = `<h1>Test Email</h1><p>Bugün ${todayMeasurements.length} ölçüm yapıldı.</p>`
-
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -513,10 +510,10 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Glohe Portal <onboarding@resend.dev>', // Resend test domain
+        from: 'Glohe Portal <onboarding@resend.dev>',
         to: [recipientEmail],
-        subject: `📊 TEST - Su Kalitesi Raporu - ${reportDate}`,
-        html: testHtml, // GEÇİCİ: Basit HTML
+        subject: `📊 Günlük Su Kalitesi Raporu - ${reportDate}`,
+        html: htmlContent,
       }),
     })
 
