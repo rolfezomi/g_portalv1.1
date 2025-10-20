@@ -68,6 +68,8 @@ async function sendDailyReport() {
 
     // Resend ile mail gönder
     console.log('📧 Email gönderiliyor...')
+    console.log('🔑 API Key length:', process.env.RESEND_API_KEY?.length || 0)
+    console.log('📨 Recipient:', process.env.RECIPIENT_EMAIL)
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
