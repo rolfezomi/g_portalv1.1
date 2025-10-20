@@ -5,6 +5,9 @@ async function sendDailyReport() {
     console.log('📊 Günlük rapor gönderimi başlıyor...')
 
     // Supabase client
+    console.log('🔐 Supabase URL:', process.env.SUPABASE_URL?.substring(0, 30) + '...')
+    console.log('🔑 Service Role Key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0)
+
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -17,7 +20,10 @@ async function sendDailyReport() {
       .order('id', { ascending: false })
       .limit(1000)
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Supabase error:', error)
+      throw error
+    }
     if (!measurements || measurements.length === 0) {
       throw new Error('Veritabanında hiç ölçüm verisi bulunamadı.')
     }
