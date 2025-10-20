@@ -1,10 +1,14 @@
 [build]
   # Build komutu (statik site için gerekli değil)
-  command = "echo 'No build needed'"
+  command = "cd netlify/functions && npm install"
   # Publish edilecek klasör
   publish = "."
   # Functions klasörü
   functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@supabase/supabase-js"]
 
 [dev]
   # Local development
