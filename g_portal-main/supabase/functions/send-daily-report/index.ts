@@ -1,7 +1,8 @@
 // Supabase Edge Function - Günlük Su Kalitesi Mail Raporu
 // Deno runtime kullanır
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +21,7 @@ interface Measurement {
   note?: string
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
