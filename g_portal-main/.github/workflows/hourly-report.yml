@@ -1,4 +1,4 @@
-name: Send Daily Report
+name: Hourly Report
 
 on:
   schedule:
@@ -7,8 +7,11 @@ on:
   workflow_dispatch: # Manuel test için
 
 jobs:
-  send-report:
+  send-hourly-report:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: g_portal-main
 
     steps:
       - name: Checkout code
@@ -28,4 +31,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        run: node scripts/send-daily-report-github.js
+        run: node scripts/send-hourly-report.js
