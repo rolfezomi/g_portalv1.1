@@ -113,9 +113,9 @@ async function sendHourlyReport() {
           <tr>
             <td style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
-                💧 GLOHE PORTAL • Saatlik Durum Raporu
+                🕐 GLOHE PORTAL • Saatlik Durum Raporu
               </h1>
-              <p style="margin: 8px 0 0 0; color: #cffafe; font-size: 14px;">
+              <p style="margin: 12px 0 0 0; color: #ffffff; font-size: 15px; font-weight: 500; opacity: 0.95; letter-spacing: 0.3px;">
                 ${reportDate} • ${currentTime}
               </p>
             </td>
@@ -239,7 +239,7 @@ async function sendHourlyReport() {
       body: JSON.stringify({
         from: 'Glohe Portal <onboarding@resend.dev>',
         to: [process.env.RECIPIENT_EMAIL],
-        subject: `💧 GLOHE PORTAL • Saatlik Durum Raporu - ${reportDate} ${currentTime}`,
+        subject: `🕐 GLOHE PORTAL • Saatlik Durum Raporu - ${reportDate} ${currentTime}`,
         html: htmlContent,
       }),
     })
