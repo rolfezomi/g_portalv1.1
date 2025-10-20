@@ -1,6 +1,6 @@
 [build]
-  # Build komutu (statik site için gerekli değil)
-  command = "cd netlify/functions && npm install"
+  # Build komutu
+  command = "npm install"
   # Publish edilecek klasör
   publish = "."
   # Functions klasörü
@@ -8,7 +8,6 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@supabase/supabase-js"]
 
 [dev]
   # Local development

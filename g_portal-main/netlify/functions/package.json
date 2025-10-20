@@ -1,8 +1,0 @@
-{
-  "name": "glohe-netlify-functions",
-  "version": "1.0.0",
-  "description": "Netlify Functions for Glohe Portal",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
-  }
-}
