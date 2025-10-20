@@ -4,11 +4,20 @@ async function sendDailyReport() {
   try {
     console.log('📊 Günlük rapor gönderimi başlıyor...')
 
+    // Debug: Environment variables
+    console.log('🔐 Environment check:')
+    console.log('  - SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET (' + process.env.SUPABASE_URL.substring(0, 30) + '...)' : 'MISSING')
+    console.log('  - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET (length: ' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : 'MISSING')
+    console.log('  - RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'SET (length: ' + process.env.RESEND_API_KEY.length + ')' : 'MISSING')
+    console.log('  - RECIPIENT_EMAIL:', process.env.RECIPIENT_EMAIL || 'MISSING')
+
     // Supabase client
+    console.log('🔧 Creating Supabase client...')
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
+    console.log('✅ Supabase client created')
 
     // Verileri çek
     const { data: measurements, error } = await supabase
