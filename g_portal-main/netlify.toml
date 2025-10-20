@@ -3,7 +3,8 @@
   command = "echo 'No build needed'"
   # Publish edilecek klasör
   publish = "."
-  # Functions disabled - using GitHub Actions for scheduled tasks
+  # Functions klasörü
+  functions = "netlify/functions"
 
 [dev]
   # Local development
@@ -23,8 +24,8 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Redirects for SPA
+# Redirects
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
