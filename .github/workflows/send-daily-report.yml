@@ -10,6 +10,10 @@ jobs:
   send-report:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: g_portal-main
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
