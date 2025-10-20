@@ -1563,10 +1563,10 @@
   <div class="toast" id="toast">Kayıt başarıyla kaydedildi.</div>
   <script>
     // Backend API URL'i
-    // Production'da Netlify Functions kullanılacak
+    // Express backend kullanılıyor
     const API_URL = window.location.hostname === 'localhost'
-      ? 'http://localhost:8888/.netlify/functions'  // Local development
-      : '/.netlify/functions';  // Production (Netlify)
+      ? 'http://localhost:3001/api'  // Local Express server
+      : 'https://glohe.netlify.app/api';  // Production (deploy ettiğinizde backend URL'ini güncelleyin)
 
     const SUPABASE_URL = 'https://mignlffeyougoefuyayr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMzM4NDUsImV4cCI6MjA3NDcwOTg0NX0.WOvAMx4L3IzovJILgwCG7lRZeHhvOl_n7J1LR5A8SX0';

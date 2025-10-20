@@ -1741,7 +1741,7 @@ async function updateUserRoleByEmail(email, existingRoleId) {
     }
 
     // Backend API ile rol güncelle
-    const response = await fetch(`${API_URL}/update-role`, {
+    const response = await fetch(`${API_URL}/users/update-role`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.session.access_token}`,
