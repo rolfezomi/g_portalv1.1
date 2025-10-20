@@ -21,7 +21,7 @@ function generateReportHTML(data) {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
       padding: 40px 20px;
     }
     .container {
@@ -33,7 +33,7 @@ function generateReportHTML(data) {
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
       padding: 40px 32px;
       text-align: center;
       color: white;
@@ -58,10 +58,10 @@ function generateReportHTML(data) {
       margin-bottom: 32px;
     }
     .kpi-card {
-      background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+      background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
       border-radius: 12px;
       padding: 20px;
-      border-left: 4px solid #667eea;
+      border-left: 4px solid #0891b2;
     }
     .kpi-card.success {
       background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
@@ -131,7 +131,7 @@ function generateReportHTML(data) {
     .category-percent {
       font-size: 16px;
       font-weight: 800;
-      color: #667eea;
+      color: #0891b2;
       padding: 4px 12px;
       background: white;
       border-radius: 6px;
@@ -162,7 +162,7 @@ function generateReportHTML(data) {
     .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
     .rank-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); }
     .rank-3 { background: linear-gradient(135deg, #fb923c, #f97316); }
-    .rank-other { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .rank-other { background: linear-gradient(135deg, #059669, #0891b2); }
     .top-name {
       flex: 1;
       font-size: 14px;
@@ -172,7 +172,7 @@ function generateReportHTML(data) {
     .top-count {
       font-size: 18px;
       font-weight: 800;
-      color: #667eea;
+      color: #0891b2;
     }
     .table-wrapper {
       overflow-x: auto;
@@ -234,7 +234,7 @@ function generateReportHTML(data) {
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>📊 Günlük Su Kalitesi Raporu</h1>
+      <h1>💧 GLOHE PORTAL • Günlük Su Kalitesi Raporu</h1>
       <p>${reportDate}</p>
     </div>
 
@@ -318,7 +318,8 @@ function generateReportHTML(data) {
 
     <!-- Footer -->
     <div class="footer">
-      <p><strong>Glohe Portal</strong> - Su Kalitesi Kontrol Sistemi</p>
+      <p style="color: #059669; font-weight: 700; font-size: 14px; margin-bottom: 4px;">💧 GLOHE PORTAL</p>
+      <p><strong>Su Kalitesi Kontrol Sistemi</strong></p>
       <p style="margin-top: 8px;">Bu rapor otomatik olarak oluşturulmuştur.</p>
     </div>
   </div>
@@ -447,7 +448,7 @@ async function sendDailyReport() {
       body: JSON.stringify({
         from: 'Glohe Portal <onboarding@resend.dev>',
         to: [process.env.RECIPIENT_EMAIL],
-        subject: `📊 Günlük Su Kalitesi Raporu - ${reportDate}`,
+        subject: `💧 GLOHE PORTAL • Günlük Su Kalitesi Raporu - ${reportDate}`,
         html: htmlContent,
       }),
     })

@@ -111,11 +111,11 @@ async function sendHourlyReport() {
 
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px 40px; text-align: center;">
+            <td style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
-                ⏰ Saatlik Durum Raporu
+                💧 GLOHE PORTAL • Saatlik Durum Raporu
               </h1>
-              <p style="margin: 8px 0 0 0; color: #dbeafe; font-size: 14px;">
+              <p style="margin: 8px 0 0 0; color: #cffafe; font-size: 14px;">
                 ${reportDate} • ${currentTime}
               </p>
             </td>
@@ -138,14 +138,14 @@ async function sendHourlyReport() {
                     </p>
                   </td>
                   <td width="4%"></td>
-                  <td width="48%" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 8px; padding: 20px; border-left: 4px solid #3b82f6;">
-                    <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <td width="48%" style="background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); border-radius: 8px; padding: 20px; border-left: 4px solid #0891b2;">
+                    <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #164e63; text-transform: uppercase; letter-spacing: 0.5px;">
                       BUGÜN TOPLAM
                     </p>
-                    <p style="margin: 0; font-size: 32px; font-weight: 900; color: #1e3a8a; line-height: 1;">
+                    <p style="margin: 0; font-size: 32px; font-weight: 900; color: #155e75; line-height: 1;">
                       ${todayMeasurements.length}
                     </p>
-                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #2563eb;">
+                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #0891b2;">
                       Toplam Ölçüm
                     </p>
                   </td>
@@ -207,8 +207,11 @@ async function sendHourlyReport() {
           <!-- Footer -->
           <tr>
             <td style="padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                © ${new Date().getFullYear()} Glohe Portal - Su Kalitesi Kontrol Sistemi
+              <p style="margin: 0; color: #059669; font-size: 12px; font-weight: 600;">
+                💧 GLOHE PORTAL
+              </p>
+              <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 12px;">
+                © ${new Date().getFullYear()} Su Kalitesi Kontrol Sistemi
               </p>
               <p style="margin: 8px 0 0 0; color: #d1d5db; font-size: 11px;">
                 Otomatik saatlik rapor • Her saat başı gönderilir
@@ -236,7 +239,7 @@ async function sendHourlyReport() {
       body: JSON.stringify({
         from: 'Glohe Portal <onboarding@resend.dev>',
         to: [process.env.RECIPIENT_EMAIL],
-        subject: `⏰ Saatlik Durum Raporu - ${reportDate} ${currentTime}`,
+        subject: `💧 GLOHE PORTAL • Saatlik Durum Raporu - ${reportDate} ${currentTime}`,
         html: htmlContent,
       }),
     })
