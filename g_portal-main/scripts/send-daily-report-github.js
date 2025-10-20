@@ -4,33 +4,20 @@ async function sendDailyReport() {
   try {
     console.log('📊 Günlük rapor gönderimi başlıyor...')
 
-    // Debug: Environment variables
-    console.log('🔐 Environment check:')
-    console.log('  - SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET (' + process.env.SUPABASE_URL.substring(0, 30) + '...)' : 'MISSING')
-    console.log('  - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET (length: ' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : 'MISSING')
-    console.log('  - RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'SET (length: ' + process.env.RESEND_API_KEY.length + ')' : 'MISSING')
-    console.log('  - RECIPIENT_EMAIL:', process.env.RECIPIENT_EMAIL || 'MISSING')
-
     // Supabase client
-    console.log('🔧 Creating Supabase client...')
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
-    console.log('✅ Supabase client created')
 
     // Verileri çek
-    console.log('📥 Fetching measurements from Supabase...')
     const { data: measurements, error } = await supabase
       .from('measurements')
       .select('id, category, point, value, unit, date, time, user, note')
       .order('id', { ascending: false })
       .limit(1000)
 
-    if (error) {
-      console.error('❌ Supabase query error:', JSON.stringify(error, null, 2))
-      throw error
-    }
+    if (error) throw error
     if (!measurements || measurements.length === 0) {
       throw new Error('Veritabanında hiç ölçüm verisi bulunamadı.')
     }
@@ -111,7 +98,6 @@ async function sendDailyReport() {
 
   } catch (error) {
     console.error('❌ Hata:', error.message)
-    console.error('❌ Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
     process.exit(1)
   }
 }
