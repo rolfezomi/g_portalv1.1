@@ -66,6 +66,7 @@ const ALL_CONTROL_POINTS = {
   ],
   'Dolum Makinaları': [
     '1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI',
+    '1020 / 8\'Lİ LİKİT DOLUM VE KAPAMA MAKİNASI',
     '1148 / ROLL-ON DOLUM VE KAPAMA MAKİNASI'
   ]
 }

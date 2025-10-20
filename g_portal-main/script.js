@@ -85,6 +85,7 @@ const APP_CONFIG = {
       color: { gradient: ['rgba(121,85,72,0.8)', 'rgba(93,64,55,1)'], border: '#5d4037', point: '#795548', pointHover: '#3e2723' },
       controlPoints: [
         '1029 / ALTILI LİKİT DOLUM VE KAPAMA MAKİNASI',
+        '1020 / 8\'Lİ LİKİT DOLUM VE KAPAMA MAKİNASI',
         '1148 / ROLL-ON DOLUM VE KAPAMA MAKİNASI'
       ]
     }

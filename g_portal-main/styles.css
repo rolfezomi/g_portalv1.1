@@ -2290,6 +2290,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   border-color: #fdd835;
 }
 
+.dm-badge-sekizli {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  color: #6a1b9a;
+  border-color: #ba68c8;
+}
+
 .dm-badge-rollon {
   background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
   color: #0277bd;
