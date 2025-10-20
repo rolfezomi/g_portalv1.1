@@ -2,8 +2,8 @@ name: Hourly Report
 
 on:
   schedule:
-    # Her saat başı çalışır: 09:00-18:00 Turkish Time (06:00-15:00 UTC)
-    - cron: '0 6-15 * * *'
+    # Her saat başı çalışır: 08:00-18:00 Turkish Time (05:00-15:00 UTC)
+    - cron: '0 5-15 * * *'
   workflow_dispatch: # Manuel test için
 
 jobs:
