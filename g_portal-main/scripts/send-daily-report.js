@@ -1,21 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
 
 // Supabase Client
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-// Email Transporter (Gmail)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD
-  }
-});
 
 // HTML Email Template
 function generateReportHTML(data) {
@@ -416,7 +405,7 @@ async function sendDailyReport() {
     // Top 5 Kontrol Noktaları
     const pointCounts = {};
     measurements.forEach(m => {
-      const point = m.control_point || 'Bilinmeyen';
+      const point = m.point || 'Bilinmeyen';
       pointCounts[point] = (pointCounts[point] || 0) + 1;
     });
 
@@ -429,7 +418,7 @@ async function sendDailyReport() {
     const recentActivities = measurements.slice(0, 10).map(m => ({
       datetime: `${m.date} ${m.time}`,
       category: (m.category || 'N/A').charAt(0).toUpperCase() + (m.category || 'N/A').slice(1),
-      point: m.control_point || 'N/A',
+      point: m.point || 'N/A',
       value: m.value || 'N/A',
       user: m.user || 'Sistem'
     }));
@@ -443,21 +432,39 @@ async function sendDailyReport() {
       reportDate
     });
 
-    // Mail Gönder
-    const mailOptions = {
-      from: `"Glohe Portal 📊" <${process.env.EMAIL_USER}>`,
-      to: process.env.RECIPIENT_EMAIL,
-      subject: `📊 Günlük Su Kalitesi Raporu - ${reportDate}`,
-      html: htmlContent
-    };
+    // Resend ile mail gönder
+    console.log('📧 Email gönderiliyor...')
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Mail başarıyla gönderildi:', info.messageId);
-    console.log('📧 Alıcı:', process.env.RECIPIENT_EMAIL);
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Glohe Portal <onboarding@resend.dev>',
+        to: [process.env.RECIPIENT_EMAIL],
+        subject: `📊 Günlük Su Kalitesi Raporu - ${reportDate}`,
+        html: htmlContent,
+      }),
+    })
+
+    const emailResult = await emailResponse.json()
+
+    if (!emailResponse.ok) {
+      console.error('❌ Email gönderimi başarısız:', emailResult)
+      throw new Error(`Email gönderimi başarısız: ${JSON.stringify(emailResult)}`)
+    }
+
+    console.log('✅ Email başarıyla gönderildi!')
+    console.log(`📬 Email ID: ${emailResult.id}`)
+    console.log(`📨 Alıcı: ${process.env.RECIPIENT_EMAIL}`)
+
+    process.exit(0)
 
   } catch (error) {
-    console.error('❌ Hata:', error.message);
-    process.exit(1);
+    console.error('❌ Hata:', error.message)
+    process.exit(1)
   }
 }
 
