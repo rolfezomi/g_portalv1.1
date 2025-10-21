@@ -354,7 +354,7 @@ function renderPaymentCalendarTab() {
       </p>
 
       <div class="payment-summary-cards">
-        <div class="payment-summary-card overdue">
+        <div class="payment-summary-card overdue clickable" onclick="filterByStatus('overdue')" id="card-overdue">
           <div class="summary-icon">⚠️</div>
           <div class="summary-content">
             <div class="summary-label">Gecikmiş</div>
@@ -363,7 +363,7 @@ function renderPaymentCalendarTab() {
           </div>
         </div>
 
-        <div class="payment-summary-card this-week">
+        <div class="payment-summary-card this-week clickable" onclick="filterByStatus('thisWeek')" id="card-thisWeek">
           <div class="summary-icon">📅</div>
           <div class="summary-content">
             <div class="summary-label">Bu Hafta</div>
@@ -372,7 +372,7 @@ function renderPaymentCalendarTab() {
           </div>
         </div>
 
-        <div class="payment-summary-card this-month">
+        <div class="payment-summary-card this-month clickable" onclick="filterByStatus('thisMonth')" id="card-thisMonth">
           <div class="summary-icon">📊</div>
           <div class="summary-content">
             <div class="summary-label">Bu Ay</div>
@@ -381,7 +381,7 @@ function renderPaymentCalendarTab() {
           </div>
         </div>
 
-        <div class="payment-summary-card future">
+        <div class="payment-summary-card future clickable" onclick="filterByStatus('future')" id="card-future">
           <div class="summary-icon">📈</div>
           <div class="summary-content">
             <div class="summary-label">Gelecek</div>
@@ -389,6 +389,17 @@ function renderPaymentCalendarTab() {
             <div class="summary-count" id="payment-future-count">0 sipariş</div>
           </div>
         </div>
+      </div>
+
+      <!-- Hızlı Arama -->
+      <div class="payment-quick-search">
+        <input
+          type="text"
+          id="payment-search-input"
+          class="search-input"
+          placeholder="🔍 Tedarikçi veya sipariş numarası ara..."
+          oninput="quickSearchPayments()"
+        />
       </div>
 
       <!-- Filtre Paneli -->
@@ -924,6 +935,7 @@ function formatNumber(value) {
 // Global filtre verileri
 let allSupplierGroups = {};
 let allPaymentGroups = {};
+let activeStatusFilter = '';
 
 // Tedarikçi listesini doldur ve filtrelenmiş verileri sakla
 function updatePaymentFilters(supplierGroups, groups) {
@@ -937,6 +949,115 @@ function updatePaymentFilters(supplierGroups, groups) {
     supplierSelect.innerHTML = '<option value="">Tümü</option>' +
       suppliers.map(s => `<option value="${s}">${s}</option>`).join('');
   }
+}
+
+// Kart tıklama ile filtreleme
+function filterByStatus(status) {
+  // Kartları highlight et
+  document.querySelectorAll('.payment-summary-card').forEach(card => {
+    card.classList.remove('active');
+  });
+
+  // Eğer aynı karta tekrar tıklanırsa filtre kaldırılsın
+  if (activeStatusFilter === status) {
+    activeStatusFilter = '';
+    document.getElementById('payment-filter-status').value = '';
+  } else {
+    activeStatusFilter = status;
+    document.getElementById(`card-${status}`).classList.add('active');
+    document.getElementById('payment-filter-status').value = status;
+  }
+
+  applyPaymentFilters();
+}
+
+// Hızlı arama
+function quickSearchPayments() {
+  const searchTerm = document.getElementById('payment-search-input')?.value.toLowerCase().trim() || '';
+
+  if (!searchTerm) {
+    // Arama boşsa mevcut filtreleri uygula
+    applyPaymentFilters();
+    return;
+  }
+
+  // Tedarikçi ve grup verilerini filtrele
+  const filteredSuppliers = {};
+  const filteredGroups = {
+    overdue: { total: 0, count: 0, orders: [] },
+    thisWeek: { total: 0, count: 0, orders: [] },
+    thisMonth: { total: 0, count: 0, orders: [] },
+    future: { total: 0, count: 0, orders: [] }
+  };
+
+  // Tüm siparişleri ara
+  Object.keys(allSupplierGroups).forEach(supplierName => {
+    const supplier = allSupplierGroups[supplierName];
+
+    const matchingOrders = supplier.orders.filter(order => {
+      const searchableText = [
+        order.siparis_no,
+        order.tedarikci_tanimi,
+        order.tedarikci_kodu,
+        order.malzeme_tanimi
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return searchableText.includes(searchTerm);
+    });
+
+    if (matchingOrders.length > 0) {
+      filteredSuppliers[supplierName] = {
+        total: matchingOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0),
+        count: matchingOrders.length,
+        overdue: 0,
+        upcoming: 0,
+        orders: matchingOrders
+      };
+
+      // Gecikmiş vs yaklaşan hesapla
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      matchingOrders.forEach(order => {
+        const vadeDate = new Date(order.vadeye_gore);
+        vadeDate.setHours(0, 0, 0, 0);
+        const tutar = parseFloat(order.tutar_tl) || 0;
+
+        if (vadeDate < today) {
+          filteredSuppliers[supplierName].overdue += tutar;
+        } else {
+          filteredSuppliers[supplierName].upcoming += tutar;
+        }
+      });
+    }
+  });
+
+  // Grupları güncelle
+  Object.keys(allPaymentGroups).forEach(category => {
+    const matchingOrders = allPaymentGroups[category].orders.filter(order => {
+      const searchableText = [
+        order.siparis_no,
+        order.tedarikci_tanimi,
+        order.tedarikci_kodu,
+        order.malzeme_tanimi
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return searchableText.includes(searchTerm);
+    });
+
+    filteredGroups[category] = {
+      total: matchingOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0),
+      count: matchingOrders.length,
+      orders: matchingOrders
+    };
+  });
+
+  // UI'ı güncelle
+  updatePaymentSummary(filteredGroups);
+  renderSupplierBalances(filteredSuppliers);
+  renderPaymentDetails(filteredGroups);
+
+  showToast(`🔍 "${searchTerm}" için ${Object.keys(filteredSuppliers).length} tedarikçi bulundu`, 'info');
 }
 
 // Filtre uygula
@@ -999,6 +1120,13 @@ function clearPaymentFilters() {
   document.getElementById('payment-filter-supplier').value = '';
   document.getElementById('payment-filter-status').value = '';
   document.getElementById('payment-filter-min').value = '';
+  document.getElementById('payment-search-input').value = '';
+
+  // Aktif kartı kaldır
+  activeStatusFilter = '';
+  document.querySelectorAll('.payment-summary-card').forEach(card => {
+    card.classList.remove('active');
+  });
 
   // Orijinal verileri göster
   updatePaymentSummary(allPaymentGroups);
