@@ -4551,8 +4551,24 @@ function enterFullscreenMode() {
     `;
   }
 
-  // 5. DRAG & DROP + RESIZE SİSTEMİNİ AKTİF ET
-  enableDragAndResize();
+  // 5. DRAG & RESIZE'I TAMAMEN DEVRE DIŞI BIRAK
+  console.log('🔒 Drag & Resize devre dışı bırakılıyor (Fullscreen mode)');
+  disableDragAndResize();
+
+  // Tüm resize handle'ları kaldır
+  document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+
+  // Kartların inline style'larını temizle
+  document.querySelectorAll('.exec-kpi-card-modern, .exec-chart-card-modern').forEach(card => {
+    card.style.position = '';
+    card.style.left = '';
+    card.style.top = '';
+    card.style.width = '';
+    card.style.height = '';
+    card.style.transform = '';
+    card.style.cursor = '';
+    card.removeAttribute('draggable');
+  });
 
   // 6. ANİMASYONLARI BAŞLAT
   setTimeout(() => animateCardsEntry(), 100);
@@ -4603,10 +4619,16 @@ function exitFullscreenMode() {
     setTimeout(() => { toolbar.style.cssText = ''; }, 300);
   }
 
-  // 3. DRAG & DROP sistemini kapat
+  // 3. DRAG & DROP sistemini kapat (önce kapat)
   disableDragAndResize();
 
-  // 4. OTOMATİK YENİLEMEYİ DURDUR
+  // 4. Normal modda drag & resize'ı tekrar aktif et (opsiyonel)
+  // setTimeout(() => {
+  //   console.log('🔓 Drag & Resize tekrar aktif ediliyor (Normal mode)');
+  //   enableDragAndResize();
+  // }, 500);
+
+  // 5. OTOMATİK YENİLEMEYİ DURDUR
   stopFullscreenAutoRefresh();
 
   console.log('✅ Normal desktop mode - Modern Dashboard restored');
@@ -5405,7 +5427,9 @@ function enableDragAndResize() {
 function disableDragAndResize() {
   console.log('🔴 Drag & Drop + Resize devre dışı bırakılıyor...');
 
-  draggableElements.forEach(({ card, index }) => {
+  // Kayıtlı kartlar için temizlik
+  draggableElements.forEach(({ card }) => {
+    // Inline style'ları tamamen temizle
     card.style.position = '';
     card.style.cursor = '';
     card.style.userSelect = '';
@@ -5413,15 +5437,41 @@ function disableDragAndResize() {
     card.style.top = '';
     card.style.width = '';
     card.style.height = '';
+    card.style.transform = '';
 
+    // Event listener'ları kaldır
     card.removeEventListener('mousedown', startDrag);
     card.removeEventListener('touchstart', startDrag);
 
     // Resize handle'ı kaldır
     const handle = card.querySelector('.resize-handle');
-    if (handle) handle.remove();
+    if (handle) {
+      handle.removeEventListener('mousedown', startResize);
+      handle.removeEventListener('touchstart', startResize);
+      handle.remove();
+    }
+
+    // Draggable attribute kaldır
+    card.removeAttribute('draggable');
   });
 
+  // TÜM kartlar için güvenlik temizliği (kayıtlı olmayabilir)
+  document.querySelectorAll('.exec-kpi-card-modern, .exec-chart-card-modern').forEach(card => {
+    card.style.position = '';
+    card.style.left = '';
+    card.style.top = '';
+    card.style.width = '';
+    card.style.height = '';
+    card.style.transform = '';
+    card.style.cursor = '';
+    card.removeAttribute('draggable');
+
+    // Tüm resize handle'ları kaldır
+    const handles = card.querySelectorAll('.resize-handle');
+    handles.forEach(h => h.remove());
+  });
+
+  // Global event listener'ları kaldır
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', stopDragOrResize);
   document.removeEventListener('touchmove', onTouchMove);

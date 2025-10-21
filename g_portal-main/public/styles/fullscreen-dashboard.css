@@ -1,0 +1,619 @@
+/* =====================================================
+   TAM EKRAN DASHBOARD - SIFIRDAN MÜKEMMEL TASARIM
+   ===================================================== */
+
+/* ROOT - Tüm ekranlar için sabitler */
+:root {
+  --fs-padding: 16px;
+  --fs-gap: 12px;
+  --fs-kpi-height: 130px;
+  --fs-chart-height: 280px;
+}
+
+/* ANA CONTAINER - Taşmayı tamamen engelle */
+.fullscreen-kiosk-mode {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 25%, #2c5364 50%, #1a3a52 75%, #0f2027 100%);
+  background-size: 400% 400%;
+  animation: gradientFlow 30s ease infinite;
+  z-index: 9999 !important;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Arka plan glow */
+.fullscreen-kiosk-mode::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 50%);
+  animation: rotateGlow 20s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* CONTENT WRAPPER - Scroll kontrolü */
+.fullscreen-kiosk-mode .content {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: var(--fs-padding) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  z-index: 1 !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Header gizle */
+.fullscreen-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* DASHBOARD CONTAINER - Grid sistem */
+.dashboard-fullscreen {
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  gap: var(--fs-gap) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+  animation: dashboardZoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dashboardZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* KPI GRID - 3 kolon sabit */
+.dashboard-fullscreen .exec-kpi-modern {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: var(--fs-gap) !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* KPI CARD - Sabit boyut, taşma yok */
+.dashboard-fullscreen .exec-kpi-card-modern {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  height: var(--fs-kpi-height) !important;
+  min-height: var(--fs-kpi-height) !important;
+  max-height: var(--fs-kpi-height) !important;
+  margin: 0 !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 14px !important;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 0 40px rgba(76, 175, 80, 0.2) !important;
+
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  cursor: default !important;
+}
+
+.dashboard-fullscreen .exec-kpi-card-modern:hover {
+  transform: translateY(-3px) !important;
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+    0 0 50px rgba(76, 175, 80, 0.4) !important;
+}
+
+/* KPI İçerik */
+.dashboard-fullscreen .exec-kpi-top {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.dashboard-fullscreen .exec-kpi-icon {
+  flex-shrink: 0 !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dashboard-fullscreen .exec-kpi-icon svg {
+  width: 22px !important;
+  height: 22px !important;
+  stroke: #fff !important;
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3)) !important;
+}
+
+.dashboard-fullscreen .exec-kpi-content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.dashboard-fullscreen .exec-kpi-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  margin: 0 0 4px 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.dashboard-fullscreen .exec-kpi-value {
+  font-size: 42px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  letter-spacing: -1px !important;
+  margin: 8px 0 !important;
+  background: linear-gradient(135deg, #fff 0%, #e0e0e0 50%, #fff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  animation: numberGlow 3s ease-in-out infinite !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+@keyframes numberGlow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)); }
+  50% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.6)); }
+}
+
+.dashboard-fullscreen .exec-kpi-trend {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* CHART GRID - 2x2 Grid */
+.dashboard-fullscreen .exec-chart-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-rows: repeat(2, 1fr) !important;
+  gap: var(--fs-gap) !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* CHART CARD - Sabit boyut */
+.dashboard-fullscreen .exec-chart-card-modern {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: var(--fs-chart-height) !important;
+  min-height: var(--fs-chart-height) !important;
+  max-height: var(--fs-chart-height) !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(30px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 14px !important;
+
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+    0 0 40px currentColor !important;
+}
+
+/* Chart renk temaları */
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(1) {
+  border-top: 3px solid rgba(33, 150, 243, 0.8) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(2) {
+  border-top: 3px solid rgba(255, 152, 0, 0.8) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(3) {
+  border-top: 3px solid rgba(156, 39, 176, 0.8) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(4) {
+  border-top: 3px solid rgba(76, 175, 80, 0.8) !important;
+}
+
+/* Chart başlık */
+.dashboard-fullscreen .exec-chart-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  margin: 0 0 6px 0 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.dashboard-fullscreen .exec-chart-subtitle {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin: 0 0 10px 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Chart içerik */
+.dashboard-fullscreen .exec-chart-card-modern canvas {
+  max-width: 100% !important;
+  max-height: calc(var(--fs-chart-height) - 80px) !important;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern > div {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Gizlenecek elementler */
+.dashboard-fullscreen .exec-two-column,
+.dashboard-fullscreen .exec-activity-container {
+  display: none !important;
+}
+
+/* EXIT BUTTON - Sağ üst */
+.fullscreen-kiosk-mode #fullscreen-toggle-btn {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 10000 !important;
+  background: rgba(255, 59, 48, 0.2) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+  padding: 10px 20px !important;
+  border-radius: 50px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  animation: exitButtonPulse 2s ease-in-out infinite !important;
+}
+
+.fullscreen-kiosk-mode #fullscreen-toggle-btn:hover {
+  background: rgba(255, 59, 48, 0.4) !important;
+  transform: scale(1.05) !important;
+}
+
+@keyframes exitButtonPulse {
+  0%, 100% {
+    box-shadow: 0 8px 32px rgba(255, 59, 48, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(255, 59, 48, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.3) inset, 0 0 40px rgba(255, 59, 48, 0.4);
+  }
+}
+
+/* SCROLLBAR */
+.fullscreen-kiosk-mode .content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fullscreen-kiosk-mode .content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.fullscreen-kiosk-mode .content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.fullscreen-kiosk-mode .content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* =====================================================
+   RESPONSIVE BREAKPOINTS
+   ===================================================== */
+
+/* 1920px+ : 3 KPI, 2x2 Chart */
+@media (min-width: 1920px) {
+  :root {
+    --fs-padding: 20px;
+    --fs-gap: 14px;
+    --fs-kpi-height: 140px;
+    --fs-chart-height: 300px;
+  }
+
+  .dashboard-fullscreen .exec-kpi-value {
+    font-size: 46px !important;
+  }
+}
+
+/* 1400px-1919px : 3 KPI, 2x2 Chart */
+@media (min-width: 1400px) and (max-width: 1919px) {
+  :root {
+    --fs-padding: 18px;
+    --fs-gap: 13px;
+    --fs-kpi-height: 135px;
+    --fs-chart-height: 290px;
+  }
+}
+
+/* 1200px-1399px : 3 KPI, 2x2 Chart (kompakt) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  :root {
+    --fs-padding: 16px;
+    --fs-gap: 12px;
+    --fs-kpi-height: 125px;
+    --fs-chart-height: 270px;
+  }
+
+  .dashboard-fullscreen .exec-kpi-value {
+    font-size: 38px !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-title {
+    font-size: 14px !important;
+  }
+}
+
+/* 900px-1199px : 2 KPI, 2x2 Chart */
+@media (min-width: 900px) and (max-width: 1199px) {
+  :root {
+    --fs-padding: 14px;
+    --fs-gap: 11px;
+    --fs-kpi-height: 120px;
+    --fs-chart-height: 250px;
+  }
+
+  .dashboard-fullscreen .exec-kpi-modern {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-value {
+    font-size: 36px !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-title {
+    font-size: 13px !important;
+  }
+}
+
+/* 600px-899px : 2 KPI, 1x4 Chart */
+@media (min-width: 600px) and (max-width: 899px) {
+  :root {
+    --fs-padding: 12px;
+    --fs-gap: 10px;
+    --fs-kpi-height: 110px;
+    --fs-chart-height: 230px;
+  }
+
+  .dashboard-fullscreen .exec-kpi-modern {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: repeat(4, 1fr) !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-value {
+    font-size: 32px !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-title {
+    font-size: 13px !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-icon svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+}
+
+/* < 600px : 1 KPI, 1x4 Chart */
+@media (max-width: 599px) {
+  :root {
+    --fs-padding: 10px;
+    --fs-gap: 8px;
+    --fs-kpi-height: 100px;
+    --fs-chart-height: 210px;
+  }
+
+  .dashboard-fullscreen .exec-kpi-modern {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: repeat(4, 1fr) !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-value {
+    font-size: 28px !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-label {
+    font-size: 10px !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-title {
+    font-size: 12px !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dashboard-fullscreen .exec-kpi-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .fullscreen-kiosk-mode #fullscreen-toggle-btn {
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* 4K (2560px+) */
+@media (min-width: 2560px) {
+  :root {
+    --fs-padding: 24px;
+    --fs-gap: 16px;
+    --fs-kpi-height: 160px;
+    --fs-chart-height: 340px;
+  }
+
+  .dashboard-fullscreen .exec-kpi-value {
+    font-size: 52px !important;
+  }
+
+  .dashboard-fullscreen .exec-chart-title {
+    font-size: 17px !important;
+  }
+}
+
+/* =====================================================
+   DRAG & RESIZE ENGELLEYİCİ - TAM EKRAN MODU
+   ===================================================== */
+
+/* Kartları tamamen sabit tut - Drag engelleme */
+.fullscreen-kiosk-mode .exec-kpi-card-modern,
+.fullscreen-kiosk-mode .exec-chart-card-modern {
+  pointer-events: auto !important;
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  
+  /* Position override - Drag transform'ları iptal */
+  position: relative !important;
+  transform: none !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  
+  /* Inline style'ları override et */
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+
+/* Hover sadece görsel efekt - hareket yok */
+.fullscreen-kiosk-mode .exec-kpi-card-modern:hover,
+.fullscreen-kiosk-mode .exec-chart-card-modern:hover {
+  cursor: default !important;
+}
+
+/* Resize handle'ları tamamen gizle ve devre dışı bırak */
+.fullscreen-kiosk-mode .resize-handle {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+/* Kartların içindeki tüm elementler seçilemez */
+.fullscreen-kiosk-mode .exec-kpi-card-modern *,
+.fullscreen-kiosk-mode .exec-chart-card-modern * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Drag ghost image'ı engelle */
+.fullscreen-kiosk-mode .exec-kpi-card-modern,
+.fullscreen-kiosk-mode .exec-chart-card-modern {
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+  user-drag: none !important;
+}
+
+/* Touch işlemlerini kontrol et */
+.fullscreen-kiosk-mode .exec-kpi-card-modern,
+.fullscreen-kiosk-mode .exec-chart-card-modern {
+  touch-action: pan-y !important; /* Sadece dikey scroll */
+}
