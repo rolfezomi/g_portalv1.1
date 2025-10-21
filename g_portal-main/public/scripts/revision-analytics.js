@@ -1109,6 +1109,65 @@ function applyPaymentFilters() {
     });
   }
 
+  // DURUM FİLTRESİ İÇİN TEDARİKÇİ BAKİYELERİNİ GÜNCELLE
+  if (status) {
+    // Seçili duruma ait siparişleri al
+    const statusOrders = filteredGroups[status]?.orders || [];
+
+    // Tedarikçileri yeniden grupla (sadece seçili durumdaki siparişler)
+    const statusBasedSuppliers = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    statusOrders.forEach(order => {
+      const supplier = order.tedarikci_tanimi || 'Bilinmeyen Tedarikçi';
+      const tutar = parseFloat(order.tutar_tl) || 0;
+      const vadeDate = new Date(order.vadeye_gore);
+      vadeDate.setHours(0, 0, 0, 0);
+
+      if (!statusBasedSuppliers[supplier]) {
+        statusBasedSuppliers[supplier] = {
+          total: 0,
+          count: 0,
+          overdue: 0,
+          upcoming: 0,
+          orders: []
+        };
+      }
+
+      statusBasedSuppliers[supplier].total += tutar;
+      statusBasedSuppliers[supplier].count++;
+      statusBasedSuppliers[supplier].orders.push(order);
+
+      if (vadeDate < today) {
+        statusBasedSuppliers[supplier].overdue += tutar;
+      } else {
+        statusBasedSuppliers[supplier].upcoming += tutar;
+      }
+    });
+
+    // Tedarikçi filtresini güncelle
+    filteredSuppliers = statusBasedSuppliers;
+
+    // Minimum tutar filtresi varsa uygula
+    if (minAmount > 0) {
+      Object.keys(filteredSuppliers).forEach(key => {
+        if (filteredSuppliers[key].total < minAmount) {
+          delete filteredSuppliers[key];
+        }
+      });
+    }
+
+    // Tedarikçi dropdown filtresi varsa uygula
+    if (supplier) {
+      if (filteredSuppliers[supplier]) {
+        filteredSuppliers = {[supplier]: filteredSuppliers[supplier]};
+      } else {
+        filteredSuppliers = {};
+      }
+    }
+  }
+
   // UI'ı güncelle
   updatePaymentSummary(filteredGroups);
   renderSupplierBalances(filteredSuppliers);
