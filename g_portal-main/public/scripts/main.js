@@ -1723,6 +1723,7 @@ async function initUsersPage() {
               <label class="role-label">Yetki Seviyesi</label>
               <select id="role-${email.replace(/[@.]/g, '_')}" class="role-select">
                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>⚙️ Admin - Tam Yetki + Yönetim</option>
+                <option value="purchasing" ${currentRole === 'purchasing' ? 'selected' : ''}>🛒 Satın Alma - Purchasing + Revizyon</option>
                 <option value="executive" ${currentRole === 'executive' ? 'selected' : ''}>📊 Üst Yönetim - Dashboard + Raporlar</option>
                 <option value="full" ${currentRole === 'full' ? 'selected' : ''}>✓ Tam Yetki</option>
                 <option value="restricted" ${currentRole === 'restricted' ? 'selected' : ''}>◐ Kısıtlı Erişim</option>
