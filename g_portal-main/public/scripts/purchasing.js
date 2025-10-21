@@ -190,11 +190,11 @@ function renderPurchasingFilters() {
       <!-- Arama Kutusu -->
       <div class="filter-row search-row">
         <div class="filter-group search-group">
-          <label>🔍 Hızlı Arama (Tedarikçi, Malzeme, Sipariş No)</label>
+          <label>🔍 Hızlı Arama (Sipariş No, Tip, Tedarikçi, Malzeme)</label>
           <input
             type="text"
             id="purchasing-search"
-            placeholder="Ara..."
+            placeholder="Sipariş No, Tip, Tedarikçi veya Malzeme ara..."
             value="${searchQuery}"
             oninput="handlePurchasingSearch(this.value)"
             class="search-input"
@@ -273,6 +273,7 @@ function applyPurchasingFilters() {
     if (searchQuery) {
       const searchableText = [
         order.siparis_no,
+        order.siparis_tip,
         order.tedarikci_tanimi,
         order.tedarikci_kodu,
         order.malzeme_tanimi,
@@ -377,6 +378,9 @@ function renderPurchasingTable() {
               <th class="sortable" onclick="handleSort('siparis_no')">
                 Sipariş No ${getSortIcon('siparis_no')}
               </th>
+              <th class="sortable" onclick="handleSort('siparis_tip')">
+                Tip ${getSortIcon('siparis_tip')}
+              </th>
               <th class="sortable" onclick="handleSort('siparis_tarihi')">
                 Tarih ${getSortIcon('siparis_tarihi')}
               </th>
@@ -410,13 +414,14 @@ function renderPurchasingTable() {
           <tbody>
             ${filteredOrders.length === 0 ? `
               <tr>
-                <td colspan="11" style="text-align:center; padding:40px; color:#999;">
+                <td colspan="12" style="text-align:center; padding:40px; color:#999;">
                   ${searchQuery ? '🔍 Arama sonucu bulunamadı' : 'Sipariş bulunamadı'}
                 </td>
               </tr>
             ` : filteredOrders.map(order => `
               <tr>
                 <td>${order.siparis_no || '-'}</td>
+                <td><span style="font-size:11px; padding:2px 6px; background:#e3f2fd; border-radius:3px; white-space:nowrap;">${order.siparis_tip || '-'}</span></td>
                 <td>${formatDate(order.siparis_tarihi)}</td>
                 <td>${order.tedarikci_tanimi || '-'}</td>
                 <td>${order.malzeme_tanimi || '-'}</td>
@@ -510,7 +515,8 @@ async function processOrdersWithRevision(orders, userEmail) {
   // Her sipariş için işle
   for (const order of orders) {
     try {
-      const orderKey = `${order.siparis_no}-${order.siparis_kalemi || ''}`;
+      // Benzersiz anahtar: SiparisNo + SiparisKalemi + SiparisTip + TedarikciKodu
+      const orderKey = `${order.siparis_no}-${order.siparis_kalemi || ''}-${order.siparis_tip || ''}-${order.tedarikci_kodu || ''}`;
 
       // Mevcut en güncel kaydı bul
       const { data: existing, error: fetchError } = await supabaseClient
@@ -518,6 +524,8 @@ async function processOrdersWithRevision(orders, userEmail) {
         .select('*')
         .eq('siparis_no', order.siparis_no)
         .eq('siparis_kalemi', order.siparis_kalemi || '')
+        .eq('siparis_tip', order.siparis_tip || '')
+        .eq('tedarikci_kodu', order.tedarikci_kodu || '')
         .eq('is_latest', true)
         .single();
 
