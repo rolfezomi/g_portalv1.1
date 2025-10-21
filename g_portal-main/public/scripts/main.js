@@ -3474,42 +3474,175 @@ function showKPIChangeNotification(kpiName, change, percentage) {
 
   kpiNotificationShown[kpiName] = Date.now();
 
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed;
-    top: 90px;
-    right: 24px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    padding: 16px 24px;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
-    font-size: 14px;
-    font-weight: 600;
-    z-index: 10001;
-    transform: translateX(400px);
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  `;
-  notification.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="font-size: 24px;">📈</div>
-      <div>
-        <div style="font-size: 15px; font-weight: 700;">${kpiName}</div>
-        <div style="font-size: 13px; opacity: 0.9;">${change} (${percentage}%)</div>
+  // Tam ekran modunu kontrol et
+  const isFullscreen = document.body.classList.contains('fullscreen-kiosk-mode');
+  const isIncrease = change.startsWith('+');
+
+  if (isFullscreen) {
+    // TAM EKRAN MODUNDA MÜTHIŞ ANIMASYONLAR
+    showFullscreenKPIAnimation(kpiName, change, percentage, isIncrease);
+  } else {
+    // Normal mod - Sağ üst köşe bildirimi
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 90px;
+      right: 24px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 10001;
+      transform: translateX(400px);
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    `;
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 24px;">📈</div>
+        <div>
+          <div style="font-size: 15px; font-weight: 700;">${kpiName}</div>
+          <div style="font-size: 13px; opacity: 0.9;">${change} (${percentage}%)</div>
+        </div>
       </div>
-    </div>
-  `;
-  document.body.appendChild(notification);
+    `;
+    document.body.appendChild(notification);
 
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 50);
+
+    setTimeout(() => {
+      notification.style.transform = 'translateX(400px)';
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 400);
+    }, 4000);
+  }
+}
+
+// Tam Ekran Modunda KPI Değişiklik Animasyonları
+function showFullscreenKPIAnimation(kpiName, change, percentage, isIncrease) {
+  // 1. "Bugünkü Ölçümler" kartını bul
+  const kpiCards = document.querySelectorAll('.exec-kpi-card-modern');
+  let targetCard = null;
+
+  kpiCards.forEach(card => {
+    const label = card.querySelector('.exec-kpi-label');
+    if (label && label.textContent.includes('Bugünkü')) {
+      targetCard = card;
+    }
+  });
+
+  if (!targetCard) return;
+
+  // 2. Kartı temizle (önceki animasyonları kaldır)
+  targetCard.classList.remove('kpi-increased', 'kpi-decreased', 'kpi-shake');
+  const oldNotification = targetCard.querySelector('.kpi-change-notification');
+  if (oldNotification) oldNotification.remove();
+  const oldRing = targetCard.querySelector('.kpi-pulse-ring');
+  if (oldRing) oldRing.remove();
+
+  // 3. Kart animasyonunu başlat
   setTimeout(() => {
-    notification.style.transform = 'translateX(0)';
+    // Glow efekti
+    if (isIncrease) {
+      targetCard.classList.add('kpi-increased');
+    } else {
+      targetCard.classList.add('kpi-decreased');
+    }
+
+    // Sarsılma efekti
+    targetCard.classList.add('kpi-shake');
+
+    // 4. Floating notification badge
+    const notification = document.createElement('div');
+    notification.className = `kpi-change-notification ${isIncrease ? 'increase' : 'decrease'}`;
+    notification.innerHTML = `<span style="font-size: 18px;">${isIncrease ? '📈' : '📉'}</span> ${change} (%${percentage})`;
+    targetCard.appendChild(notification);
+
+    // 5. Pulse ring efekti
+    const pulseRing = document.createElement('div');
+    pulseRing.className = `kpi-pulse-ring ${isIncrease ? '' : 'decrease'}`;
+    targetCard.appendChild(pulseRing);
+
+    // 6. Sayı değişim animasyonu
+    const valueElement = targetCard.querySelector('.exec-kpi-value');
+    if (valueElement) {
+      valueElement.classList.remove('kpi-number-increase', 'kpi-number-decrease');
+      setTimeout(() => {
+        if (isIncrease) {
+          valueElement.classList.add('kpi-number-increase');
+        } else {
+          valueElement.classList.add('kpi-number-decrease');
+        }
+      }, 100);
+    }
+
+    // 7. CONFETTI BURST (sadece artış için)
+    if (isIncrease) {
+      createConfettiBurst(targetCard);
+    }
+
+    // 8. Animasyonları temizle
+    setTimeout(() => {
+      notification.remove();
+      pulseRing.remove();
+      targetCard.classList.remove('kpi-shake');
+      if (valueElement) {
+        valueElement.classList.remove('kpi-number-increase', 'kpi-number-decrease');
+      }
+    }, 3000);
+
+    // Glow efektini 3 saniye sonra kaldır
+    setTimeout(() => {
+      targetCard.classList.remove('kpi-increased', 'kpi-decreased');
+    }, 3000);
   }, 50);
+}
 
-  setTimeout(() => {
-    notification.style.transform = 'translateX(400px)';
-    notification.style.opacity = '0';
-    setTimeout(() => notification.remove(), 400);
-  }, 4000);
+// Confetti Patlaması Oluştur
+function createConfettiBurst(card) {
+  const rect = card.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  // 20 adet confetti parçacığı oluştur
+  const particleCount = 20;
+  const colors = ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7', '#c8e6c9'];
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'kpi-confetti-particle';
+
+    // Rastgele renk
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    particle.style.backgroundColor = color;
+
+    // Rastgele yön ve mesafe
+    const angle = (Math.PI * 2 * i) / particleCount;
+    const distance = 80 + Math.random() * 60; // 80-140px arası
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+
+    // CSS variables ile hedef pozisyon
+    particle.style.setProperty('--tx', `${tx}px`);
+    particle.style.setProperty('--ty', `${ty}px`);
+
+    // Pozisyon
+    particle.style.position = 'fixed';
+    particle.style.left = `${centerX}px`;
+    particle.style.top = `${centerY}px`;
+    particle.style.zIndex = '10000';
+
+    document.body.appendChild(particle);
+
+    // 2 saniye sonra temizle
+    setTimeout(() => {
+      particle.remove();
+    }, 2000);
+  }
 }
 
 // Değişen kartları highlight et
@@ -3586,6 +3719,9 @@ function updateExecutiveKPIs(measurements, logs) {
       if (todayCount > lastKnownCount) {
         const realDiff = todayCount - lastKnownCount;
         showKPIChangeNotification('Bugünkü Ölçümler', `+${realDiff} artış`, percentage);
+      } else if (todayCount < lastKnownCount) {
+        const realDiff = lastKnownCount - todayCount;
+        showKPIChangeNotification('Bugünkü Ölçümler', `-${realDiff} azalış`, percentage);
       }
       // Değeri güncelle
       localStorage.setItem(storageKey, todayCount.toString());
