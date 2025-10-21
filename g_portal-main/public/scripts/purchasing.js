@@ -330,37 +330,91 @@ async function handleCSVFile(file) {
 
     console.log(`📦 ${orders.length} sipariş parse edildi`);
 
+    // Kullanıcı email'ini al
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const userEmail = user?.email;
+
+    if (!userEmail) {
+      showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
+      return;
+    }
+
+    // Her siparişe created_by bilgisini ekle
+    const ordersWithMetadata = orders.map(order => ({
+      ...order,
+      created_by: userEmail,
+      updated_by: userEmail
+    }));
+
+    console.log('📤 Supabase\'e yükleniyor...', ordersWithMetadata);
+
     // Supabase'e yükle
     const { data, error } = await supabaseClient
       .from('purchasing_orders')
-      .insert(orders);
+      .insert(ordersWithMetadata);
 
     if (error) {
       console.error('CSV yükleme hatası:', error);
+      console.error('Hata detayı:', JSON.stringify(error, null, 2));
       showToast('❌ CSV yüklenemedi: ' + error.message, 'error');
       return;
     }
 
+    console.log('✅ Supabase yanıtı:', data);
     showToast(`✅ ${orders.length} sipariş başarıyla yüklendi`, 'success');
     await refreshPurchasingData();
 
   } catch (error) {
     console.error('CSV işleme hatası:', error);
-    showToast('❌ CSV dosyası işlenemedi', 'error');
+    console.error('Hata stack:', error.stack);
+    showToast('❌ CSV dosyası işlenemedi: ' + error.message, 'error');
   }
 }
 
 function parseCSV(text) {
+  // Daha gelişmiş CSV parsing - quoted fields'ları handle eder
+  function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
   const lines = text.split('\n').filter(line => line.trim());
-  const headers = lines[0].split(',').map(h => h.trim());
+  if (lines.length === 0) {
+    throw new Error('CSV dosyası boş');
+  }
+
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^"|"$/g, ''));
+  console.log('📋 CSV Headers:', headers);
 
   const orders = [];
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',');
+    const values = parseCSVLine(lines[i]);
     const order = {};
 
     headers.forEach((header, index) => {
-      const value = values[index]?.trim() || null;
+      let value = values[index]?.trim().replace(/^"|"$/g, '') || null;
 
       // Alan adlarını eşleştir (CSV header'ları ile database kolonları)
       const fieldMapping = {
@@ -368,20 +422,47 @@ function parseCSV(text) {
         'Sipariş Tarihi': 'siparis_tarihi',
         'Tedarikçi Kodu': 'tedarikci_kodu',
         'Tedarikçi': 'tedarikci_tanimi',
-        'Malzeme': 'malzeme_tanimi',
+        'Tedarikçi Tanımı': 'tedarikci_tanimi',
+        'Malzeme': 'malzeme',
+        'Malzeme Tanımı': 'malzeme_tanimi',
         'Miktar': 'miktar',
         'Birim': 'birim',
         'Birim Fiyat': 'birim_fiyat',
         'Tutar (TL)': 'tutar_tl',
+        'Tutar': 'tutar_tl',
         'Ödeme Koşulu': 'odeme_kosulu',
+        'Teslim Tarihi': 'teslim_tarihi',
+        'Vade Gün': 'vade_gun',
+        'KDV Oranı': 'kdv_orani',
+        'Kur': 'kur',
+        'Gelen Miktar': 'gelen_miktar',
+        'Depo': 'depo',
+        'Malzeme Grubu': 'malzeme_grubu',
+        'Marka': 'marka',
+        'Açıklama': 'aciklama',
         // Diğer alanları buraya ekleyebilirsiniz
       };
 
-      const dbField = fieldMapping[header] || header.toLowerCase().replace(/ /g, '_');
+      const dbField = fieldMapping[header] || header.toLowerCase().replace(/ /g, '_').replace(/[öÖ]/g, 'o').replace(/[üÜ]/g, 'u').replace(/[şŞ]/g, 's').replace(/[ıİ]/g, 'i').replace(/[ğĞ]/g, 'g').replace(/[çÇ]/g, 'c');
+
+      // Boş string'leri null yap
+      if (value === '' || value === '-') {
+        value = null;
+      }
+
       order[dbField] = value;
     });
 
-    orders.push(order);
+    // En az bir alan dolu ise ekle
+    const hasData = Object.values(order).some(v => v !== null && v !== '');
+    if (hasData) {
+      orders.push(order);
+    }
+  }
+
+  console.log(`📦 ${orders.length} adet sipariş parse edildi`);
+  if (orders.length > 0) {
+    console.log('📝 İlk sipariş örneği:', orders[0]);
   }
 
   return orders;
