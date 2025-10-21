@@ -352,7 +352,7 @@ let cachedRecords = [];
 let currentSection = 'home';
 let trendChart = null;
 let currentUserEmail = '';
-let currentUserRole = 'full'; // 'admin', 'full', 'restricted'
+let currentUserRole = null; // Veritabanından yüklenecek
 const ADMIN_EMAIL = 'ugur.onar@glohe.com';
 
 // ====== REAL-TIME SUBSCRIPTION ======
@@ -812,23 +812,27 @@ async function logout() {
 // ====== KULLANICI ROL SİSTEMİ ======
 async function loadUserRole(email) {
   try {
+    console.log('🔍 Kullanıcı rolü yükleniyor:', email);
+
     const { data, error } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('email', email)
       .single();
 
+    console.log('📊 Supabase yanıtı:', { data, error });
+
     if (error || !data) {
       // Varsayılan olarak 'full' yetkisi ver
       currentUserRole = 'full';
-      console.log('Kullanıcı rolü bulunamadı, varsayılan: full');
+      console.warn('⚠️ Kullanıcı rolü bulunamadı, varsayılan: full', error);
     } else {
       currentUserRole = data.role;
-      console.log('Kullanıcı rolü:', currentUserRole);
+      console.log('✅ Kullanıcı rolü yüklendi:', currentUserRole);
     }
   } catch (err) {
     currentUserRole = 'full';
-    console.error('Rol yükleme hatası:', err);
+    console.error('❌ Rol yükleme hatası:', err);
   }
 }
 
