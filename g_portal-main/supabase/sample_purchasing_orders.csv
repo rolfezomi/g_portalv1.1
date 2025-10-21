@@ -1,0 +1,4 @@
+Sipariş No,Sipariş Tarihi,Tedarikçi Kodu,Tedarikçi Tanımı,Malzeme,Malzeme Tanımı,Miktar,Birim,Birim Fiyat,Tutar (TL),Ödeme Koşulu,Teslim Tarihi,Vade Gün,KDV Oranı,Kur,Gelen Miktar,Depo,Malzeme Grubu,Marka,Açıklama
+SIP-2025-001,2025-10-21,TED001,Test Tedarikçi A.Ş.,MAL001,Test Malzeme 1,100,Adet,50.00,5000.00,30 Gün Vadeli,2025-11-15,30,20,TL,0,Merkez Depo,Hammadde,Test Marka,Test açıklama
+SIP-2025-002,2025-10-21,TED002,Örnek Tedarikçi Ltd.,MAL002,Örnek Malzeme 2,50,KG,150.00,7500.00,Peşin,2025-11-01,0,20,TL,25,Merkez Depo,Kimyasal,Örnek Marka,Kısmi geldi
+SIP-2025-003,2025-10-22,TED001,Test Tedarikçi A.Ş.,MAL003,Test Malzeme 3,200,Litre,25.50,5100.00,60 Gün Vadeli,2025-12-20,60,20,TL,0,Yan Depo,Sıvı,Test Marka,Beklemede
