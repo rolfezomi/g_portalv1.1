@@ -846,19 +846,158 @@
   color: #999;
 }
 
-/* Grafik Container */
-.payment-chart-container {
-  background: #fafafa;
+/* Tedarikçi Bakiyeleri Container */
+.supplier-balances-container {
+  background: white;
   border-radius: 12px;
   padding: 30px;
   margin-bottom: 40px;
-  overflow-x: auto;
 }
 
-.payment-chart-container canvas {
-  display: block;
-  margin: 0 auto;
-  max-width: 100%;
+.supplier-balances-container h3 {
+  margin-bottom: 25px;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.supplier-balances-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Tedarikçi Bakiye Item */
+.supplier-balance-item {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.supplier-balance-item:hover {
+  border-color: #f5576c;
+  box-shadow: 0 4px 16px rgba(245, 87, 108, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Tedarikçi Bilgileri */
+.supplier-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.supplier-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  flex: 1;
+  min-width: 200px;
+}
+
+.supplier-meta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.supplier-count {
+  font-size: 13px;
+  color: #666;
+  background: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.supplier-total {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f5576c;
+}
+
+/* Balance Bar (Yatay Çubuk Grafik) */
+.balance-bar-container {
+  width: 100%;
+  height: 40px;
+  background: #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.balance-bar-wrapper {
+  height: 100%;
+  display: flex;
+  transition: all 0.5s ease;
+}
+
+.balance-bar {
+  height: 100%;
+  transition: all 0.5s ease;
+  position: relative;
+}
+
+.balance-bar.overdue {
+  background: linear-gradient(90deg, #f44336 0%, #e57373 100%);
+}
+
+.balance-bar.upcoming {
+  background: linear-gradient(90deg, #4caf50 0%, #81c784 100%);
+}
+
+.balance-bar:hover {
+  opacity: 0.9;
+  cursor: help;
+}
+
+/* Balance Detayları */
+.balance-details {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.balance-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: white;
+}
+
+.balance-detail.overdue {
+  border-left: 3px solid #f44336;
+}
+
+.balance-detail.upcoming {
+  border-left: 3px solid #4caf50;
+}
+
+.balance-detail .detail-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.balance-detail .detail-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+.balance-detail.overdue .detail-value {
+  color: #f44336;
+}
+
+.balance-detail.upcoming .detail-value {
+  color: #4caf50;
 }
 
 /* Detay Listesi */
@@ -878,13 +1017,29 @@
     grid-template-columns: 1fr;
   }
 
-  .payment-chart-container {
+  .supplier-balances-container {
     padding: 15px;
-    overflow-x: scroll;
   }
 
-  .payment-chart-container canvas {
-    min-width: 600px;
+  .supplier-balance-item {
+    padding: 15px;
+  }
+
+  .supplier-name {
+    font-size: 16px;
+    min-width: 100%;
+  }
+
+  .supplier-total {
+    font-size: 18px;
+  }
+
+  .supplier-meta {
+    gap: 10px;
+  }
+
+  .balance-bar-container {
+    height: 30px;
   }
 
   .payment-summary-card {

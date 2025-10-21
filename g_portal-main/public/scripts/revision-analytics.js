@@ -391,8 +391,9 @@ function renderPaymentCalendarTab() {
         </div>
       </div>
 
-      <div class="payment-chart-container">
-        <canvas id="payment-chart" width="800" height="400"></canvas>
+      <div id="supplier-balances-container" class="supplier-balances-container">
+        <h3>Tedarikçi Bakiyeleri</h3>
+        <div id="supplier-balances-list"></div>
       </div>
 
       <div id="payment-details-list" class="payment-details-list"></div>
@@ -429,20 +430,35 @@ async function getPaymentData() {
       future: { total: 0, count: 0, orders: [] }
     };
 
-    // Tarihe göre gruplama
-    const dateGroups = {};
+    // Tedarikçi bazlı gruplama
+    const supplierGroups = {};
 
     orders.forEach(order => {
       const vadeDate = new Date(order.vadeye_gore);
       vadeDate.setHours(0, 0, 0, 0);
       const tutar = parseFloat(order.tutar_tl) || 0;
+      const supplier = order.tedarikci_tanimi || 'Bilinmeyen Tedarikçi';
 
-      // Tarih grupları (grafik için)
-      const dateKey = order.vadeye_gore;
-      if (!dateGroups[dateKey]) {
-        dateGroups[dateKey] = 0;
+      // Tedarikçi grupları (grafik için)
+      if (!supplierGroups[supplier]) {
+        supplierGroups[supplier] = {
+          total: 0,
+          count: 0,
+          overdue: 0,
+          upcoming: 0,
+          orders: []
+        };
       }
-      dateGroups[dateKey] += tutar;
+      supplierGroups[supplier].total += tutar;
+      supplierGroups[supplier].count++;
+      supplierGroups[supplier].orders.push(order);
+
+      // Gecikmiş vs yaklaşan
+      if (vadeDate < today) {
+        supplierGroups[supplier].overdue += tutar;
+      } else {
+        supplierGroups[supplier].upcoming += tutar;
+      }
 
       // Kategori grupları
       if (vadeDate < today) {
@@ -466,7 +482,7 @@ async function getPaymentData() {
 
     // UI'ı güncelle
     updatePaymentSummary(groups);
-    renderPaymentChart(dateGroups);
+    renderSupplierBalances(supplierGroups);
     renderPaymentDetails(groups);
 
   } catch (error) {
@@ -490,104 +506,79 @@ function updatePaymentSummary(groups) {
   document.getElementById('payment-future-count').textContent = `${groups.future.count} sipariş`;
 }
 
-// Grafik çiz
-function renderPaymentChart(dateGroups) {
-  const canvas = document.getElementById('payment-chart');
-  if (!canvas) return;
+// Tedarikçi bakiyeleri render et (Modern yatay çubuk grafik)
+function renderSupplierBalances(supplierGroups) {
+  const container = document.getElementById('supplier-balances-list');
+  if (!container) return;
 
-  const ctx = canvas.getContext('2d');
+  // Tedarikçileri toplam tutara göre sırala
+  const suppliers = Object.keys(supplierGroups).sort((a, b) => {
+    return supplierGroups[b].total - supplierGroups[a].total;
+  });
 
-  // Canvas temizle
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Tarihleri sırala
-  const sortedDates = Object.keys(dateGroups).sort();
-  const values = sortedDates.map(date => dateGroups[date]);
-
-  if (sortedDates.length === 0) {
-    ctx.font = '16px Arial';
-    ctx.fillStyle = '#999';
-    ctx.textAlign = 'center';
-    ctx.fillText('Veri bulunamadı', canvas.width / 2, canvas.height / 2);
+  if (suppliers.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>Veri bulunamadı</p>
+      </div>
+    `;
     return;
   }
 
-  // Grafik alanı
-  const padding = 60;
-  const chartWidth = canvas.width - padding * 2;
-  const chartHeight = canvas.height - padding * 2;
+  // Maksimum tutar (ölçeklendirme için)
+  const maxTotal = Math.max(...suppliers.map(s => supplierGroups[s].total));
 
-  // Maksimum değer
-  const maxValue = Math.max(...values);
-  const barWidth = chartWidth / sortedDates.length;
+  container.innerHTML = suppliers.map(supplier => {
+    const data = supplierGroups[supplier];
+    const percentOfMax = (data.total / maxTotal) * 100;
+    const overduePercent = (data.overdue / data.total) * 100;
+    const upcomingPercent = (data.upcoming / data.total) * 100;
 
-  // Çubukları çiz
-  sortedDates.forEach((date, index) => {
-    const value = dateGroups[date];
-    const barHeight = (value / maxValue) * chartHeight;
-    const x = padding + index * barWidth;
-    const y = padding + chartHeight - barHeight;
+    return `
+      <div class="supplier-balance-item">
+        <div class="supplier-info">
+          <div class="supplier-name">${supplier}</div>
+          <div class="supplier-meta">
+            <span class="supplier-count">${data.count} sipariş</span>
+            <span class="supplier-total">${formatCurrency(data.total)}</span>
+          </div>
+        </div>
 
-    // Renk belirleme (geçmiş = kırmızı, yakın = turuncu, uzak = yeşil)
-    const vadeDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+        <div class="balance-bar-container">
+          <div class="balance-bar-wrapper" style="width: ${percentOfMax}%">
+            ${data.overdue > 0 ? `
+              <div class="balance-bar overdue"
+                   style="width: ${overduePercent}%"
+                   title="Gecikmiş: ${formatCurrency(data.overdue)}">
+              </div>
+            ` : ''}
+            ${data.upcoming > 0 ? `
+              <div class="balance-bar upcoming"
+                   style="width: ${upcomingPercent}%"
+                   title="Yaklaşan: ${formatCurrency(data.upcoming)}">
+              </div>
+            ` : ''}
+          </div>
+        </div>
 
-    let color = '#4caf50'; // Yeşil (uzak)
-    if (vadeDate < today) {
-      color = '#f44336'; // Kırmızı (geçmiş)
-    } else if (vadeDate - today < 7 * 24 * 60 * 60 * 1000) {
-      color = '#ff9800'; // Turuncu (bu hafta)
-    } else if (vadeDate - today < 30 * 24 * 60 * 60 * 1000) {
-      color = '#ffc107'; // Sarı (bu ay)
-    }
-
-    ctx.fillStyle = color;
-    ctx.fillRect(x + 5, y, barWidth - 10, barHeight);
-
-    // Tarih etiketi
-    ctx.save();
-    ctx.translate(x + barWidth / 2, canvas.height - padding + 20);
-    ctx.rotate(-Math.PI / 4);
-    ctx.font = '11px Arial';
-    ctx.fillStyle = '#666';
-    ctx.textAlign = 'right';
-    ctx.fillText(formatDate(date), 0, 0);
-    ctx.restore();
-
-    // Tutar etiketi
-    if (barHeight > 20) {
-      ctx.font = '11px Arial';
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.fillText(formatCurrencyShort(value), x + barWidth / 2, y + barHeight / 2 + 4);
-    }
-  });
-
-  // Y ekseni
-  ctx.strokeStyle = '#ddd';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(padding, padding);
-  ctx.lineTo(padding, padding + chartHeight);
-  ctx.lineTo(padding + chartWidth, padding + chartHeight);
-  ctx.stroke();
-
-  // Y ekseni etiketleri
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#666';
-  ctx.textAlign = 'right';
-  for (let i = 0; i <= 5; i++) {
-    const value = (maxValue / 5) * i;
-    const y = padding + chartHeight - (chartHeight / 5) * i;
-    ctx.fillText(formatCurrencyShort(value), padding - 10, y + 4);
-  }
-
-  // Başlık
-  ctx.font = 'bold 16px Arial';
-  ctx.fillStyle = '#333';
-  ctx.textAlign = 'center';
-  ctx.fillText('Vade Tarihlerine Göre Ödeme Tutarları', canvas.width / 2, 30);
+        <div class="balance-details">
+          ${data.overdue > 0 ? `
+            <div class="balance-detail overdue">
+              <span class="detail-label">Gecikmiş</span>
+              <span class="detail-value">${formatCurrency(data.overdue)}</span>
+            </div>
+          ` : ''}
+          ${data.upcoming > 0 ? `
+            <div class="balance-detail upcoming">
+              <span class="detail-label">Yaklaşan</span>
+              <span class="detail-value">${formatCurrency(data.upcoming)}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // Detay listesi
