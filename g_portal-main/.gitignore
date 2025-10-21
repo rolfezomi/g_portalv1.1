@@ -36,6 +36,10 @@ dist/
 supabase/.temp/
 .temp/
 
+# Build outputs
+public/build/
+public/dist/
+
 # Invalid file names
 NUL
 

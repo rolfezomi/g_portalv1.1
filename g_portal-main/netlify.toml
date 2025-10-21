@@ -2,7 +2,7 @@
   # Build komutu
   command = "npm install"
   # Publish edilecek klasör
-  publish = "."
+  publish = "public"
   # Functions klasörü
   functions = "netlify/functions"
 

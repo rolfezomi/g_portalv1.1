@@ -17,7 +17,7 @@
   <!-- Apple Touch Icon -->
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%231b5e20'/%3E%3Cstop offset='100%25' style='stop-color:%232e7d32'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cpath d='M50 25c-8 0-12 8-12 15 0 10 12 25 12 25s12-15 12-25c0-7-4-15-12-15z' fill='%23fff' opacity='0.95'/%3E%3Ccircle cx='50' cy='40' r='4' fill='%231b5e20'/%3E%3Cpath d='M30 70h40v5H30z' fill='%23fff' opacity='0.9'/%3E%3Cpath d='M35 62c0-2 2-3 4-3h22c2 0 4 1 4 3v8H35z' fill='%23fff' opacity='0.85'/%3E%3C/svg%3E">
 
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles/main.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -81,10 +81,10 @@
             <span class="menu-arrow">▼</span>
           </a>
           <ul class="submenu" id="su-analizi-submenu">
-            <li><a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor"><span class="icon-wrap"><img src="icons/klor.png" alt="Klor"></span><span>Klor</span></a></li>
-            <li><a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph"><span class="icon-wrap"><img src="icons/ph.png" alt="Ph"></span><span>Ph</span></a></li>
-            <li><a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik"><span class="icon-wrap"><img src="icons/iletkenlik.png" alt="İletkenlik"></span><span>İletkenlik</span></a></li>
-            <li><a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik"><span class="icon-wrap"><img src="icons/sertlik.png" alt="Sertlik"></span><span>Sertlik</span></a></li>
+            <li><a href="#" onclick="showSection('klor'); setActive(this); return false;" data-section-link="klor"><span class="icon-wrap"><img src="assets/icons/klor.png" alt="Klor"></span><span>Klor</span></a></li>
+            <li><a href="#" onclick="showSection('ph'); setActive(this); return false;" data-section-link="ph"><span class="icon-wrap"><img src="assets/icons/ph.png" alt="Ph"></span><span>Ph</span></a></li>
+            <li><a href="#" onclick="showSection('iletkenlik'); setActive(this); return false;" data-section-link="iletkenlik"><span class="icon-wrap"><img src="assets/icons/iletkenlik.png" alt="İletkenlik"></span><span>İletkenlik</span></a></li>
+            <li><a href="#" onclick="showSection('sertlik'); setActive(this); return false;" data-section-link="sertlik"><span class="icon-wrap"><img src="assets/icons/sertlik.png" alt="Sertlik"></span><span>Sertlik</span></a></li>
           </ul>
         </li>
 
@@ -112,7 +112,7 @@
           <span>Dolum Makinaları</span>
         </a></li>
 
-        <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
+        <li><a href="#" onclick="showSection('mikro'); setActive(this); return false;" data-section-link="mikro" data-tooltip="MikroBiyoloji"><span class="icon-wrap"><img src="assets/icons/mikro.png" alt="MikroBiyoloji"></span><span>MikroBiyoloji</span></a></li>
 
         <!-- Dashboard (Sadece executive role için) -->
         <li id="executive-dashboard-menu" style="display: none;"><a href="#" onclick="showSection('executive-dashboard'); setActive(this); return false;" data-section-link="executive-dashboard" data-tooltip="Dashboard">
@@ -136,7 +136,7 @@
           <span class="status-dot"></span>
           <span class="status-text">Canlı</span>
         </div>
-        <img id="logout-button" src="icons/cikis-glohe.png" alt="Çıkış" title="Çıkış" onclick="logout()" style="cursor:pointer;width:30px;height:30px;">
+        <img id="logout-button" src="assets/icons/cikis-glohe.png" alt="Çıkış" title="Çıkış" onclick="logout()" style="cursor:pointer;width:30px;height:30px;">
       </div>
     </div>
 
@@ -1576,6 +1576,6 @@
     window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase bağlantısı kuruldu', window.supabaseClient);
   </script>
-  <script src="script.js"></script>
+  <script src="scripts/main.js"></script>
 </body>
 </html>
