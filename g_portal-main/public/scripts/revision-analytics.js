@@ -247,7 +247,7 @@ function renderChangesReportTab() {
                 <td>${renderChangesSummary(order.changes_from_previous)}</td>
                 <td>${order.uploaded_by || '-'}</td>
                 <td>
-                  <button class="btn-icon" onclick="showOrderHistory('${order.siparis_no}', '${order.siparis_kalemi || ''}')">
+                  <button class="btn-icon" onclick="showOrderHistory('${order.siparis_no}', '${order.siparis_kalemi || ''}', '${order.siparis_tip || ''}', '${order.tedarikci_kodu || ''}')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M12 20h9"></path>
                       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -746,7 +746,7 @@ function renderTopRevisedTab() {
                 <td>${formatDate(stat.last_revision_date)}</td>
                 <td><span class="revision-badge">v${stat.current_revision}</span></td>
                 <td>
-                  <button class="btn-icon" onclick="showOrderHistory('${stat.siparis_no}', '${stat.siparis_kalemi || ''}')">
+                  <button class="btn-icon" onclick="showOrderHistory('${stat.siparis_no}', '${stat.siparis_kalemi || ''}', '${stat.siparis_tip || ''}', '${stat.tedarikci_kodu || ''}')">
                     📜 Geçmiş
                   </button>
                 </td>
@@ -763,12 +763,14 @@ function renderTopRevisedTab() {
 // SİPARİŞ GEÇMİŞİ MODAL
 // =====================================================
 
-async function showOrderHistory(siparisNo, siparisKalemi) {
+async function showOrderHistory(siparisNo, siparisKalemi, siparisTip, tedarikciKodu) {
   try {
     const { data, error } = await supabaseClient
       .rpc('get_order_revision_history', {
         p_siparis_no: siparisNo,
-        p_siparis_kalemi: siparisKalemi || null
+        p_siparis_kalemi: siparisKalemi || null,
+        p_siparis_tip: siparisTip || null,
+        p_tedarikci_kodu: tedarikciKodu || null
       });
 
     if (error) throw error;
@@ -781,10 +783,17 @@ async function showOrderHistory(siparisNo, siparisKalemi) {
     // Modal oluştur
     const modal = document.createElement('div');
     modal.className = 'revision-modal-overlay';
+
+    // İlk kaydın tedarikçi bilgisini al
+    const supplierInfo = data[0]?.tedarikci_tanimi || '';
+    const orderType = data[0]?.siparis_tip || '';
+
     modal.innerHTML = `
       <div class="revision-modal">
         <div class="revision-modal-header">
           <h3>📜 Sipariş Geçmişi: ${siparisNo}</h3>
+          ${orderType ? `<p style="margin:5px 0 0 0; font-size:13px; color:#666;"><span style="background:#e3f2fd; padding:2px 6px; border-radius:3px; font-weight:600;">${orderType}</span></p>` : ''}
+          ${supplierInfo ? `<p style="margin:5px 0 0 0; font-size:13px; color:#666;">${supplierInfo}</p>` : ''}
           <button class="modal-close" onclick="this.closest('.revision-modal-overlay').remove()">×</button>
         </div>
         <div class="revision-modal-body">
