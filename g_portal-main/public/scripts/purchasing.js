@@ -17,6 +17,18 @@ let searchQuery = '';
 async function refreshPurchasingData() {
   console.log('🔄 Satın alma verileri yenileniyor...');
 
+  // Yükleme göstergesi
+  const contentEl = document.getElementById('purchasing-content');
+  if (contentEl) {
+    contentEl.innerHTML = `
+      <div style="text-align:center; padding:60px 20px;">
+        <div style="font-size:48px; margin-bottom:20px;">🔄</div>
+        <h3 style="color:#666;">Veriler Yükleniyor...</h3>
+        <p style="color:#999;">Lütfen bekleyin</p>
+      </div>
+    `;
+  }
+
   try {
     // Siparişleri yükle - SADECE EN GÜNCEL REVİZYONLAR (is_latest = true)
     const { data: orders, error: ordersError } = await supabaseClient
@@ -51,11 +63,16 @@ async function refreshPurchasingData() {
     }
 
     // UI'ı güncelle
-    renderPurchasingStats();
-    renderPurchasingTable();
-    renderPurchasingFilters();
-
-    showToast('✅ Veriler yüklendi', 'success');
+    if (purchasingOrders.length === 0) {
+      // Veri yoksa boş durum göster
+      showEmptyState();
+    } else {
+      // Veri varsa tabloyu göster
+      renderPurchasingStats();
+      renderPurchasingTable();
+      renderPurchasingFilters();
+      showToast('✅ Veriler yüklendi', 'success');
+    }
 
   } catch (error) {
     console.error('Beklenmeyen hata:', error);
@@ -868,6 +885,44 @@ function getOrderStatus(order) {
   } else {
     return '<span style="color:#2e7d32; font-weight:600;">Tamamlandı</span>';
   }
+}
+
+// Boş durum göster (henüz CSV yüklenmemiş)
+function showEmptyState() {
+  const contentEl = document.getElementById('purchasing-content');
+  if (!contentEl) return;
+
+  contentEl.innerHTML = `
+    <div style="text-align:center; padding:80px 20px; max-width:600px; margin:0 auto;">
+      <div style="font-size:64px; margin-bottom:20px;">📦</div>
+      <h2 style="color:#333; margin-bottom:12px;">Satın Alma Verileri Bulunamadı</h2>
+      <p style="color:#666; font-size:16px; line-height:1.6; margin-bottom:30px;">
+        Henüz CSV dosyası yüklenmemiş. Başlamak için üst menüden <strong>"CSV Yükle"</strong> butonuna tıklayın.
+      </p>
+      <button
+        class="btn btn-primary"
+        onclick="openCSVUpload()"
+        style="padding:12px 32px; font-size:16px;"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:8px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        İlk CSV Dosyasını Yükle
+      </button>
+
+      <div style="margin-top:40px; padding:20px; background:#f5f5f5; border-radius:8px; text-align:left;">
+        <h4 style="margin-top:0; color:#555;">💡 Bilgi</h4>
+        <ul style="color:#666; line-height:1.8;">
+          <li>CSV dosyanız <strong>Canias ERP</strong> formatında olmalıdır (noktalı virgül ayırıcı)</li>
+          <li>Tarih formatı: <code>GG.AA.YYYY</code> (örn: 04.10.2025)</li>
+          <li>Sayı formatı: <code>1.234,56</code> (Türkçe format)</li>
+          <li>Aynı sipariş numarası tekrar yüklenirse <strong>revizyon</strong> olarak kaydedilir</li>
+        </ul>
+      </div>
+    </div>
+  `;
 }
 
 // =====================================================
