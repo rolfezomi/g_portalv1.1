@@ -146,14 +146,16 @@
 }
 
 .table-wrapper {
-  overflow-x: auto;
+  overflow-x: visible;
+  width: 100%;
 }
 
 /* Tablo Stilleri */
 .purchasing-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .purchasing-table thead {
@@ -161,14 +163,31 @@
 }
 
 .purchasing-table th {
-  padding: 12px;
+  padding: 8px 4px;
   text-align: left;
   font-weight: 600;
   color: #333;
   border-bottom: 2px solid #ddd;
   white-space: nowrap;
   position: relative;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* Kolon Genişlikleri - Tam Sığması İçin */
+.purchasing-table th:nth-child(1), .purchasing-table td:nth-child(1) { width: 6%; }
+.purchasing-table th:nth-child(2), .purchasing-table td:nth-child(2) { width: 3%; text-align: center; }
+.purchasing-table th:nth-child(3), .purchasing-table td:nth-child(3) { width: 6%; }
+.purchasing-table th:nth-child(4), .purchasing-table td:nth-child(4) { width: 16%; }
+.purchasing-table th:nth-child(5), .purchasing-table td:nth-child(5) { width: 18%; }
+.purchasing-table th:nth-child(6), .purchasing-table td:nth-child(6) { width: 6%; text-align: right; }
+.purchasing-table th:nth-child(7), .purchasing-table td:nth-child(7) { width: 5%; text-align: right; }
+.purchasing-table th:nth-child(8), .purchasing-table td:nth-child(8) { width: 6%; text-align: right; }
+.purchasing-table th:nth-child(9), .purchasing-table td:nth-child(9) { width: 8%; text-align: right; }
+.purchasing-table th:nth-child(10), .purchasing-table td:nth-child(10) { width: 10%; }
+.purchasing-table th:nth-child(11), .purchasing-table td:nth-child(11) { width: 10%; }
+.purchasing-table th:nth-child(12), .purchasing-table td:nth-child(12) { width: 6%; text-align: center; }
 
 /* Sıralanabilir Başlıklar */
 .purchasing-table th.sortable {
@@ -182,8 +201,8 @@
 }
 
 .sort-icon {
-  margin-left: 5px;
-  font-size: 12px;
+  margin-left: 3px;
+  font-size: 10px;
   color: #999;
   display: inline-block;
   transition: color 0.2s;
@@ -195,9 +214,11 @@
 }
 
 .purchasing-table td {
-  padding: 12px;
+  padding: 8px 4px;
   border-bottom: 1px solid #eee;
   color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .purchasing-table tbody tr:hover {
@@ -309,16 +330,16 @@
 
 .vade-date {
   display: inline-block;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 10px;
   white-space: nowrap;
   transition: all 0.2s;
 }
 
 .vade-date small {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 500;
   opacity: 0.9;
 }
