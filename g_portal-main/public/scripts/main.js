@@ -662,9 +662,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       showFullAccessMenu(); // Trend Analizi
       showAdminMenu(); // Logs + User Management
       showExecutiveMenu(); // Dashboard
+      showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
+    } else if (currentUserRole === 'purchasing') {
+      // Satın alma kullanıcısı sadece purchasing modülünü görsün
+      showPurchasingMenu();
+      showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
     } else if (currentUserRole === 'full') {
       showFullAccessMenu(); // Trend Analizi
       showExecutiveMenu(); // Dashboard (Full access için de göster)
@@ -911,6 +916,15 @@ function showFullAccessMenu() {
   }
 }
 
+// ====== PURCHASING MENÜ GÖRÜNÜRLÜĞÜ ======
+function showPurchasingMenu() {
+  const purchasingMenu = document.getElementById('purchasing-menu');
+  if (purchasingMenu) {
+    purchasingMenu.style.display = 'block';
+    console.log('✅ Satın Alma menüsü gösteriliyor');
+  }
+}
+
 // ====== NAVİGASYON ======
 function setActive(a) {
   document.querySelectorAll('.menu a').forEach(el => el.classList.remove('active'));
@@ -1020,9 +1034,14 @@ function showSection(key) {
     return;
   }
 
+  if (key === 'purchasing' && currentUserRole !== 'admin' && currentUserRole !== 'purchasing') {
+    showToast('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+    return;
+  }
+
   currentSection = key;
 
-  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'dolum-makinalari', 'admin-panel', 'logs', 'users', 'trends', 'executive-dashboard'].forEach(s => {
+  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'dolum-makinalari', 'admin-panel', 'logs', 'users', 'trends', 'executive-dashboard', 'purchasing'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });
@@ -1038,7 +1057,8 @@ function showSection(key) {
     logs: initLogsPage,
     users: initUsersPage,
     trends: initTrendsPage,
-    'executive-dashboard': updateExecutiveDashboard
+    'executive-dashboard': updateExecutiveDashboard,
+    'purchasing': refreshPurchasingData
   };
 
   if (initFuncs[key]) setTimeout(initFuncs[key], 0);
