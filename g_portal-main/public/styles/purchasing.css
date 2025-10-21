@@ -302,3 +302,75 @@
   color: #1976d2;
   display: block;
 }
+
+/* =====================================================
+   VADE TARİHİ RENK KODLARI
+   ===================================================== */
+
+.vade-date {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.vade-date small {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* Geçmiş tarihler - KIRMIZI (Acil!) */
+.vade-date.vade-overdue {
+  background: #ffebee;
+  color: #c62828;
+  border: 2px solid #ef5350;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 83, 80, 0);
+  }
+}
+
+/* Bugün - TURUNCU */
+.vade-date.vade-today {
+  background: #fff3e0;
+  color: #e65100;
+  border: 2px solid #ff9800;
+  font-weight: 700;
+}
+
+/* 1-7 gün - SARI (Yaklaşıyor) */
+.vade-date.vade-near {
+  background: #fff9c4;
+  color: #f57f17;
+  border: 1px solid #fbc02d;
+}
+
+/* 8-30 gün - AÇIK YEŞİL */
+.vade-date.vade-medium {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #66bb6a;
+}
+
+/* 30+ gün - YEŞİL (Güvenli) */
+.vade-date.vade-far {
+  background: #c8e6c9;
+  color: #1b5e20;
+  border: 1px solid #4caf50;
+}
+
+/* Hover efekti */
+.vade-date:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}

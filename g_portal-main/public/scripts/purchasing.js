@@ -382,13 +382,16 @@ function renderPurchasingTable() {
               <th class="sortable" onclick="handleSort('odeme_kosulu')">
                 Ödeme Koşulu ${getSortIcon('odeme_kosulu')}
               </th>
+              <th class="sortable" onclick="handleSort('vadeye_gore')">
+                Vade Tarihi ${getSortIcon('vadeye_gore')}
+              </th>
               <th>Durum</th>
             </tr>
           </thead>
           <tbody>
             ${filteredOrders.length === 0 ? `
               <tr>
-                <td colspan="10" style="text-align:center; padding:40px; color:#999;">
+                <td colspan="11" style="text-align:center; padding:40px; color:#999;">
                   ${searchQuery ? '🔍 Arama sonucu bulunamadı' : 'Sipariş bulunamadı'}
                 </td>
               </tr>
@@ -403,6 +406,7 @@ function renderPurchasingTable() {
                 <td>${formatCurrency(order.birim_fiyat)}</td>
                 <td>${formatCurrency(order.tutar_tl)}</td>
                 <td>${order.odeme_kosulu || '-'}</td>
+                <td>${formatVadeDate(order.vadeye_gore)}</td>
                 <td>${getOrderStatus(order)}</td>
               </tr>
             `).join('')}
@@ -656,6 +660,50 @@ function formatDate(dateStr) {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat('tr-TR').format(date);
+}
+
+function formatVadeDate(dateStr) {
+  if (!dateStr) return '-';
+
+  const vadeDate = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  vadeDate.setHours(0, 0, 0, 0);
+
+  // Fark hesapla (gün cinsinden)
+  const diffTime = vadeDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Tarih formatı
+  const formattedDate = new Intl.DateTimeFormat('tr-TR').format(vadeDate);
+
+  // Renk ve stil belirleme
+  let className = 'vade-date';
+  let label = '';
+
+  if (diffDays < 0) {
+    // Geçmiş - Kırmızı (Acil!)
+    className += ' vade-overdue';
+    label = `(${Math.abs(diffDays)} gün geçti)`;
+  } else if (diffDays === 0) {
+    // Bugün - Turuncu
+    className += ' vade-today';
+    label = '(BUGÜN)';
+  } else if (diffDays <= 7) {
+    // 1-7 gün - Sarı (Yaklaşıyor)
+    className += ' vade-near';
+    label = `(${diffDays} gün)`;
+  } else if (diffDays <= 30) {
+    // 8-30 gün - Açık Yeşil
+    className += ' vade-medium';
+    label = `(${diffDays} gün)`;
+  } else {
+    // 30+ gün - Yeşil (Uzak)
+    className += ' vade-far';
+    label = `(${diffDays} gün)`;
+  }
+
+  return `<span class="${className}">${formattedDate} <small>${label}</small></span>`;
 }
 
 function getOrderStatus(order) {
