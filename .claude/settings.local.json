@@ -40,7 +40,10 @@
       "Bash(cmd.exe /c \"set SUPABASE_ACCESS_TOKEN=sbp_5912092397fcfa37b5c7474a023f9a6c39de04e5 && cd ../../.. && C:\\Users\\Onars\\scoop\\shims\\supabase.exe functions deploy send-daily-report --project-ref mignlffeyougoefuyayr 2>&1\")",
       "Bash(node:*)",
       "Bash(https://api.github.com/repos/rolfezomi/g_portalv1.1/actions/secrets/SUPABASE_SERVICE_ROLE_KEY )",
-      "Bash(https://api.github.com/repos/rolfezomi/g_portalv1.1/actions/secrets/public-key)"
+      "Bash(https://api.github.com/repos/rolfezomi/g_portalv1.1/actions/secrets/public-key)",
+      "Bash(rm -rf api/)",
+      "Bash(rm -rf scripts/)",
+      "Bash(rm -f index.html.backup_20251016_135140 nul _redirects)"
     ],
     "deny": [],
     "ask": []
