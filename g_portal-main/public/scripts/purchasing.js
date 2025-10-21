@@ -6,6 +6,9 @@
 let purchasingOrders = [];
 let purchasingSuppliers = [];
 let filteredOrders = [];
+let currentSortField = 'siparis_tarihi';
+let currentSortDirection = 'desc';
+let searchQuery = '';
 
 // =====================================================
 // VERİ YÜKLEME FONKSİYONLARI
@@ -163,7 +166,24 @@ function renderPurchasingFilters() {
 
   const filtersHTML = `
     <div class="purchasing-filters">
-      <h3>Filtreler</h3>
+      <h3>Filtreler & Arama</h3>
+
+      <!-- Arama Kutusu -->
+      <div class="filter-row search-row">
+        <div class="filter-group search-group">
+          <label>🔍 Hızlı Arama (Tedarikçi, Malzeme, Sipariş No)</label>
+          <input
+            type="text"
+            id="purchasing-search"
+            placeholder="Ara..."
+            value="${searchQuery}"
+            oninput="handlePurchasingSearch(this.value)"
+            class="search-input"
+          >
+        </div>
+      </div>
+
+      <!-- Filtreler -->
       <div class="filter-row">
         <div class="filter-group">
           <label>Tedarikçi</label>
@@ -192,7 +212,7 @@ function renderPurchasingFilters() {
         </div>
 
         <div class="filter-group">
-          <button class="btn btn-secondary" onclick="clearPurchasingFilters()">Filtreleri Temizle</button>
+          <button class="btn btn-secondary" onclick="clearPurchasingFilters()">Tümünü Temizle</button>
         </div>
       </div>
     </div>
@@ -212,6 +232,11 @@ function renderPurchasingFilters() {
   }
 }
 
+function handlePurchasingSearch(value) {
+  searchQuery = value.toLowerCase().trim();
+  applyPurchasingFilters();
+}
+
 function applyPurchasingFilters() {
   const supplier = document.getElementById('filter-supplier')?.value || '';
   const payment = document.getElementById('filter-payment')?.value || '';
@@ -219,12 +244,31 @@ function applyPurchasingFilters() {
   const dateEnd = document.getElementById('filter-date-end')?.value || '';
 
   filteredOrders = purchasingOrders.filter(order => {
+    // Dropdown filtreler
     if (supplier && order.tedarikci_tanimi !== supplier) return false;
     if (payment && order.odeme_kosulu !== payment) return false;
     if (dateStart && order.siparis_tarihi < dateStart) return false;
     if (dateEnd && order.siparis_tarihi > dateEnd) return false;
+
+    // Arama filtresi
+    if (searchQuery) {
+      const searchableText = [
+        order.siparis_no,
+        order.tedarikci_tanimi,
+        order.tedarikci_kodu,
+        order.malzeme_tanimi,
+        order.malzeme,
+        order.odeme_kosulu
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      if (!searchableText.includes(searchQuery)) return false;
+    }
+
     return true;
   });
+
+  // Sıralama uygula
+  sortPurchasingOrders();
 
   renderPurchasingTable();
   console.log(`🔍 Filtre uygulandı: ${filteredOrders.length}/${purchasingOrders.length} sipariş`);
@@ -235,11 +279,58 @@ function clearPurchasingFilters() {
   document.getElementById('filter-payment').value = '';
   document.getElementById('filter-date-start').value = '';
   document.getElementById('filter-date-end').value = '';
+  document.getElementById('purchasing-search').value = '';
 
+  searchQuery = '';
   filteredOrders = [...purchasingOrders];
+  sortPurchasingOrders();
   renderPurchasingTable();
 
   showToast('✅ Filtreler temizlendi', 'success');
+}
+
+// =====================================================
+// SIRALAMA FONKSİYONLARI
+// =====================================================
+
+function sortPurchasingOrders() {
+  filteredOrders.sort((a, b) => {
+    let aVal = a[currentSortField];
+    let bVal = b[currentSortField];
+
+    // Null değerleri sona at
+    if (aVal === null || aVal === undefined) return 1;
+    if (bVal === null || bVal === undefined) return -1;
+
+    // Sayısal karşılaştırma
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return currentSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+
+    // String karşılaştırma
+    aVal = String(aVal).toLowerCase();
+    bVal = String(bVal).toLowerCase();
+
+    if (currentSortDirection === 'asc') {
+      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+    } else {
+      return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+    }
+  });
+}
+
+function handleSort(field) {
+  if (currentSortField === field) {
+    // Aynı alana tıklanırsa yönü değiştir
+    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    // Farklı alana tıklanırsa yeni alan ve varsayılan yön
+    currentSortField = field;
+    currentSortDirection = 'asc';
+  }
+
+  sortPurchasingOrders();
+  renderPurchasingTable();
 }
 
 // =====================================================
@@ -247,6 +338,16 @@ function clearPurchasingFilters() {
 // =====================================================
 
 function renderPurchasingTable() {
+  // Sıralama okları oluştur
+  const getSortIcon = (field) => {
+    if (currentSortField !== field) {
+      return '<span class="sort-icon">⇅</span>';
+    }
+    return currentSortDirection === 'asc'
+      ? '<span class="sort-icon active">▲</span>'
+      : '<span class="sort-icon active">▼</span>';
+  };
+
   const tableHTML = `
     <div class="purchasing-table-container">
       <h3>Siparişler (${filteredOrders.length})</h3>
@@ -254,15 +355,33 @@ function renderPurchasingTable() {
         <table class="purchasing-table">
           <thead>
             <tr>
-              <th>Sipariş No</th>
-              <th>Tarih</th>
-              <th>Tedarikçi</th>
-              <th>Malzeme</th>
-              <th>Miktar</th>
-              <th>Gelen</th>
-              <th>Birim Fiyat</th>
-              <th>Tutar (TL)</th>
-              <th>Ödeme Koşulu</th>
+              <th class="sortable" onclick="handleSort('siparis_no')">
+                Sipariş No ${getSortIcon('siparis_no')}
+              </th>
+              <th class="sortable" onclick="handleSort('siparis_tarihi')">
+                Tarih ${getSortIcon('siparis_tarihi')}
+              </th>
+              <th class="sortable" onclick="handleSort('tedarikci_tanimi')">
+                Tedarikçi ${getSortIcon('tedarikci_tanimi')}
+              </th>
+              <th class="sortable" onclick="handleSort('malzeme_tanimi')">
+                Malzeme ${getSortIcon('malzeme_tanimi')}
+              </th>
+              <th class="sortable" onclick="handleSort('miktar')">
+                Miktar ${getSortIcon('miktar')}
+              </th>
+              <th class="sortable" onclick="handleSort('gelen_miktar')">
+                Gelen ${getSortIcon('gelen_miktar')}
+              </th>
+              <th class="sortable" onclick="handleSort('birim_fiyat')">
+                Birim Fiyat ${getSortIcon('birim_fiyat')}
+              </th>
+              <th class="sortable" onclick="handleSort('tutar_tl')">
+                Tutar (TL) ${getSortIcon('tutar_tl')}
+              </th>
+              <th class="sortable" onclick="handleSort('odeme_kosulu')">
+                Ödeme Koşulu ${getSortIcon('odeme_kosulu')}
+              </th>
               <th>Durum</th>
             </tr>
           </thead>
@@ -270,7 +389,7 @@ function renderPurchasingTable() {
             ${filteredOrders.length === 0 ? `
               <tr>
                 <td colspan="10" style="text-align:center; padding:40px; color:#999;">
-                  Sipariş bulunamadı
+                  ${searchQuery ? '🔍 Arama sonucu bulunamadı' : 'Sipariş bulunamadı'}
                 </td>
               </tr>
             ` : filteredOrders.map(order => `
