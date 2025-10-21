@@ -631,22 +631,37 @@ function detectChanges(oldOrder, newOrder) {
   ];
 
   for (const field of fieldsToCheck) {
-    const oldValue = oldOrder[field];
-    const newValue = newOrder[field];
+    let oldValue = oldOrder[field];
+    let newValue = newOrder[field];
 
-    // Null ve undefined'ı eşit say
-    if ((oldValue === null || oldValue === undefined) &&
-        (newValue === null || newValue === undefined)) {
-      continue;
+    // Sayısal alanlar için null ve 0'ı eşit say
+    const numericFields = ['gelen_miktar', 'miktar', 'birim_fiyat', 'tutar_tl',
+                          'net', 'brut', 'kdv_orani', 'kur', 'vade_gun'];
+
+    if (numericFields.includes(field)) {
+      // null, undefined veya 0 değerlerini normalize et
+      oldValue = (oldValue === null || oldValue === undefined || oldValue === 0) ? 0 : parseFloat(oldValue);
+      newValue = (newValue === null || newValue === undefined || newValue === 0) ? 0 : parseFloat(newValue);
+
+      // İkisi de 0 ise değişiklik yok
+      if (oldValue === 0 && newValue === 0) {
+        continue;
+      }
+
+      // Sayısal fark toleransı (1 kuruş)
+      if (Math.abs(oldValue - newValue) < 0.01) {
+        continue;
+      }
+    } else {
+      // String/metin alanlar için null ve undefined'ı eşit say
+      if ((oldValue === null || oldValue === undefined) &&
+          (newValue === null || newValue === undefined)) {
+        continue;
+      }
     }
 
     // Değerler farklıysa kaydet
     if (oldValue !== newValue) {
-      // Sayısal alanlar için tolerans
-      if (typeof oldValue === 'number' && typeof newValue === 'number') {
-        if (Math.abs(oldValue - newValue) < 0.01) continue; // 1 kuruş farkı ignore et
-      }
-
       changes[field] = {
         from: oldValue,
         to: newValue
