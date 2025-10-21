@@ -623,9 +623,14 @@ function parseCSV(text) {
       order[dbField] = value;
     });
 
-    // En az bir alan dolu ise ekle
-    const hasData = Object.values(order).some(v => v !== null && v !== '');
-    if (hasData) {
+    // Geçerli sipariş kontrolü - en az sipariş no veya tedarikçi olmalı
+    const isValidOrder = (
+      (order.siparis_no && order.siparis_no !== '-') ||
+      (order.tedarikci_tanimi && order.tedarikci_tanimi !== '-') ||
+      (order.malzeme_tanimi && order.malzeme_tanimi !== '-')
+    );
+
+    if (isValidOrder) {
       orders.push(order);
     }
   }
