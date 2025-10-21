@@ -1756,6 +1756,7 @@ async function initUsersPage() {
 function getRoleLabel(role) {
   const labels = {
     'admin': 'Admin (Tam Yetki + Kullanıcı Yönetimi)',
+    'purchasing': 'Satın Alma (Purchasing + Revizyon Analizi)',
     'executive': 'Üst Yönetim (Dashboard + Raporlar)',
     'full': 'Tam Yetki',
     'restricted': 'Kısıtlı (Son Değerler ve Grafikler Gizli)'

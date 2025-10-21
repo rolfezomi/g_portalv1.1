@@ -102,7 +102,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    if (!['admin', 'executive', 'full', 'restricted'].includes(role)) {
+    if (!['admin', 'purchasing', 'executive', 'full', 'restricted'].includes(role)) {
       return {
         statusCode: 400,
         headers,
