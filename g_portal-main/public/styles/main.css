@@ -3193,18 +3193,59 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
    FULLSCREEN KIOSK MODE - F11 PRESENTATION
    ========================= */
 
-/* Fullscreen mode aktif olduğunda */
+/* Fullscreen mode aktif olduğunda - YENİLİKÇİ DİNAMİK GRADYAN */
 .fullscreen-kiosk-mode {
-  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 25%, #2c5364 50%, #1a3a52 75%, #0f2027 100%);
+  background-size: 400% 400%;
+  animation: gradientFlow 30s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dinamik gradyan animasyonu */
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Arka plan parıltı efekti */
+.fullscreen-kiosk-mode::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 50%);
+  animation: rotateGlow 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotateGlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .fullscreen-kiosk-mode .content {
   margin-left: 0 !important;
-  padding: 40px !important;
+  padding: 50px 60px !important;
   max-width: 100vw;
   height: 100vh;
   overflow-y: auto;
   background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 /* Header ve menü gizle */
@@ -3220,24 +3261,174 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   animation: dashboardZoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.dashboard-fullscreen .executive-kpi-grid {
-  gap: 24px;
-  margin-bottom: 32px;
+.dashboard-fullscreen .exec-kpi-modern {
+  gap: 32px !important;
+  margin-bottom: 40px !important;
+  padding: 0 20px;
 }
 
-.dashboard-fullscreen .executive-kpi-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+/* KPI ikonları daha büyük ve parlak */
+.dashboard-fullscreen .exec-kpi-icon {
+  width: 60px !important;
+  height: 60px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dashboard-fullscreen .exec-kpi-icon svg {
+  width: 32px !important;
+  height: 32px !important;
+  stroke: #fff !important;
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+}
+
+/* KPI trend bilgisi */
+.dashboard-fullscreen .exec-kpi-trend {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard-fullscreen .exec-kpi-card-modern {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 0 40px rgba(76, 175, 80, 0.2) !important;
+  border: 2px solid rgba(255, 255, 255, 0.25) !important;
   transform-origin: center;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  will-change: transform, box-shadow;
+  position: relative;
+  overflow: visible !important;
 }
 
-.dashboard-fullscreen .executive-chart-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+/* 3D hover efekti - hafif eğilme */
+.dashboard-fullscreen .exec-kpi-card-modern:hover {
+  transform: translateY(-12px) rotateX(2deg) scale(1.02) !important;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+    0 0 60px rgba(76, 175, 80, 0.4),
+    0 0 100px rgba(102, 126, 234, 0.2) !important;
+}
+
+/* Işıltılı kenar animasyonu */
+.dashboard-fullscreen .exec-kpi-card-modern::before {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  ) !important;
+  animation: shimmer 3s ease-in-out infinite !important;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Pulse animasyon - sürekli */
+.dashboard-fullscreen .exec-kpi-card-modern {
+  animation: kpiPulse 4s ease-in-out infinite !important;
+}
+
+@keyframes kpiPulse {
+  0%, 100% {
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+      0 0 40px rgba(76, 175, 80, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+      0 0 60px rgba(76, 175, 80, 0.4);
+  }
+}
+
+.dashboard-fullscreen .exec-chart-card-modern {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(30px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  position: relative;
+  overflow: hidden !important;
+}
+
+/* Her grafik kartı için farklı renk teması */
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(1) {
+  border-top: 3px solid rgba(33, 150, 243, 0.8);
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(33, 150, 243, 0.3) inset,
+    0 0 30px rgba(33, 150, 243, 0.2) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(2) {
+  border-top: 3px solid rgba(255, 152, 0, 0.8);
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 152, 0, 0.3) inset,
+    0 0 30px rgba(255, 152, 0, 0.2) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(3) {
+  border-top: 3px solid rgba(156, 39, 176, 0.8);
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(156, 39, 176, 0.3) inset,
+    0 0 30px rgba(156, 39, 176, 0.2) !important;
+}
+
+.dashboard-fullscreen .exec-chart-card-modern:nth-child(4) {
+  border-top: 3px solid rgba(76, 175, 80, 0.8);
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(76, 175, 80, 0.3) inset,
+    0 0 30px rgba(76, 175, 80, 0.2) !important;
+}
+
+/* Chart hover efekti */
+.dashboard-fullscreen .exec-chart-card-modern:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+    0 0 50px currentColor !important;
+}
+
+/* Chart başlıkları daha belirgin */
+.dashboard-fullscreen .exec-chart-title {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-fullscreen .exec-chart-subtitle {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 14px !important;
 }
 
 .dashboard-fullscreen .executive-charts-row {
@@ -3341,13 +3532,35 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
-/* Fullscreen'de KPI kartları daha büyük font */
-.dashboard-fullscreen .kpi-value {
-  font-size: 38px !important;
+/* Fullscreen'de KPI kartları daha büyük font + GRADIENT TEXT */
+.dashboard-fullscreen .exec-kpi-value {
+  font-size: 72px !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #fff 0%, #e0e0e0 50%, #fff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  letter-spacing: -2px;
+  line-height: 1;
+  animation: numberGlow 3s ease-in-out infinite;
 }
 
-.dashboard-fullscreen .kpi-label {
-  font-size: 14px !important;
+@keyframes numberGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.6));
+  }
+}
+
+.dashboard-fullscreen .exec-kpi-label {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 .dashboard-fullscreen .chart-header h3 {
@@ -3373,10 +3586,57 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* FLOATING EXIT BUTTON - Sağ üst köşe */
+.fullscreen-kiosk-mode #fullscreen-toggle-btn {
+  position: fixed !important;
+  top: 30px !important;
+  right: 30px !important;
+  z-index: 99999 !important;
+  background: rgba(255, 59, 48, 0.2) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+  padding: 14px 28px !important;
+  border-radius: 50px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  box-shadow:
+    0 8px 32px rgba(255, 59, 48, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  animation: exitButtonPulse 2s ease-in-out infinite !important;
+  margin: 0 !important;
+}
+
+.fullscreen-kiosk-mode #fullscreen-toggle-btn:hover {
+  background: rgba(255, 59, 48, 0.4) !important;
+  transform: scale(1.1) !important;
+  box-shadow:
+    0 12px 48px rgba(255, 59, 48, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.4) inset !important;
+}
+
+@keyframes exitButtonPulse {
+  0%, 100% {
+    box-shadow:
+      0 8px 32px rgba(255, 59, 48, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  }
+  50% {
+    box-shadow:
+      0 8px 32px rgba(255, 59, 48, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+      0 0 40px rgba(255, 59, 48, 0.4);
+  }
+}
+
 /* Tam Ekran Mod: Sadece KPI ve Grafikler Göster */
 .dashboard-fullscreen .exec-chart-grid {
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 32px;
+  margin-bottom: 32px;
 }
 
 .dashboard-fullscreen .exec-two-column {
