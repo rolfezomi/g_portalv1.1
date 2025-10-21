@@ -372,8 +372,10 @@ async function handleCSVFile(file) {
 }
 
 function parseCSV(text) {
-  // Daha gelişmiş CSV parsing - quoted fields'ları handle eder
-  function parseCSVLine(line) {
+  // Canias ERP CSV format'ı için özelleştirilmiş parsing
+  // Ayırıcı: noktalı virgül (;)
+
+  function parseCSVLine(line, delimiter = ';') {
     const result = [];
     let current = '';
     let inQuotes = false;
@@ -389,7 +391,7 @@ function parseCSV(text) {
         } else {
           inQuotes = !inQuotes;
         }
-      } else if (char === ',' && !inQuotes) {
+      } else if (char === delimiter && !inQuotes) {
         result.push(current.trim());
         current = '';
       } else {
@@ -400,54 +402,99 @@ function parseCSV(text) {
     return result;
   }
 
+  // BOM karakterini temizle (UTF-8 BOM: ﻿)
+  text = text.replace(/^\uFEFF/, '');
+
   const lines = text.split('\n').filter(line => line.trim());
   if (lines.length === 0) {
     throw new Error('CSV dosyası boş');
   }
 
-  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^"|"$/g, ''));
+  // Canias formatı - noktalı virgül ile ayrılmış
+  const headers = parseCSVLine(lines[0], ';').map(h => h.trim().replace(/^"|"$/g, ''));
   console.log('📋 CSV Headers:', headers);
 
   const orders = [];
   for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
+    const values = parseCSVLine(lines[i], ';');
     const order = {};
 
     headers.forEach((header, index) => {
       let value = values[index]?.trim().replace(/^"|"$/g, '') || null;
 
-      // Alan adlarını eşleştir (CSV header'ları ile database kolonları)
+      // Canias ERP field mapping
       const fieldMapping = {
-        'Sipariş No': 'siparis_no',
-        'Sipariş Tarihi': 'siparis_tarihi',
-        'Tedarikçi Kodu': 'tedarikci_kodu',
-        'Tedarikçi': 'tedarikci_tanimi',
-        'Tedarikçi Tanımı': 'tedarikci_tanimi',
+        'Teslimat': 'teslimat',
+        'Baslama': 'baslama',
+        'Firma': 'firma',
+        'SiparisTip': 'siparis_tip',
+        'SiparisNo': 'siparis_no',
+        'SiparisTarihi': 'siparis_tarihi',
+        'SiparisKalemi': 'siparis_kalemi',
         'Malzeme': 'malzeme',
-        'Malzeme Tanımı': 'malzeme_tanimi',
-        'Miktar': 'miktar',
+        'MalzemeTanimi': 'malzeme_tanimi',
         'Birim': 'birim',
-        'Birim Fiyat': 'birim_fiyat',
-        'Tutar (TL)': 'tutar_tl',
-        'Tutar': 'tutar_tl',
-        'Ödeme Koşulu': 'odeme_kosulu',
-        'Teslim Tarihi': 'teslim_tarihi',
-        'Vade Gün': 'vade_gun',
-        'KDV Oranı': 'kdv_orani',
-        'Kur': 'kur',
-        'Gelen Miktar': 'gelen_miktar',
         'Depo': 'depo',
-        'Malzeme Grubu': 'malzeme_grubu',
+        'MalzemeGrubu': 'malzeme_grubu',
         'Marka': 'marka',
-        'Açıklama': 'aciklama',
-        // Diğer alanları buraya ekleyebilirsiniz
+        'TedarikciKodu': 'tedarikci_kodu',
+        'TedarikciTanimi': 'tedarikci_tanimi',
+        'TeslimTarihi': 'teslim_tarihi',
+        'OzelStok': 'ozel_stok',
+        'Miktar': 'miktar',
+        'GelenMiktar': 'gelen_miktar',
+        'BirimFiyat': 'birim_fiyat',
+        'Brut': 'brut',
+        'NET': 'net',
+        'Kur': 'kur',
+        'KDVOrani': 'kdv_orani',
+        'Aciklama': 'aciklama',
+        'OdemeKosulu': 'odeme_kosulu',
+        'IstekTipi': 'istek_tipi',
+        'IstekNo': 'istek_no',
+        'IstekTeslimTarihi': 'istek_teslim_tarihi',
+        'TutarTL': 'tutar_tl',
+        'VADEGUN': 'vade_gun',
+        'VADEYEGORE': 'vadeye_gore',
+        'Fark': 'fark',
+        'DepoFark': 'depo_fark',
+        'Bu hafta': 'bu_hafta',
+        'Bu Ay': 'bu_ay',
+        'Tip': 'tip'
       };
 
-      const dbField = fieldMapping[header] || header.toLowerCase().replace(/ /g, '_').replace(/[öÖ]/g, 'o').replace(/[üÜ]/g, 'u').replace(/[şŞ]/g, 's').replace(/[ıİ]/g, 'i').replace(/[ğĞ]/g, 'g').replace(/[çÇ]/g, 'c');
+      const dbField = fieldMapping[header] || header.toLowerCase()
+        .replace(/ /g, '_')
+        .replace(/[öÖ]/g, 'o')
+        .replace(/[üÜ]/g, 'u')
+        .replace(/[şŞ]/g, 's')
+        .replace(/[ıİI]/g, 'i')
+        .replace(/[ğĞ]/g, 'g')
+        .replace(/[çÇ]/g, 'c');
 
       // Boş string'leri null yap
-      if (value === '' || value === '-') {
+      if (value === '' || value === '-' || value === 'Hic') {
         value = null;
+      }
+
+      // Tarih formatını dönüştür (Canias: 4.10.2025 -> PostgreSQL: 2025-10-04)
+      if ((dbField === 'siparis_tarihi' || dbField === 'teslim_tarihi' ||
+           dbField === 'istek_teslim_tarihi' || dbField === 'vadeye_gore') && value) {
+        const dateParts = value.split('.');
+        if (dateParts.length === 3) {
+          const day = dateParts[0].padStart(2, '0');
+          const month = dateParts[1].padStart(2, '0');
+          const year = dateParts[2];
+          value = `${year}-${month}-${day}`;
+        }
+      }
+
+      // Sayısal değerleri dönüştür (Canias: 3,9031 -> PostgreSQL: 3.9031)
+      if ((dbField === 'miktar' || dbField === 'gelen_miktar' || dbField === 'birim_fiyat' ||
+           dbField === 'brut' || dbField === 'net' || dbField === 'tutar_tl' ||
+           dbField === 'kdv_orani' || dbField === 'vade_gun' || dbField === 'fark' ||
+           dbField === 'depo_fark') && value) {
+        value = value.replace(/\./g, '').replace(',', '.');
       }
 
       order[dbField] = value;

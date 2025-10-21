@@ -1,101 +1,120 @@
-# CSV Yükleme Kılavuzu - Satın Alma Modülü
+# CSV Yükleme Kılavuzu - Satın Alma Modülü (Canias ERP)
 
-Bu doküman satın alma modülüne CSV dosyası ile toplu sipariş yükleme işlemini açıklar.
+Bu doküman satın alma modülüne Canias ERP'den alınan CSV dosyası ile toplu sipariş yükleme işlemini açıklar.
+
+---
+
+## 🏢 Canias ERP Format Özellikleri
+
+- **Dosya Formatı:** CSV (Semicolon Delimited)
+- **Ayırıcı Karakter:** Noktalı virgül (;)
+- **Encoding:** UTF-8 with BOM
+- **Tarih Formatı:** GG.AA.YYYY (örn: 21.10.2025)
+- **Sayı Formatı:** Nokta binlik ayırıcı, virgül ondalık ayırıcı (örn: 1.234,56)
 
 ---
 
 ## 📋 CSV Dosya Formatı
 
-### Desteklenen Kolonlar
+### Desteklenen Kolonlar (Canias ERP Standart)
 
 CSV dosyanız aşağıdaki kolonlardan **herhangi birini** içerebilir. Tüm kolonları kullanmanız zorunlu değildir:
 
-| CSV Header | Database Kolonu | Veri Tipi | Örnek |
-|------------|----------------|-----------|-------|
-| Sipariş No | siparis_no | Text | SIP-2025-001 |
-| Sipariş Tarihi | siparis_tarihi | Date (YYYY-MM-DD) | 2025-10-21 |
-| Tedarikçi Kodu | tedarikci_kodu | Text | TED001 |
-| Tedarikçi / Tedarikçi Tanımı | tedarikci_tanimi | Text | Test Tedarikçi A.Ş. |
-| Malzeme | malzeme | Text | MAL001 |
-| Malzeme Tanımı | malzeme_tanimi | Text | Test Malzeme |
-| Miktar | miktar | Numeric | 100 |
-| Birim | birim | Text | Adet, KG, Litre |
-| Birim Fiyat | birim_fiyat | Numeric | 50.00 |
-| Tutar (TL) / Tutar | tutar_tl | Numeric | 5000.00 |
-| Ödeme Koşulu | odeme_kosulu | Text | 30 Gün Vadeli |
-| Teslim Tarihi | teslim_tarihi | Date (YYYY-MM-DD) | 2025-11-15 |
-| Vade Gün | vade_gun | Numeric | 30 |
-| KDV Oranı | kdv_orani | Numeric | 20 |
-| Kur | kur | Text | TL, USD, EUR |
-| Gelen Miktar | gelen_miktar | Numeric | 50 |
-| Depo | depo | Text | Merkez Depo |
-| Malzeme Grubu | malzeme_grubu | Text | Hammadde |
-| Marka | marka | Text | Test Marka |
-| Açıklama | aciklama | Text | İsteğe bağlı notlar |
-
-### Ek Kolonlar (Tüm Alan Listesi)
-
-CSV dosyanız aşağıdaki ek alanları da içerebilir:
-
-- Teslimat (`teslimat`)
-- Başlama (`baslama`)
-- Firma (`firma`)
-- Sipariş Tip (`siparis_tip`)
-- Sipariş Kalemi (`siparis_kalemi`)
-- İstek Teslim Tarihi (`istek_teslim_tarihi`)
-- Vadeye Göre (`vadeye_gore`)
-- Özel Stok (`ozel_stok`)
-- Fark (`fark`)
-- Depo Fark (`depo_fark`)
-- Brüt (`brut`)
-- Net (`net`)
-- İstek Tipi (`istek_tipi`)
-- İstek No (`istek_no`)
-- Bu Hafta (`bu_hafta`)
-- Bu Ay (`bu_ay`)
-- Tip (`tip`)
+| CSV Header (Canias) | Database Kolonu | Veri Tipi | Örnek |
+|---------------------|----------------|-----------|-------|
+| **Sipariş Bilgileri** |
+| Teslimat | teslimat | Text | Hic, Kismen |
+| Baslama | baslama | Text | Baslamadi |
+| Firma | firma | Text | 01 |
+| SiparisTip | siparis_tip | Text | O1 |
+| SiparisNo | siparis_no | Text | 25100010 |
+| SiparisTarihi | siparis_tarihi | Date | 21.10.2025 |
+| SiparisKalemi | siparis_kalemi | Text | 10, 20, 30 |
+| **Malzeme Bilgileri** |
+| Malzeme | malzeme | Text | AMB2-00087 |
+| MalzemeTanimi | malzeme_tanimi | Text | Test Malzeme |
+| Birim | birim | Text | AD, KG, LT |
+| Depo | depo | Text | AMD |
+| MalzemeGrubu | malzeme_grubu | Text | BASKISIZ |
+| Marka | marka | Text | INCIA |
+| **Tedarikçi Bilgileri** |
+| TedarikciKodu | tedarikci_kodu | Text | T001 |
+| TedarikciTanimi | tedarikci_tanimi | Text | UNİSON A.Ş. |
+| **Tarih Bilgileri** |
+| TeslimTarihi | teslim_tarihi | Date | 21.11.2025 |
+| IstekTeslimTarihi | istek_teslim_tarihi | Date | 21.11.2025 |
+| VADEYEGORE | vadeye_gore | Date | 20.12.2025 |
+| **Miktar Bilgileri** |
+| OzelStok | ozel_stok | Text | 1, 0 |
+| Miktar | miktar | Numeric | 1.000 |
+| GelenMiktar | gelen_miktar | Numeric | 500 |
+| Fark | fark | Numeric | 0 |
+| DepoFark | depo_fark | Numeric | 1.000 |
+| **Finansal Bilgiler** |
+| BirimFiyat | birim_fiyat | Numeric | 50,00 |
+| Brut | brut | Numeric | 50.000,00 |
+| NET | net | Numeric | 50.000,00 |
+| Kur | kur | Text | TL, EUR, USD |
+| KDVOrani | kdv_orani | Numeric | 20 |
+| TutarTL | tutar_tl | Numeric | 50.000,00 |
+| VADEGUN | vade_gun | Numeric | 30 |
+| **Ödeme ve İstek** |
+| OdemeKosulu | odeme_kosulu | Text | 30 Gün Vadeli |
+| IstekTipi | istek_tipi | Text | IN |
+| IstekNo | istek_no | Text | 00001 |
+| **Diğer** |
+| Aciklama | aciklama | Text | Notlar |
+| Bu hafta | bu_hafta | Text | - |
+| Bu Ay | bu_ay | Text | Bu Ay |
+| Tip | tip | Text | AMB |
 
 ---
 
-## ✅ Örnek CSV Dosyası
+## ✅ Örnek CSV Dosyası (Canias Format)
 
-### Minimum Örnek (Sadece Zorunlu Alanlar)
+### Canias ERP'den Export Edilen Format
 
-```csv
-Sipariş No,Sipariş Tarihi,Tedarikçi Tanımı,Malzeme Tanımı,Miktar,Tutar (TL)
-SIP-001,2025-10-21,Test Tedarikçi,Test Malzeme,100,5000.00
-SIP-002,2025-10-22,Örnek Ltd.,Örnek Malzeme,50,7500.00
-```
-
-### Tam Örnek (Tüm Önemli Alanlar)
+**Önemli:** Canias ERP'den export ettiğinizde dosya otomatik olarak doğru formatta gelecektir. Bu örnek sadece formatı anlamanız içindir.
 
 ```csv
-Sipariş No,Sipariş Tarihi,Tedarikçi Kodu,Tedarikçi Tanımı,Malzeme,Malzeme Tanımı,Miktar,Birim,Birim Fiyat,Tutar (TL),Ödeme Koşulu,Teslim Tarihi,Vade Gün,KDV Oranı,Kur,Gelen Miktar,Depo,Malzeme Grubu,Marka,Açıklama
-SIP-2025-001,2025-10-21,TED001,Test Tedarikçi A.Ş.,MAL001,Test Malzeme 1,100,Adet,50.00,5000.00,30 Gün Vadeli,2025-11-15,30,20,TL,0,Merkez Depo,Hammadde,Test Marka,Test açıklama
-SIP-2025-002,2025-10-21,TED002,Örnek Tedarikçi Ltd.,MAL002,Örnek Malzeme 2,50,KG,150.00,7500.00,Peşin,2025-11-01,0,20,TL,25,Merkez Depo,Kimyasal,Örnek Marka,Kısmi geldi
+Teslimat;Baslama;Firma;SiparisTip;SiparisNo;SiparisTarihi;SiparisKalemi;Malzeme;MalzemeTanimi;Birim;Depo;MalzemeGrubu;Marka;TedarikciKodu;TedarikciTanimi;TeslimTarihi;OzelStok;Miktar;GelenMiktar;BirimFiyat;Brut;NET;Kur;KDVOrani;Aciklama;OdemeKosulu;IstekTipi;IstekNo;IstekTeslimTarihi;TutarTL;VADEGUN;VADEYEGORE;Fark;DepoFark;Bu hafta;Bu Ay;Tip
+Hic;Baslamadi;01;O1;25100010;21.10.2025;10;TEST-001;Test Malzeme 1;AD;AMD;HAMMADDE;TEST;T001;Test Tedarikçi A.Ş.;21.11.2025;1;1.000;0;50,00;50.000,00;50.000,00;TL;20;Test;30 Gün Vadeli;IN;00001;21.11.2025;50.000,00;30;20.12.2025;0;1.000;;Bu Ay;TEST
+Hic;Baslamadi;01;O1;25100011;21.10.2025;20;TEST-002;Test Malzeme 2;KG;AMD;KIMYASAL;ÖRNEK;T002;Örnek Ltd.;25.11.2025;1;500;250;150,50;75.250,00;75.250,00;TL;20;Kısmi geldi;60 Gün Vadeli;IN;00002;25.11.2025;75.250,00;60;24.12.2025;0;250;;Bu Ay;TEST
 ```
 
-Örnek dosya: [`sample_purchasing_orders.csv`](./sample_purchasing_orders.csv)
+Örnek dosya: [`sample_canias_purchasing.csv`](./sample_canias_purchasing.csv)
+
+### Format Detayları
+
+- **Ayırıcı:** Noktalı virgül (;)
+- **Tarih:** GG.AA.YYYY (örn: 21.10.2025)
+- **Sayı:** Nokta binlik, virgül ondalık (örn: 1.000,00)
+- **Encoding:** UTF-8 with BOM (﻿)
 
 ---
 
 ## 🚀 CSV Dosyası Yükleme Adımları
 
-### 1. CSV Dosyasını Hazırlayın
+### 1. Canias ERP'den CSV Export Edin
 
-- **UTF-8 encoding** kullanın (Türkçe karakterler için)
-- Excel'de kaydederken "CSV UTF-8 (Virgülle Ayrılmış)" formatını seçin
-- İlk satır **mutlaka header satırı** olmalı
+**Önemli:** Canias ERP'den direkt export ettiğiniz dosyayı kullanın. Formatı değiştirmeyin!
+
+1. Canias ERP'de Satın Alma raporunu açın
+2. Export/Dışa Aktar seçeneğini kullanın
+3. CSV formatını seçin
+4. Dosyayı indirin (örn: `ugur-Satınalma Raporu-(Canias).csv`)
 
 ### 2. Dosyayı Yükleyin
 
 1. Satın Alma modülüne gidin
 2. "CSV Yükle" butonuna tıklayın
-3. CSV dosyanızı seçin
+3. Canias'tan indirdiğiniz CSV dosyasını seçin
 4. Sistem otomatik olarak:
-   - Dosyayı okur
+   - BOM karakterini temizler
+   - Noktalı virgül ayırıcısını tanır
+   - Tarihleri dönüştürür (21.10.2025 → 2025-10-21)
+   - Sayıları dönüştürür (1.234,56 → 1234.56)
    - CSV kolonlarını database kolonlarına eşleştirir
-   - Türkçe karakterleri normalize eder
    - Verileri Supabase'e kaydeder
 
 ### 3. Sonucu Kontrol Edin
@@ -136,38 +155,40 @@ Yüklenen siparişler:
 
 ## ⚠️ Önemli Notlar
 
-### 1. Tarih Formatı
+### 1. Canias Dosyasını Değiştirmeyin!
 
-Tarihler **YYYY-MM-DD** formatında olmalı:
+**ÇOK ÖNEMLİ:** Canias ERP'den export ettiğiniz CSV dosyasını Excel'de açıp düzenlemeyin!
 
-✅ **Doğru:**
+❌ **Yapmamanız Gerekenler:**
+- Excel'de açıp kaydetmek (format bozulur!)
+- Tarihleri elle değiştirmek
+- Sayıları elle düzenlemek
+- Ayırıcıyı virgülden noktalı virgüle çevirmek
+
+✅ **Yapmanız Gerekenler:**
+- Canias'tan indirdiğiniz dosyayı direkt yükleyin
+- Sistem her şeyi otomatik halleder
+
+### 2. Otomatik Format Dönüşümleri
+
+Sistem aşağıdaki dönüşümleri otomatik yapar:
+
+**Tarihler:**
 ```
-2025-10-21
-2025-11-15
-```
-
-❌ **Yanlış:**
-```
-21.10.2025
-21/10/2025
-10-21-2025
-```
-
-### 2. Sayısal Değerler
-
-- Ondalık ayırıcı olarak **nokta (.)** kullanın
-- Binlik ayırıcı kullanmayın
-
-✅ **Doğru:**
-```
-5000.00
-150.50
+Canias:     21.10.2025 (GG.AA.YYYY)
+Database:   2025-10-21 (YYYY-MM-DD)
 ```
 
-❌ **Yanlış:**
+**Sayılar:**
 ```
-5.000,00
-5,000.00
+Canias:     1.234,56 (Nokta binlik, virgül ondalık)
+Database:   1234.56  (PostgreSQL formatı)
+```
+
+**Boş Değerler:**
+```
+Canias:     "Hic", "-", ""
+Database:   null
 ```
 
 ### 3. Türkçe Karakterler
