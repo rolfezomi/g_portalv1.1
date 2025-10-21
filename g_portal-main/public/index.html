@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="styles/main.css"/>
   <link rel="stylesheet" href="styles/fullscreen-dashboard.css"/>
   <link rel="stylesheet" href="styles/purchasing.css"/>
+  <link rel="stylesheet" href="styles/revision-analytics.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -126,6 +127,17 @@
             </svg>
           </span>
           <span>Satın Alma</span>
+        </a></li>
+
+        <!-- Revizyon Analiz (Sadece purchasing ve admin role için) -->
+        <li id="revision-analytics-menu" style="display: none;"><a href="#" onclick="showSection('revision-analytics'); setActive(this); return false;" data-section-link="revision-analytics" data-tooltip="Revizyon Analiz">
+          <span class="icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+          </span>
+          <span>Revizyon Analiz</span>
         </a></li>
 
         <!-- Dashboard (Sadece executive role için) -->
@@ -966,6 +978,29 @@
         </div>
       </section>
 
+      <!-- Revizyon Analiz Dashboard -->
+      <section id="page-revision-analytics" style="display:none;">
+        <div class="toolbar">
+          <h2>📊 Revizyon Analiz Dashboard</h2>
+          <div class="right">
+            <button class="btn btn-secondary" onclick="refreshRevisionAnalytics()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                <path d="M21 3v5h-5"></path>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                <path d="M3 21v-5h5"></path>
+              </svg>
+              <span>Yenile</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Revizyon Analiz içeriği -->
+        <div id="revision-analytics-content" style="padding: 20px;">
+          <!-- İçerik JavaScript ile doldurulacak -->
+        </div>
+      </section>
+
       <!-- Dashboard -->
       <section id="page-executive-dashboard" style="display:none;">
         <div class="toolbar">
@@ -1640,5 +1675,6 @@
   </script>
   <script src="scripts/main.js"></script>
   <script src="scripts/purchasing.js"></script>
+  <script src="scripts/revision-analytics.js"></script>
 </body>
 </html>

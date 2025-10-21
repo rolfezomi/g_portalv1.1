@@ -663,12 +663,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       showAdminMenu(); // Logs + User Management
       showExecutiveMenu(); // Dashboard
       showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
+      showRevisionAnalyticsMenu(); // Revizyon Analiz (Admin tüm modülleri görür)
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
     } else if (currentUserRole === 'purchasing') {
-      // Satın alma kullanıcısı sadece purchasing modülünü görsün
+      // Satın alma kullanıcısı purchasing ve revizyon analiz modüllerini görsün
       showPurchasingMenu();
+      showRevisionAnalyticsMenu();
       showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
     } else if (currentUserRole === 'full') {
       showFullAccessMenu(); // Trend Analizi
@@ -925,6 +927,14 @@ function showPurchasingMenu() {
   }
 }
 
+function showRevisionAnalyticsMenu() {
+  const revisionMenu = document.getElementById('revision-analytics-menu');
+  if (revisionMenu) {
+    revisionMenu.style.display = 'block';
+    console.log('✅ Revizyon Analiz menüsü gösteriliyor');
+  }
+}
+
 // ====== NAVİGASYON ======
 function setActive(a) {
   document.querySelectorAll('.menu a').forEach(el => el.classList.remove('active'));
@@ -1039,9 +1049,14 @@ function showSection(key) {
     return;
   }
 
+  if (key === 'revision-analytics' && currentUserRole !== 'admin' && currentUserRole !== 'purchasing') {
+    showToast('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+    return;
+  }
+
   currentSection = key;
 
-  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'dolum-makinalari', 'admin-panel', 'logs', 'users', 'trends', 'executive-dashboard', 'purchasing'].forEach(s => {
+  ['home', 'su-analizi', 'klor', 'sertlik', 'ph', 'iletkenlik', 'mikro', 'kazan-mikser', 'dolum-makinalari', 'admin-panel', 'logs', 'users', 'trends', 'executive-dashboard', 'purchasing', 'revision-analytics'].forEach(s => {
     const el = document.getElementById(`page-${s}`);
     if (el) el.style.display = s === key ? '' : 'none';
   });
@@ -1058,7 +1073,8 @@ function showSection(key) {
     users: initUsersPage,
     trends: initTrendsPage,
     'executive-dashboard': updateExecutiveDashboard,
-    'purchasing': refreshPurchasingData
+    'purchasing': refreshPurchasingData,
+    'revision-analytics': refreshRevisionAnalytics
   };
 
   if (initFuncs[key]) setTimeout(initFuncs[key], 0);
