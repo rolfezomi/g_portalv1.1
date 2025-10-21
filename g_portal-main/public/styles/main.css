@@ -3239,7 +3239,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 .fullscreen-kiosk-mode .content {
   margin-left: 0 !important;
-  padding: 50px 60px !important;
+  padding: 30px 40px !important;
   max-width: 100vw;
   height: 100vh;
   overflow-y: auto;
@@ -3262,9 +3262,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .dashboard-fullscreen .exec-kpi-modern {
-  gap: 32px !important;
-  margin-bottom: 40px !important;
-  padding: 0 20px;
+  gap: 20px !important;
+  margin-bottom: 24px !important;
+  padding: 0;
 }
 
 /* KPI ikonları daha büyük ve parlak */
@@ -3310,6 +3310,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   will-change: transform, box-shadow;
   position: relative;
   overflow: visible !important;
+  padding: 20px 24px !important;
+  min-height: 160px !important;
 }
 
 /* 3D hover efekti - hafif eğilme */
@@ -3374,6 +3376,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   position: relative;
   overflow: hidden !important;
+  padding: 18px !important;
 }
 
 /* Her grafik kartı için farklı renk teması */
@@ -3432,8 +3435,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .dashboard-fullscreen .executive-charts-row {
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 /* Dashboard zoom in animasyonu */
@@ -3635,8 +3638,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 /* Tam Ekran Mod: Sadece KPI ve Grafikler Göster */
 .dashboard-fullscreen .exec-chart-grid {
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  margin-bottom: 32px;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .dashboard-fullscreen .exec-two-column {
