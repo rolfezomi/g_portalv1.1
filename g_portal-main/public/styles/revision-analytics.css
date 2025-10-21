@@ -846,6 +846,55 @@
   color: #999;
 }
 
+/* Ödeme Takvimi Filtreleri */
+.payment-filters {
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.payment-filters h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.payment-filters .filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  align-items: end;
+}
+
+.payment-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.payment-filters .filter-group label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.payment-filters select,
+.payment-filters input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.payment-filters select:focus,
+.payment-filters input:focus {
+  outline: none;
+  border-color: #f5576c;
+}
+
 /* Tedarikçi Bakiyeleri Container */
 .supplier-balances-container {
   background: white;

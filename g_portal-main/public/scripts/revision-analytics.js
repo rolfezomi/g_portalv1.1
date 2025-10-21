@@ -391,6 +391,41 @@ function renderPaymentCalendarTab() {
         </div>
       </div>
 
+      <!-- Filtre Paneli -->
+      <div class="payment-filters">
+        <h4>🔍 Filtreler</h4>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Tedarikçi</label>
+            <select id="payment-filter-supplier" onchange="applyPaymentFilters()">
+              <option value="">Tümü</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Durum</label>
+            <select id="payment-filter-status" onchange="applyPaymentFilters()">
+              <option value="">Tümü</option>
+              <option value="overdue">Gecikmiş</option>
+              <option value="thisWeek">Bu Hafta</option>
+              <option value="thisMonth">Bu Ay</option>
+              <option value="future">Gelecek</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Minimum Tutar (₺)</label>
+            <input type="number" id="payment-filter-min" placeholder="0" onchange="applyPaymentFilters()">
+          </div>
+
+          <div class="filter-group">
+            <button class="btn btn-secondary" onclick="clearPaymentFilters()">
+              Temizle
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div id="supplier-balances-container" class="supplier-balances-container">
         <h3>Tedarikçi Bakiyeleri</h3>
         <div id="supplier-balances-list"></div>
@@ -484,6 +519,9 @@ async function getPaymentData() {
     updatePaymentSummary(groups);
     renderSupplierBalances(supplierGroups);
     renderPaymentDetails(groups);
+
+    // Filtreleri doldur
+    updatePaymentFilters(supplierGroups, groups);
 
   } catch (error) {
     console.error('Ödeme verileri yükleme hatası:', error);
@@ -877,6 +915,97 @@ function formatCurrency(value) {
 function formatNumber(value) {
   if (!value && value !== 0) return '-';
   return new Intl.NumberFormat('tr-TR').format(value);
+}
+
+// =====================================================
+// ÖDEME TAKVİMİ FİLTRE FONKSİYONLARI
+// =====================================================
+
+// Global filtre verileri
+let allSupplierGroups = {};
+let allPaymentGroups = {};
+
+// Tedarikçi listesini doldur ve filtrelenmiş verileri sakla
+function updatePaymentFilters(supplierGroups, groups) {
+  allSupplierGroups = JSON.parse(JSON.stringify(supplierGroups));
+  allPaymentGroups = JSON.parse(JSON.stringify(groups));
+
+  // Tedarikçi select'ini doldur
+  const supplierSelect = document.getElementById('payment-filter-supplier');
+  if (supplierSelect) {
+    const suppliers = Object.keys(supplierGroups).sort();
+    supplierSelect.innerHTML = '<option value="">Tümü</option>' +
+      suppliers.map(s => `<option value="${s}">${s}</option>`).join('');
+  }
+}
+
+// Filtre uygula
+function applyPaymentFilters() {
+  const supplier = document.getElementById('payment-filter-supplier')?.value || '';
+  const status = document.getElementById('payment-filter-status')?.value || '';
+  const minAmount = parseFloat(document.getElementById('payment-filter-min')?.value) || 0;
+
+  // Tedarikçi filtresi
+  let filteredSuppliers = {...allSupplierGroups};
+  if (supplier) {
+    filteredSuppliers = {[supplier]: allSupplierGroups[supplier]};
+  }
+
+  // Minimum tutar filtresi
+  if (minAmount > 0) {
+    Object.keys(filteredSuppliers).forEach(key => {
+      if (filteredSuppliers[key].total < minAmount) {
+        delete filteredSuppliers[key];
+      }
+    });
+  }
+
+  // Durum filtresi için grupları filtrele
+  let filteredGroups = {...allPaymentGroups};
+  if (status) {
+    const emptyGroup = { total: 0, count: 0, orders: [] };
+    filteredGroups = {
+      overdue: status === 'overdue' ? allPaymentGroups.overdue : emptyGroup,
+      thisWeek: status === 'thisWeek' ? allPaymentGroups.thisWeek : emptyGroup,
+      thisMonth: status === 'thisMonth' ? allPaymentGroups.thisMonth : emptyGroup,
+      future: status === 'future' ? allPaymentGroups.future : emptyGroup
+    };
+  }
+
+  // Tedarikçi filtresi ile grup filtresi kombine et
+  if (supplier || minAmount > 0) {
+    // Filtrelenmiş tedarikçilerin siparişlerini al
+    const validOrders = Object.values(filteredSuppliers)
+      .flatMap(s => s.orders.map(o => o.siparis_no));
+
+    // Gruplardan sadece bu siparişleri tut
+    Object.keys(filteredGroups).forEach(category => {
+      filteredGroups[category].orders = filteredGroups[category].orders
+        .filter(o => validOrders.includes(o.siparis_no));
+      filteredGroups[category].count = filteredGroups[category].orders.length;
+      filteredGroups[category].total = filteredGroups[category].orders
+        .reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
+    });
+  }
+
+  // UI'ı güncelle
+  updatePaymentSummary(filteredGroups);
+  renderSupplierBalances(filteredSuppliers);
+  renderPaymentDetails(filteredGroups);
+}
+
+// Filtreleri temizle
+function clearPaymentFilters() {
+  document.getElementById('payment-filter-supplier').value = '';
+  document.getElementById('payment-filter-status').value = '';
+  document.getElementById('payment-filter-min').value = '';
+
+  // Orijinal verileri göster
+  updatePaymentSummary(allPaymentGroups);
+  renderSupplierBalances(allSupplierGroups);
+  renderPaymentDetails(allPaymentGroups);
+
+  showToast('✅ Filtreler temizlendi', 'success');
 }
 
 console.log('✅ Revizyon Analytics modülü yüklendi');

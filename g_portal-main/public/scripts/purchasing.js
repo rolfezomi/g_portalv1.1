@@ -39,6 +39,20 @@ async function refreshPurchasingData() {
 
     if (ordersError) {
       console.error('Sipariş yükleme hatası:', ordersError);
+
+      // Hata durumunda boş durum göster
+      if (contentEl) {
+        contentEl.innerHTML = `
+          <div style="text-align:center; padding:60px 20px;">
+            <div style="font-size:48px; margin-bottom:20px;">❌</div>
+            <h3 style="color:#f44336;">Veriler Yüklenemedi</h3>
+            <p style="color:#999;">${ordersError.message}</p>
+            <button class="btn btn-primary" onclick="refreshPurchasingData()" style="margin-top:20px;">
+              Tekrar Dene
+            </button>
+          </div>
+        `;
+      }
       showToast('❌ Siparişler yüklenemedi: ' + ordersError.message, 'error');
       return;
     }
@@ -62,20 +76,34 @@ async function refreshPurchasingData() {
       console.log(`✅ ${purchasingSuppliers.length} tedarikçi yüklendi`);
     }
 
-    // UI'ı güncelle
+    // UI'ı güncelle - ÖNCE RENDER ET SONRA TOAST GÖSTER
     if (purchasingOrders.length === 0) {
       // Veri yoksa boş durum göster
       showEmptyState();
     } else {
       // Veri varsa tabloyu göster
       renderPurchasingStats();
-      renderPurchasingTable();
       renderPurchasingFilters();
+      renderPurchasingTable();
       showToast('✅ Veriler yüklendi', 'success');
     }
 
   } catch (error) {
     console.error('Beklenmeyen hata:', error);
+
+    // Hata durumunda kullanıcıya bilgi ver
+    if (contentEl) {
+      contentEl.innerHTML = `
+        <div style="text-align:center; padding:60px 20px;">
+          <div style="font-size:48px; margin-bottom:20px;">⚠️</div>
+          <h3 style="color:#ff9800;">Beklenmeyen Hata</h3>
+          <p style="color:#999;">${error.message || 'Bilinmeyen hata'}</p>
+          <button class="btn btn-primary" onclick="refreshPurchasingData()" style="margin-top:20px;">
+            Tekrar Dene
+          </button>
+        </div>
+      `;
+    }
     showToast('❌ Beklenmeyen bir hata oluştu', 'error');
   }
 }
