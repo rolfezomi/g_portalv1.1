@@ -106,8 +106,8 @@ function renderRevisionDashboard() {
       <button class="revision-tab" onclick="switchRevisionTab('timeline')">
         ⏰ Zaman Çizelgesi
       </button>
-      <button class="revision-tab" onclick="switchRevisionTab('time-travel')">
-        🕐 Zaman Yolculuğu
+      <button class="revision-tab" onclick="switchRevisionTab('payment-calendar')">
+        💰 Ödeme Takvimi
       </button>
       <button class="revision-tab" onclick="switchRevisionTab('top-revised')">
         🔄 En Çok Revize Edilenler
@@ -195,8 +195,8 @@ function switchRevisionTab(tabName) {
     case 'timeline':
       content.innerHTML = renderTimelineTab();
       break;
-    case 'time-travel':
-      content.innerHTML = renderTimeTravelTab();
+    case 'payment-calendar':
+      content.innerHTML = renderPaymentCalendarTab();
       break;
     case 'top-revised':
       content.innerHTML = renderTopRevisedTab();
@@ -339,109 +339,325 @@ function groupRevisionsByDate(data) {
 }
 
 // =====================================================
-// ZAMAN YOLCULUĞU TAB
+// ÖDEME TAKVİMİ TAB
 // =====================================================
 
-function renderTimeTravelTab() {
+function renderPaymentCalendarTab() {
+  // Veri yüklemesini tetikle
+  setTimeout(() => getPaymentData(), 0);
+
   return `
-    <div class="time-travel-container">
-      <h3>🕐 Zaman Yolculuğu</h3>
-      <p class="time-travel-description">
-        Belirli bir tarihteki sipariş durumunu görüntüleyin
+    <div class="payment-calendar-container">
+      <h3>💰 Ödeme Takvimi</h3>
+      <p class="payment-calendar-description">
+        Vade tarihlerine göre ödenecek tutarlar
       </p>
 
-      <div class="time-travel-selector">
-        <label>📅 Tarih Seçin:</label>
-        <input type="date" id="time-travel-date" max="${new Date().toISOString().split('T')[0]}">
-        <button class="btn btn-primary" onclick="performTimeTravel()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          Zaman Yolculuğu Yap
-        </button>
+      <div class="payment-summary-cards">
+        <div class="payment-summary-card overdue">
+          <div class="summary-icon">⚠️</div>
+          <div class="summary-content">
+            <div class="summary-label">Gecikmiş</div>
+            <div class="summary-amount" id="payment-overdue">₺0</div>
+            <div class="summary-count" id="payment-overdue-count">0 sipariş</div>
+          </div>
+        </div>
+
+        <div class="payment-summary-card this-week">
+          <div class="summary-icon">📅</div>
+          <div class="summary-content">
+            <div class="summary-label">Bu Hafta</div>
+            <div class="summary-amount" id="payment-week">₺0</div>
+            <div class="summary-count" id="payment-week-count">0 sipariş</div>
+          </div>
+        </div>
+
+        <div class="payment-summary-card this-month">
+          <div class="summary-icon">📊</div>
+          <div class="summary-content">
+            <div class="summary-label">Bu Ay</div>
+            <div class="summary-amount" id="payment-month">₺0</div>
+            <div class="summary-count" id="payment-month-count">0 sipariş</div>
+          </div>
+        </div>
+
+        <div class="payment-summary-card future">
+          <div class="summary-icon">📈</div>
+          <div class="summary-content">
+            <div class="summary-label">Gelecek</div>
+            <div class="summary-amount" id="payment-future">₺0</div>
+            <div class="summary-count" id="payment-future-count">0 sipariş</div>
+          </div>
+        </div>
       </div>
 
-      <div id="time-travel-results" class="time-travel-results"></div>
+      <div class="payment-chart-container">
+        <canvas id="payment-chart" width="800" height="400"></canvas>
+      </div>
+
+      <div id="payment-details-list" class="payment-details-list"></div>
     </div>
   `;
 }
 
-async function performTimeTravel() {
-  const dateInput = document.getElementById('time-travel-date');
-  const resultsDiv = document.getElementById('time-travel-results');
-
-  if (!dateInput.value) {
-    showToast('⚠️ Lütfen bir tarih seçin', 'warning');
-    return;
-  }
-
-  resultsDiv.innerHTML = '<div class="loading">⏳ Zaman yolculuğu yapılıyor...</div>';
-
+// Ödeme verilerini hazırla
+async function getPaymentData() {
   try {
-    const targetDate = new Date(dateInput.value + 'T23:59:59Z').toISOString();
-
-    const { data, error } = await supabaseClient
-      .rpc('get_orders_at_date', { p_target_date: targetDate });
+    const { data: orders, error } = await supabaseClient
+      .from('purchasing_orders')
+      .select('*')
+      .eq('is_latest', true)
+      .not('vadeye_gore', 'is', null)
+      .order('vadeye_gore', { ascending: true });
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
-      resultsDiv.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🕐</div>
-          <h3>Bu tarihte veri bulunamadı</h3>
-          <p>Seçtiğiniz tarihte henüz sipariş kaydı yoktu</p>
-        </div>
-      `;
-      return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const oneWeekLater = new Date(today);
+    oneWeekLater.setDate(oneWeekLater.getDate() + 7);
+
+    const oneMonthLater = new Date(today);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+
+    // Gruplara ayır
+    const groups = {
+      overdue: { total: 0, count: 0, orders: [] },
+      thisWeek: { total: 0, count: 0, orders: [] },
+      thisMonth: { total: 0, count: 0, orders: [] },
+      future: { total: 0, count: 0, orders: [] }
+    };
+
+    // Tarihe göre gruplama
+    const dateGroups = {};
+
+    orders.forEach(order => {
+      const vadeDate = new Date(order.vadeye_gore);
+      vadeDate.setHours(0, 0, 0, 0);
+      const tutar = parseFloat(order.tutar_tl) || 0;
+
+      // Tarih grupları (grafik için)
+      const dateKey = order.vadeye_gore;
+      if (!dateGroups[dateKey]) {
+        dateGroups[dateKey] = 0;
+      }
+      dateGroups[dateKey] += tutar;
+
+      // Kategori grupları
+      if (vadeDate < today) {
+        groups.overdue.total += tutar;
+        groups.overdue.count++;
+        groups.overdue.orders.push(order);
+      } else if (vadeDate <= oneWeekLater) {
+        groups.thisWeek.total += tutar;
+        groups.thisWeek.count++;
+        groups.thisWeek.orders.push(order);
+      } else if (vadeDate <= oneMonthLater) {
+        groups.thisMonth.total += tutar;
+        groups.thisMonth.count++;
+        groups.thisMonth.orders.push(order);
+      } else {
+        groups.future.total += tutar;
+        groups.future.count++;
+        groups.future.orders.push(order);
+      }
+    });
+
+    // UI'ı güncelle
+    updatePaymentSummary(groups);
+    renderPaymentChart(dateGroups);
+    renderPaymentDetails(groups);
+
+  } catch (error) {
+    console.error('Ödeme verileri yükleme hatası:', error);
+    showToast('❌ Ödeme verileri yüklenemedi', 'error');
+  }
+}
+
+// Özet kartları güncelle
+function updatePaymentSummary(groups) {
+  document.getElementById('payment-overdue').textContent = formatCurrency(groups.overdue.total);
+  document.getElementById('payment-overdue-count').textContent = `${groups.overdue.count} sipariş`;
+
+  document.getElementById('payment-week').textContent = formatCurrency(groups.thisWeek.total);
+  document.getElementById('payment-week-count').textContent = `${groups.thisWeek.count} sipariş`;
+
+  document.getElementById('payment-month').textContent = formatCurrency(groups.thisMonth.total);
+  document.getElementById('payment-month-count').textContent = `${groups.thisMonth.count} sipariş`;
+
+  document.getElementById('payment-future').textContent = formatCurrency(groups.future.total);
+  document.getElementById('payment-future-count').textContent = `${groups.future.count} sipariş`;
+}
+
+// Grafik çiz
+function renderPaymentChart(dateGroups) {
+  const canvas = document.getElementById('payment-chart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+
+  // Canvas temizle
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Tarihleri sırala
+  const sortedDates = Object.keys(dateGroups).sort();
+  const values = sortedDates.map(date => dateGroups[date]);
+
+  if (sortedDates.length === 0) {
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#999';
+    ctx.textAlign = 'center';
+    ctx.fillText('Veri bulunamadı', canvas.width / 2, canvas.height / 2);
+    return;
+  }
+
+  // Grafik alanı
+  const padding = 60;
+  const chartWidth = canvas.width - padding * 2;
+  const chartHeight = canvas.height - padding * 2;
+
+  // Maksimum değer
+  const maxValue = Math.max(...values);
+  const barWidth = chartWidth / sortedDates.length;
+
+  // Çubukları çiz
+  sortedDates.forEach((date, index) => {
+    const value = dateGroups[date];
+    const barHeight = (value / maxValue) * chartHeight;
+    const x = padding + index * barWidth;
+    const y = padding + chartHeight - barHeight;
+
+    // Renk belirleme (geçmiş = kırmızı, yakın = turuncu, uzak = yeşil)
+    const vadeDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let color = '#4caf50'; // Yeşil (uzak)
+    if (vadeDate < today) {
+      color = '#f44336'; // Kırmızı (geçmiş)
+    } else if (vadeDate - today < 7 * 24 * 60 * 60 * 1000) {
+      color = '#ff9800'; // Turuncu (bu hafta)
+    } else if (vadeDate - today < 30 * 24 * 60 * 60 * 1000) {
+      color = '#ffc107'; // Sarı (bu ay)
     }
 
-    resultsDiv.innerHTML = `
-      <div class="time-travel-header">
-        <h4>📊 ${formatDate(dateInput.value)} tarihindeki durum</h4>
-        <p>${data.length} sipariş bulundu</p>
+    ctx.fillStyle = color;
+    ctx.fillRect(x + 5, y, barWidth - 10, barHeight);
+
+    // Tarih etiketi
+    ctx.save();
+    ctx.translate(x + barWidth / 2, canvas.height - padding + 20);
+    ctx.rotate(-Math.PI / 4);
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'right';
+    ctx.fillText(formatDate(date), 0, 0);
+    ctx.restore();
+
+    // Tutar etiketi
+    if (barHeight > 20) {
+      ctx.font = '11px Arial';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText(formatCurrencyShort(value), x + barWidth / 2, y + barHeight / 2 + 4);
+    }
+  });
+
+  // Y ekseni
+  ctx.strokeStyle = '#ddd';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, padding + chartHeight);
+  ctx.lineTo(padding + chartWidth, padding + chartHeight);
+  ctx.stroke();
+
+  // Y ekseni etiketleri
+  ctx.font = '12px Arial';
+  ctx.fillStyle = '#666';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 5; i++) {
+    const value = (maxValue / 5) * i;
+    const y = padding + chartHeight - (chartHeight / 5) * i;
+    ctx.fillText(formatCurrencyShort(value), padding - 10, y + 4);
+  }
+
+  // Başlık
+  ctx.font = 'bold 16px Arial';
+  ctx.fillStyle = '#333';
+  ctx.textAlign = 'center';
+  ctx.fillText('Vade Tarihlerine Göre Ödeme Tutarları', canvas.width / 2, 30);
+}
+
+// Detay listesi
+function renderPaymentDetails(groups) {
+  const container = document.getElementById('payment-details-list');
+  if (!container) return;
+
+  const allOrders = [
+    ...groups.overdue.orders.map(o => ({ ...o, category: 'overdue' })),
+    ...groups.thisWeek.orders.map(o => ({ ...o, category: 'thisWeek' })),
+    ...groups.thisMonth.orders.map(o => ({ ...o, category: 'thisMonth' })),
+    ...groups.future.orders.map(o => ({ ...o, category: 'future' }))
+  ];
+
+  if (allOrders.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Vade tarihi olan sipariş bulunamadı</h3>
       </div>
-      <div class="table-wrapper">
-        <table class="purchasing-table">
-          <thead>
-            <tr>
-              <th>Sipariş No</th>
-              <th>Tedarikçi</th>
-              <th>Malzeme</th>
-              <th>Miktar</th>
-              <th>Gelen</th>
-              <th>Tutar (TL)</th>
-              <th>Rev</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(order => `
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <h4>Ödeme Detayları (${allOrders.length} sipariş)</h4>
+    <div class="table-wrapper">
+      <table class="purchasing-table">
+        <thead>
+          <tr>
+            <th>Sipariş No</th>
+            <th>Tedarikçi</th>
+            <th>Tutar (TL)</th>
+            <th>Vade Tarihi</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${allOrders.map(order => {
+            const categoryLabels = {
+              overdue: '<span style="color:#f44336; font-weight:600;">⚠️ Gecikmiş</span>',
+              thisWeek: '<span style="color:#ff9800; font-weight:600;">📅 Bu Hafta</span>',
+              thisMonth: '<span style="color:#ffc107; font-weight:600;">📊 Bu Ay</span>',
+              future: '<span style="color:#4caf50; font-weight:600;">📈 Gelecek</span>'
+            };
+
+            return `
               <tr>
                 <td><strong>${order.siparis_no}</strong></td>
                 <td>${order.tedarikci_tanimi || '-'}</td>
-                <td>${order.malzeme_tanimi || '-'}</td>
-                <td>${formatNumber(order.miktar)}</td>
-                <td>${formatNumber(order.gelen_miktar)}</td>
-                <td>${formatCurrency(order.tutar_tl)}</td>
-                <td><span class="revision-badge">v${order.revision_number}</span></td>
+                <td><strong>${formatCurrency(order.tutar_tl)}</strong></td>
+                <td>${formatDate(order.vadeye_gore)}</td>
+                <td>${categoryLabels[order.category]}</td>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
 
-  } catch (error) {
-    console.error('Zaman yolculuğu hatası:', error);
-    resultsDiv.innerHTML = `
-      <div class="error-state">
-        <div class="error-icon">❌</div>
-        <h3>Bir hata oluştu</h3>
-        <p>${error.message}</p>
-      </div>
-    `;
+// Kısa para format (grafik için)
+function formatCurrencyShort(value) {
+  if (value >= 1000000) {
+    return `₺${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `₺${(value / 1000).toFixed(1)}K`;
   }
+  return `₺${value.toFixed(0)}`;
 }
 
 // =====================================================
