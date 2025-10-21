@@ -639,9 +639,17 @@ function detectChanges(oldOrder, newOrder) {
                           'net', 'brut', 'kdv_orani', 'kur', 'vade_gun'];
 
     if (numericFields.includes(field)) {
-      // null, undefined veya 0 değerlerini normalize et
-      oldValue = (oldValue === null || oldValue === undefined || oldValue === 0) ? 0 : parseFloat(oldValue);
-      newValue = (newValue === null || newValue === undefined || newValue === 0) ? 0 : parseFloat(newValue);
+      // null, undefined, boş string veya 0 değerlerini normalize et
+      const isOldEmpty = oldValue === null || oldValue === undefined || oldValue === '' || oldValue === 0;
+      const isNewEmpty = newValue === null || newValue === undefined || newValue === '' || newValue === 0;
+
+      // Normalize: boş değerleri 0 yap, dolu değerleri parse et
+      oldValue = isOldEmpty ? 0 : parseFloat(oldValue);
+      newValue = isNewEmpty ? 0 : parseFloat(newValue);
+
+      // NaN kontrolü
+      if (isNaN(oldValue)) oldValue = 0;
+      if (isNaN(newValue)) newValue = 0;
 
       // İkisi de 0 ise değişiklik yok
       if (oldValue === 0 && newValue === 0) {
@@ -653,9 +661,11 @@ function detectChanges(oldOrder, newOrder) {
         continue;
       }
     } else {
-      // String/metin alanlar için null ve undefined'ı eşit say
-      if ((oldValue === null || oldValue === undefined) &&
-          (newValue === null || newValue === undefined)) {
+      // String/metin alanlar için null, undefined ve boş string'i eşit say
+      const isOldEmpty = oldValue === null || oldValue === undefined || oldValue === '';
+      const isNewEmpty = newValue === null || newValue === undefined || newValue === '';
+
+      if (isOldEmpty && isNewEmpty) {
         continue;
       }
     }
