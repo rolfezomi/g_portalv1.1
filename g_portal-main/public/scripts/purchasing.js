@@ -18,10 +18,11 @@ async function refreshPurchasingData() {
   console.log('🔄 Satın alma verileri yenileniyor...');
 
   try {
-    // Siparişleri yükle
+    // Siparişleri yükle - SADECE EN GÜNCEL REVİZYONLAR (is_latest = true)
     const { data: orders, error: ordersError } = await supabaseClient
       .from('purchasing_orders')
       .select('*')
+      .eq('is_latest', true)
       .order('siparis_tarihi', { ascending: false });
 
     if (ordersError) {
@@ -31,6 +32,7 @@ async function refreshPurchasingData() {
     }
 
     purchasingOrders = orders || [];
+    console.log(`📦 ${purchasingOrders.length} güncel sipariş yüklendi`);
     filteredOrders = [...purchasingOrders];
 
     console.log(`✅ ${purchasingOrders.length} sipariş yüklendi`);
@@ -462,29 +464,14 @@ async function handleCSVFile(file) {
       return;
     }
 
-    // Her siparişe created_by bilgisini ekle
-    const ordersWithMetadata = orders.map(order => ({
-      ...order,
-      created_by: userEmail,
-      updated_by: userEmail
-    }));
+    // REVIZYON MANTIĞI: Her sipariş için kontrol et ve işle
+    const results = await processOrdersWithRevision(orders, userEmail);
 
-    console.log('📤 Supabase\'e yükleniyor...', ordersWithMetadata);
-
-    // Supabase'e yükle
-    const { data, error } = await supabaseClient
-      .from('purchasing_orders')
-      .insert(ordersWithMetadata);
-
-    if (error) {
-      console.error('CSV yükleme hatası:', error);
-      console.error('Hata detayı:', JSON.stringify(error, null, 2));
-      showToast('❌ CSV yüklenemedi: ' + error.message, 'error');
-      return;
-    }
-
-    console.log('✅ Supabase yanıtı:', data);
-    showToast(`✅ ${orders.length} sipariş başarıyla yüklendi`, 'success');
+    console.log('✅ İşlem tamamlandı:', results);
+    showToast(
+      `✅ ${results.inserted} yeni, ${results.updated} güncellendi, ${results.unchanged} değişmedi`,
+      'success'
+    );
     await refreshPurchasingData();
 
   } catch (error) {
@@ -492,6 +479,165 @@ async function handleCSVFile(file) {
     console.error('Hata stack:', error.stack);
     showToast('❌ CSV dosyası işlenemedi: ' + error.message, 'error');
   }
+}
+
+// Revizyon mantığıyla sipariş işleme
+async function processOrdersWithRevision(orders, userEmail) {
+  const results = {
+    inserted: 0,
+    updated: 0,
+    unchanged: 0,
+    errors: []
+  };
+
+  // Her sipariş için işle
+  for (const order of orders) {
+    try {
+      const orderKey = `${order.siparis_no}-${order.siparis_kalemi || ''}`;
+
+      // Mevcut en güncel kaydı bul
+      const { data: existing, error: fetchError } = await supabaseClient
+        .from('purchasing_orders')
+        .select('*')
+        .eq('siparis_no', order.siparis_no)
+        .eq('siparis_kalemi', order.siparis_kalemi || '')
+        .eq('is_latest', true)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 = kayıt bulunamadı (normal)
+        console.error(`Hata (${orderKey}):`, fetchError);
+        results.errors.push({ order: orderKey, error: fetchError.message });
+        continue;
+      }
+
+      if (!existing) {
+        // YENİ SİPARİŞ - İlk kez ekleniyor
+        const newOrder = {
+          ...order,
+          revision_number: 1,
+          is_latest: true,
+          revision_date: new Date().toISOString(),
+          uploaded_by: userEmail,
+          created_by: userEmail,
+          updated_by: userEmail,
+          changes_from_previous: null
+        };
+
+        const { error: insertError } = await supabaseClient
+          .from('purchasing_orders')
+          .insert([newOrder]);
+
+        if (insertError) {
+          console.error(`Ekleme hatası (${orderKey}):`, insertError);
+          results.errors.push({ order: orderKey, error: insertError.message });
+        } else {
+          results.inserted++;
+          console.log(`➕ Yeni sipariş: ${orderKey}`);
+        }
+
+      } else {
+        // MEVCUT SİPARİŞ - Değişiklik kontrolü yap
+        const changes = detectChanges(existing, order);
+
+        if (Object.keys(changes).length === 0) {
+          // DEĞİŞİKLİK YOK - Hiçbir şey yapma
+          results.unchanged++;
+          console.log(`⏭️ Değişiklik yok: ${orderKey}`);
+
+        } else {
+          // DEĞİŞİKLİK VAR - Yeni revizyon oluştur
+
+          // 1. Eski kaydı güncelle (is_latest = false)
+          const { error: updateError } = await supabaseClient
+            .from('purchasing_orders')
+            .update({ is_latest: false })
+            .eq('id', existing.id);
+
+          if (updateError) {
+            console.error(`Güncelleme hatası (${orderKey}):`, updateError);
+            results.errors.push({ order: orderKey, error: updateError.message });
+            continue;
+          }
+
+          // 2. Yeni revizyon ekle
+          const newRevision = {
+            ...order,
+            revision_number: existing.revision_number + 1,
+            is_latest: true,
+            revision_date: new Date().toISOString(),
+            uploaded_by: userEmail,
+            created_by: existing.created_by, // İlk oluşturanı koru
+            updated_by: userEmail,
+            changes_from_previous: changes
+          };
+
+          const { error: revisionError } = await supabaseClient
+            .from('purchasing_orders')
+            .insert([newRevision]);
+
+          if (revisionError) {
+            console.error(`Revizyon hatası (${orderKey}):`, revisionError);
+            results.errors.push({ order: orderKey, error: revisionError.message });
+
+            // Rollback: Eski kaydı tekrar latest yap
+            await supabaseClient
+              .from('purchasing_orders')
+              .update({ is_latest: true })
+              .eq('id', existing.id);
+          } else {
+            results.updated++;
+            console.log(`🔄 Güncellendi (v${newRevision.revision_number}): ${orderKey}`, changes);
+          }
+        }
+      }
+
+    } catch (err) {
+      console.error('Beklenmeyen hata:', err);
+      results.errors.push({ order: order.siparis_no, error: err.message });
+    }
+  }
+
+  return results;
+}
+
+// İki sipariş arasındaki farkları tespit et
+function detectChanges(oldOrder, newOrder) {
+  const changes = {};
+
+  // Kontrol edilecek alanlar
+  const fieldsToCheck = [
+    'gelen_miktar', 'miktar', 'birim_fiyat', 'tutar_tl', 'net', 'brut',
+    'odeme_kosulu', 'vade_gun', 'vadeye_gore', 'teslim_tarihi',
+    'kdv_orani', 'kur', 'malzeme_tanimi', 'tedarikci_tanimi',
+    'depo', 'aciklama', 'teslimat', 'baslama', 'ozel_stok'
+  ];
+
+  for (const field of fieldsToCheck) {
+    const oldValue = oldOrder[field];
+    const newValue = newOrder[field];
+
+    // Null ve undefined'ı eşit say
+    if ((oldValue === null || oldValue === undefined) &&
+        (newValue === null || newValue === undefined)) {
+      continue;
+    }
+
+    // Değerler farklıysa kaydet
+    if (oldValue !== newValue) {
+      // Sayısal alanlar için tolerans
+      if (typeof oldValue === 'number' && typeof newValue === 'number') {
+        if (Math.abs(oldValue - newValue) < 0.01) continue; // 1 kuruş farkı ignore et
+      }
+
+      changes[field] = {
+        from: oldValue,
+        to: newValue
+      };
+    }
+  }
+
+  return changes;
 }
 
 function parseCSV(text) {
