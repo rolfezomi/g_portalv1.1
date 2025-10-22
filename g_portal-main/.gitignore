@@ -21,6 +21,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.claude/
 
 # Netlify
 .netlify/
@@ -42,6 +43,9 @@ public/dist/
 
 # Invalid file names
 NUL
+
+# Documentation with secrets
+PROJE_DOKUMANTASYONU.md
 
 # Documentation (optional - uncomment if you don't want to track)
 # *.md
