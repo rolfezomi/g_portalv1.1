@@ -668,7 +668,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       await loadRecent();
       updateTrendFromStorage();
     } else if (currentUserRole === 'purchasing') {
-      // Satın alma kullanıcısı purchasing ve revizyon analiz modüllerini görsün
+      // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
+      hideAllMenusExceptPurchasing(); // Önce tüm menüleri gizle
       showPurchasingMenu();
       showRevisionAnalyticsMenu();
       showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
@@ -769,9 +770,18 @@ if (loginForm) {
         showFullAccessMenu(); // Trend Analizi
         showAdminMenu(); // Logs + User Management
         showExecutiveMenu(); // Dashboard
+        showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
+        showRevisionAnalyticsMenu(); // Revizyon Analiz (Admin tüm modülleri görür)
         await logActivity('LOGIN', 'Auth', { email });
         showHomepage();
         loadRecent();
+      } else if (currentUserRole === 'purchasing') {
+        // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
+        hideAllMenusExceptPurchasing(); // Önce tüm menüleri gizle
+        showPurchasingMenu();
+        showRevisionAnalyticsMenu();
+        await logActivity('LOGIN', 'Auth', { email });
+        showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
       } else if (currentUserRole === 'full') {
         showFullAccessMenu(); // Trend Analizi
         showExecutiveMenu(); // Dashboard (Full access için de göster)
@@ -923,6 +933,23 @@ function showFullAccessMenu() {
 }
 
 // ====== PURCHASING MENÜ GÖRÜNÜRLÜĞÜ ======
+function hideAllMenusExceptPurchasing() {
+  // Tüm menü itemlerini gizle
+  const menu = document.querySelector('.menu ul');
+  if (!menu) return;
+
+  const allMenuItems = menu.querySelectorAll('li');
+  allMenuItems.forEach(item => {
+    const itemId = item.id;
+    // Sadece purchasing ve revision-analytics hariç hepsini gizle
+    if (itemId !== 'purchasing-menu' && itemId !== 'revision-analytics-menu') {
+      item.style.display = 'none';
+    }
+  });
+
+  console.log('🚫 Purchasing rolü için diğer menüler gizlendi');
+}
+
 function showPurchasingMenu() {
   const purchasingMenu = document.getElementById('purchasing-menu');
   if (purchasingMenu) {
