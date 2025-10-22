@@ -674,8 +674,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       showRevisionAnalyticsMenu();
       showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
     } else if (currentUserRole === 'full') {
+      // Kalite Yönetim: Tüm ölçüm sayfaları + Trend Analizi + Dashboard (Satın Alma ve Revizyon Analiz HARİÇ)
       showFullAccessMenu(); // Trend Analizi
-      showExecutiveMenu(); // Dashboard (Full access için de göster)
+      showExecutiveMenu(); // Dashboard
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
@@ -783,8 +784,9 @@ if (loginForm) {
         await logActivity('LOGIN', 'Auth', { email });
         showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
       } else if (currentUserRole === 'full') {
+        // Kalite Yönetim: Tüm ölçüm sayfaları + Trend Analizi + Dashboard (Satın Alma ve Revizyon Analiz HARİÇ)
         showFullAccessMenu(); // Trend Analizi
-        showExecutiveMenu(); // Dashboard (Full access için de göster)
+        showExecutiveMenu(); // Dashboard
         await logActivity('LOGIN', 'Auth', { email });
         showHomepage();
         loadRecent();
@@ -1756,7 +1758,7 @@ async function initUsersPage() {
                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>⚙️ Admin - Tam Yetki + Yönetim</option>
                 <option value="purchasing" ${currentRole === 'purchasing' ? 'selected' : ''}>🛒 Satın Alma - Purchasing + Revizyon</option>
                 <option value="executive" ${currentRole === 'executive' ? 'selected' : ''}>📊 Üst Yönetim - Dashboard + Raporlar</option>
-                <option value="full" ${currentRole === 'full' ? 'selected' : ''}>✓ Tam Yetki</option>
+                <option value="full" ${currentRole === 'full' ? 'selected' : ''}>🔬 Kalite Yönetim - Ölçümler + Trend</option>
                 <option value="restricted" ${currentRole === 'restricted' ? 'selected' : ''}>◐ Kısıtlı Erişim</option>
               </select>
             </div>
@@ -1789,7 +1791,7 @@ function getRoleLabel(role) {
     'admin': 'Admin (Tam Yetki + Kullanıcı Yönetimi)',
     'purchasing': 'Satın Alma (Purchasing + Revizyon Analizi)',
     'executive': 'Üst Yönetim (Dashboard + Raporlar)',
-    'full': 'Tam Yetki',
+    'full': 'Kalite Yönetim (Ölçümler + Trend + Dashboard)',
     'restricted': 'Kısıtlı (Son Değerler ve Grafikler Gizli)'
   };
   return labels[role] || role;
