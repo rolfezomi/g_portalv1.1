@@ -1,4 +1,67 @@
 // =========================
+// DİNAMİK MOD ÜL YÜKLEME
+// =========================
+
+// Yüklenmiş modülleri takip et (aynı script'i birden fazla kez yüklemeyi önle)
+const loadedModules = {};
+
+/**
+ * Dinamik olarak JavaScript modülü yükler
+ * @param {string} moduleName - Yüklenecek modül adı (örn: 'purchasing', 'revision-analytics')
+ * @returns {Promise} Script yüklendiğinde resolve olur
+ */
+function loadModuleScript(moduleName) {
+  return new Promise((resolve, reject) => {
+    // Zaten yüklenmişse tekrar yükleme
+    if (loadedModules[moduleName]) {
+      console.log(`ℹ️ ${moduleName} modülü zaten yüklü`);
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `scripts/${moduleName}.js`;
+    script.async = true;
+
+    script.onload = () => {
+      loadedModules[moduleName] = true;
+      console.log(`✅ ${moduleName} modülü yüklendi`);
+      resolve();
+    };
+
+    script.onerror = () => {
+      console.error(`❌ ${moduleName} modülü yüklenemedi`);
+      reject(new Error(`${moduleName} modülü yüklenemedi`));
+    };
+
+    document.body.appendChild(script);
+  });
+}
+
+/**
+ * Kullanıcı rolüne göre gerekli modülleri yükler
+ * @param {string} userRole - Kullanıcı rolü (admin, purchasing, executive, full, restricted)
+ */
+async function loadRoleBasedModules(userRole) {
+  const modulesToLoad = [];
+
+  // Admin ve Purchasing rolleri için purchasing ve revision modüllerini yükle
+  if (userRole === 'admin' || userRole === 'purchasing') {
+    modulesToLoad.push('purchasing', 'revision-analytics');
+  }
+
+  // Modülleri paralel olarak yükle
+  if (modulesToLoad.length > 0) {
+    try {
+      await Promise.all(modulesToLoad.map(module => loadModuleScript(module)));
+      console.log(`✅ ${userRole} rolü için gerekli modüller yüklendi`);
+    } catch (error) {
+      console.error('Modül yükleme hatası:', error);
+    }
+  }
+}
+
+// =========================
 // CHART.JS PLUGIN REGISTER
 // =========================
 
@@ -765,6 +828,9 @@ if (loginForm) {
 
       // Kullanıcı rolünü al
       await loadUserRole(email);
+
+      // Rol bazlı modülleri yükle (purchasing, revision-analytics)
+      await loadRoleBasedModules(currentUserRole);
 
       // Rol bazlı menü gösterimi
       if (currentUserRole === 'admin') {
