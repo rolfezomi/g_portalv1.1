@@ -1673,26 +1673,14 @@ async function initUsersPage() {
   if (!usersContainer) return;
 
   try {
-    // Backend API'den kullanıcı listesini al
-    const { data: session } = await supabaseClient.auth.getSession();
-    if (!session?.session?.access_token) {
-      usersContainer.innerHTML = '<p style="color:#d32f2f; padding:20px;">Oturum bulunamadı. Lütfen yeniden giriş yapın.</p>';
+    // Supabase RPC ile kullanıcı listesini al
+    const { data: authUsers, error } = await supabaseClient.rpc('get_all_users_with_roles');
+
+    if (error) {
+      console.error('Kullanıcı yükleme hatası:', error);
+      usersContainer.innerHTML = `<p style="color:#d32f2f; padding:20px;">Kullanıcılar yüklenemedi: ${error.message}</p>`;
       return;
     }
-
-    const response = await fetch(`${API_URL}/users`, {
-      headers: {
-        'Authorization': `Bearer ${session.session.access_token}`
-      }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      usersContainer.innerHTML = `<p style="color:#d32f2f; padding:20px;">Kullanıcılar yüklenemedi: ${errorData.error || response.statusText}</p>`;
-      return;
-    }
-
-    const { users: authUsers } = await response.json();
 
     if (!authUsers || authUsers.length === 0) {
       usersContainer.innerHTML = '<p style="opacity:0.6; padding:20px; text-align:center;">Henüz kullanıcı kaydı yok.</p>';
@@ -1804,35 +1792,25 @@ async function updateUserRoleByEmail(email, existingRoleId) {
   const newRole = selectEl.value;
 
   try {
-    // Backend API'den kullanıcı session'ını al
-    const { data: session } = await supabaseClient.auth.getSession();
-    if (!session?.session?.access_token) {
-      showToast('Oturum bulunamadı. Lütfen yeniden giriş yapın.');
-      return;
-    }
-
-    // Backend API ile rol güncelle
-    const response = await fetch(`${API_URL}/update-role`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.session.access_token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email,
-        role: newRole,
-        roleId: existingRoleId
-      })
+    // Supabase RPC ile rol güncelle
+    const { data: result, error } = await supabaseClient.rpc('update_user_role', {
+      p_email: email,
+      p_role: newRole,
+      p_role_id: existingRoleId
     });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      showToast('Rol güncellenemedi: ' + (result.error || response.statusText));
+    if (error) {
+      console.error('Rol güncelleme hatası:', error);
+      showToast('Rol güncellenemedi: ' + error.message);
       return;
     }
 
-    showToast(result.message || `${email} kullanıcısının rolü güncellendi`);
+    if (result && !result.success) {
+      showToast('Rol güncellenemedi: ' + (result.error || 'Bilinmeyen hata'));
+      return;
+    }
+
+    showToast(result?.message || `${email} kullanıcısının rolü güncellendi`);
 
     // Sayfayı yenile
     setTimeout(() => initUsersPage(), 1000);
