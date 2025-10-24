@@ -1,0 +1,616 @@
+{
+  "machines": [
+    {
+      "machine_no": "TD-1002",
+      "machine_name": "Elektrik Jeneratörü",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "DIŞ HİZMET",
+          "frequency": "annual",
+          "months": [
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1010",
+      "machine_name": "Kompresör (150 lt)",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "DIŞ HİZMET",
+          "frequency": "annual",
+          "months": [
+            8
+          ],
+          "is_active": true
+        },
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1011",
+      "machine_name": "Forklift EFG 216",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "DIŞ HİZMET",
+          "frequency": "semi-annual",
+          "months": [
+            2,
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1012",
+      "machine_name": "Forklift EFG 430",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "DIŞ HİZMET",
+          "frequency": "semi-annual",
+          "months": [
+            2,
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1105",
+      "machine_name": "Inkjet Makinesi",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "DIŞ HİZMET",
+          "frequency": "annual",
+          "months": [
+            1
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1106",
+      "machine_name": "Inkjet Makinesi",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "DIŞ HİZMET",
+          "frequency": "annual",
+          "months": [
+            1
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1010",
+      "machine_name": "3 Tonluk Mikser",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "quarterly",
+          "months": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1011",
+      "machine_name": "7 Tonluk Mikser",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "quarterly",
+          "months": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1012",
+      "machine_name": "7 Tonluk Mikser",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "quarterly",
+          "months": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1013",
+      "machine_name": "2 Tonluk Mikser",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "quarterly",
+          "months": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1034",
+      "machine_name": "Zarf Tipi Paketleme Mak.",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "semi-annual",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1030",
+      "machine_name": "Rolon Dolum Makinası",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "annual",
+          "months": [
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜT-1004",
+      "machine_name": "Seyyar Mikser",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "annual",
+          "months": [
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜT-1005",
+      "machine_name": "Manuel Likit Dolum Makinası",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "annual",
+          "months": [
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜT-1007",
+      "machine_name": "Şaset Dolum Makinası",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "semi-annual",
+          "months": [
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1053",
+      "machine_name": "Pilot Reaktör (APM Mikser)",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "annual",
+          "months": [
+            8
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1001",
+      "machine_name": "Buhar Jeneratörü",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1004",
+      "machine_name": "Büyük Chiller",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1005",
+      "machine_name": "Kompresör (900 lt)",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1006",
+      "machine_name": "Klima Santrali",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1007",
+      "machine_name": "Su Hidrofor Pompa Sistemi",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1008",
+      "machine_name": "Yangın Hidrofor Pompa Sist.",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1009",
+      "machine_name": "Ozmos Su Sistemi",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "monthly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜT-1013",
+      "machine_name": "Pres Filtre - 1",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "quarterly",
+          "months": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜT-1014",
+      "machine_name": "Pres Filtre - 2",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "quarterly",
+          "months": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "TD-1003",
+      "machine_name": "Küçük Chiller",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "weekly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "NA",
+      "machine_name": "Hepa Filtre Hava Ölçümleri Hammadde  Depo",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "monthly",
+          "months": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "machine_no": "ÜK-1136",
+      "machine_name": "Koli Bantlama Makinası",
+      "location": null,
+      "is_active": true,
+      "schedules": [
+        {
+          "maintenance_type": "İÇ BAKIM",
+          "frequency": "annual",
+          "months": [
+            12
+          ],
+          "is_active": true
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "total_machines": 28,
+    "total_schedules": 29,
+    "by_frequency": {
+      "annual": 9,
+      "weekly": 8,
+      "semi-annual": 4,
+      "quarterly": 6,
+      "monthly": 2
+    }
+  }
+}
