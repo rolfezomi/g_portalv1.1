@@ -40,7 +40,7 @@ supabase/.temp/
 # Build outputs
 public/build/
 public/dist/
-public/maintenance/
+# public/maintenance/ - Maintenance modülü build output'u git'te tutulacak
 
 # Invalid file names
 NUL
