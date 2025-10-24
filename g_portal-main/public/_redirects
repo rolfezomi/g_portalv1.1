@@ -1,0 +1,5 @@
+# Bakım Yönetimi modülü route'ları
+/maintenance/* /maintenance/index.html 200
+
+# Ana portal SPA fallback (ileride gerekebilir)
+# /* /index.html 200
