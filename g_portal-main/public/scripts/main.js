@@ -664,9 +664,20 @@ window.addEventListener('DOMContentLoaded', async () => {
       showExecutiveMenu(); // Dashboard
       showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
       showRevisionAnalyticsMenu(); // Revizyon Analiz (Admin tüm modülleri görür)
+      showMaintenanceMenu(); // Bakım Yönetimi (Admin tüm modülleri görür)
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
+    } else if (currentUserRole === 'maintenance') {
+      // Bakım kullanıcısı SADECE bakım modülünü görsün
+      const allMenuItems = document.querySelectorAll('.menu ul li');
+      allMenuItems.forEach(item => {
+        if (item.id !== 'maintenance-menu') {
+          item.style.display = 'none';
+        }
+      });
+      showMaintenanceMenu();
+      showMaintenanceModule(); // Direkt bakım modülüne yönlendir
     } else if (currentUserRole === 'purchasing') {
       // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
       hideAllMenusExceptPurchasing(); // Önce tüm menüleri gizle
@@ -966,6 +977,25 @@ function showRevisionAnalyticsMenu() {
     revisionMenu.style.display = 'block';
     console.log('✅ Revizyon Analiz menüsü gösteriliyor');
   }
+}
+
+function showMaintenanceMenu() {
+  const maintenanceMenu = document.getElementById('maintenance-menu');
+  if (maintenanceMenu) {
+    maintenanceMenu.style.display = 'block';
+    console.log('✅ Bakım Yönetimi menüsü gösteriliyor');
+  }
+}
+
+function showMaintenanceModule() {
+  // Erişim kontrolü
+  if (currentUserRole !== 'admin' && currentUserRole !== 'maintenance') {
+    showToast('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+    return;
+  }
+
+  // Bakım modülüne yönlendir
+  window.location.href = '/maintenance/';
 }
 
 // ====== NAVİGASYON ======
