@@ -460,13 +460,80 @@ SELECT id, 'İÇ BAKIM', 'quarterly', ARRAY[1,4,7,10]
 FROM machines WHERE machine_no = 'UK-1136';
 
 -- ============================================
--- 5. SUCCESS MESSAGE
+-- 5. BAKIM KAYITLARI OLUŞTUR (2025 YILI)
+-- ============================================
+
+-- Her bakım planı için 2025 yılının kayıtlarını otomatik oluştur
+-- Her ay için planned_date = Ayın 15'i olarak ayarlanır
+
+INSERT INTO maintenance_records (schedule_id, machine_id, planned_date, status)
+SELECT
+  s.id as schedule_id,
+  s.machine_id,
+  make_date(2025, month_num, 15) as planned_date,
+  'pending' as status
+FROM
+  maintenance_schedules s,
+  unnest(s.months) as month_num
+WHERE
+  s.is_active = true
+ORDER BY
+  planned_date;
+
+-- ============================================
+-- 6. BAKIM KAYITLARI OLUŞTUR (2024 - GEÇMİŞ KAYITLAR)
+-- ============================================
+
+-- 2024 yılı kayıtları (Ekim-Aralık tamamlandı olarak işaretlenir)
+INSERT INTO maintenance_records (schedule_id, machine_id, planned_date, completed_date, status, performed_by)
+SELECT
+  s.id as schedule_id,
+  s.machine_id,
+  make_date(2024, month_num, 15) as planned_date,
+  make_date(2024, month_num, 16) as completed_date,
+  CASE
+    WHEN month_num >= 10 THEN 'completed'
+    ELSE 'pending'
+  END as status,
+  CASE
+    WHEN month_num >= 10 THEN 'Bakım Ekibi'
+    ELSE NULL
+  END as performed_by
+FROM
+  maintenance_schedules s,
+  unnest(s.months) as month_num
+WHERE
+  s.is_active = true
+  AND month_num >= 10  -- Sadece Ekim, Kasım, Aralık
+ORDER BY
+  planned_date;
+
+-- ============================================
+-- 7. SUCCESS MESSAGE
 -- ============================================
 
 DO $$
+DECLARE
+  machine_count INTEGER;
+  schedule_count INTEGER;
+  record_count_2025 INTEGER;
+  record_count_2024 INTEGER;
 BEGIN
+  SELECT COUNT(*) INTO machine_count FROM machines;
+  SELECT COUNT(*) INTO schedule_count FROM maintenance_schedules;
+  SELECT COUNT(*) INTO record_count_2025 FROM maintenance_records WHERE EXTRACT(YEAR FROM planned_date) = 2025;
+  SELECT COUNT(*) INTO record_count_2024 FROM maintenance_records WHERE EXTRACT(YEAR FROM planned_date) = 2024;
+
+  RAISE NOTICE '';
   RAISE NOTICE '✅ Bakım Yönetim Sistemi başarıyla kuruldu!';
-  RAISE NOTICE '📊 47 makine kaydedildi';
-  RAISE NOTICE '📅 47 bakım planı oluşturuldu';
+  RAISE NOTICE '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  RAISE NOTICE '📊 % makine kaydedildi', machine_count;
+  RAISE NOTICE '📅 % bakım planı oluşturuldu', schedule_count;
+  RAISE NOTICE '📋 % adet 2024 bakım kaydı (geçmiş)', record_count_2024;
+  RAISE NOTICE '📋 % adet 2025 bakım kaydı (plan)', record_count_2025;
   RAISE NOTICE '🔒 RLS policies aktif (sadece admin ve maintenance rolü erişebilir)';
+  RAISE NOTICE '';
+  RAISE NOTICE '💡 Not: Bakım kayıtları her ayın 15''i için planlanmıştır.';
+  RAISE NOTICE '💡 2024 Ekim-Aralık bakımları tamamlandı olarak işaretlenmiştir.';
+  RAISE NOTICE '';
 END $$;
