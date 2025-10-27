@@ -982,10 +982,21 @@ function showMaintenanceModule() {
 function refreshMenusBasedOnRole() {
   console.log('🔄 Menüler yenileniyor, rol:', currentUserRole);
 
-  // Önce tüm menüleri gizle
-  const allMenuItems = document.querySelectorAll('.menu ul li');
-  allMenuItems.forEach(item => {
-    item.style.display = 'none';
+  // Önce SADECE özel menüleri gizle (base menülere dokunma)
+  const specialMenuIds = [
+    'admin-menu',
+    'purchasing-menu',
+    'maintenance-menu',
+    'trend-analizi-menu',
+    'executive-dashboard-menu',
+    'revision-analytics-menu'
+  ];
+
+  specialMenuIds.forEach(menuId => {
+    const menuItem = document.getElementById(menuId);
+    if (menuItem) {
+      menuItem.style.display = 'none';
+    }
   });
 
   // Role göre menüleri göster
@@ -998,9 +1009,24 @@ function refreshMenusBasedOnRole() {
     showMaintenanceMenu(); // Bakım Yönetimi (Admin tüm modülleri görür)
   } else if (currentUserRole === 'maintenance') {
     // Bakım kullanıcısı SADECE bakım modülünü görsün
+    // Tüm base menüleri gizle
+    const allMenuItems = document.querySelectorAll('.menu ul li');
+    allMenuItems.forEach(item => {
+      if (item.id !== 'maintenance-menu') {
+        item.style.display = 'none';
+      }
+    });
     showMaintenanceMenu();
   } else if (currentUserRole === 'purchasing') {
     // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
+    // Tüm base menüleri gizle
+    const allMenuItems = document.querySelectorAll('.menu ul li');
+    allMenuItems.forEach(item => {
+      const itemId = item.id;
+      if (itemId !== 'purchasing-menu' && itemId !== 'revision-analytics-menu') {
+        item.style.display = 'none';
+      }
+    });
     showPurchasingMenu();
     showRevisionAnalyticsMenu();
   } else if (currentUserRole === 'full') {
