@@ -6,6 +6,12 @@
   <title>Glohe Bakım Yönetim Sistemi</title>
   <script type="module" crossorigin src="/maintenance/assets/index-DglKEklH.js"></script>
   <link rel="stylesheet" crossorigin href="/maintenance/assets/index-CDujfKqZ.css">
+
+  <!-- Haftalık Takvim Modülü - Custom CSS -->
+  <link rel="stylesheet" href="/maintenance/assets/maintenance-custom.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="app">
@@ -141,6 +147,20 @@
       </div>
     </div>
   </div>
+
+  <!-- Haftalık Takvim Modülü - Scripts -->
+  <script>
+    // Supabase Client Initialization
+    const SUPABASE_URL = 'https://mignlffeyougoefuyayr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2OTg1NTQsImV4cCI6MjA0NTI3NDU1NH0.y1PHGPGSYu7_5Gt9xoC6O9wAUANs2NP4OD4YtjK4v9g';
+
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase client initialized');
+  </script>
+
+  <script src="/maintenance/assets/maintenance-analysis.js"></script>
+  <script src="/maintenance/assets/supabase-data.js"></script>
+  <script src="/maintenance/assets/maintenance-app.js"></script>
 
 </body>
 </html>

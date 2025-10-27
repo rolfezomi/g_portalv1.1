@@ -1,0 +1,311 @@
+/**
+ * Bakım Yönetimi - Supabase Veri Modülü
+ * Machines ve Maintenance Schedules verilerini Supabase'den çeker
+ */
+
+// ==================== SUPABASE CLIENT ====================
+
+// Supabase client'ı ana sayfadan alacağız (zaten mevcut)
+// window.supabase global olarak tanımlı olmalı
+
+/**
+ * Supabase client'ın hazır olup olmadığını kontrol et
+ *
+ * @returns {boolean}
+ */
+function isSupabaseReady() {
+  return typeof window.supabase !== 'undefined' && window.supabase !== null;
+}
+
+/**
+ * Supabase client hazır değilse hata fırlat
+ */
+function ensureSupabase() {
+  if (!isSupabaseReady()) {
+    throw new Error('Supabase client hazır değil! Ana sayfada supabase client yüklendiğinden emin olun.');
+  }
+}
+
+// ==================== MAKİNELER ====================
+
+/**
+ * Tüm makineleri Supabase'den çek
+ *
+ * @param {boolean} includeInactive - Pasif makineleri de getir
+ * @returns {Promise<Array>} Makineler listesi
+ */
+async function fetchAllMachines(includeInactive = false) {
+  ensureSupabase();
+
+  try {
+    let query = window.supabase
+      .from('machines')
+      .select('*')
+      .order('machine_no', { ascending: true });
+
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Makineler çekilirken hata:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('fetchAllMachines error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Belirli bir makineyi getir
+ *
+ * @param {string} machineNo - Makine numarası
+ * @returns {Promise<Object|null>} Makine objesi
+ */
+async function fetchMachine(machineNo) {
+  ensureSupabase();
+
+  try {
+    const { data, error } = await window.supabase
+      .from('machines')
+      .select('*')
+      .eq('machine_no', machineNo)
+      .single();
+
+    if (error) {
+      console.error(`Makine ${machineNo} çekilirken hata:`, error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('fetchMachine error:', err);
+    return null;
+  }
+}
+
+// ==================== BAKIM PERİYOTLARI ====================
+
+/**
+ * Tüm bakım periyotlarını Supabase'den çek
+ *
+ * @param {boolean} includeInactive - Pasif schedule'ları da getir
+ * @returns {Promise<Array>} Schedule'lar listesi
+ */
+async function fetchAllSchedules(includeInactive = false) {
+  ensureSupabase();
+
+  try {
+    let query = window.supabase
+      .from('maintenance_schedules')
+      .select('*')
+      .order('machine_no', { ascending: true })
+      .order('schedule_id', { ascending: true });
+
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Schedule\'lar çekilirken hata:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('fetchAllSchedules error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Belirli bir makineye ait schedule'ları getir
+ *
+ * @param {string} machineNo - Makine numarası
+ * @returns {Promise<Array>} Schedule'lar listesi
+ */
+async function fetchMachineSchedules(machineNo) {
+  ensureSupabase();
+
+  try {
+    const { data, error } = await window.supabase
+      .from('maintenance_schedules')
+      .select('*')
+      .eq('machine_no', machineNo)
+      .eq('is_active', true)
+      .order('schedule_id', { ascending: true });
+
+    if (error) {
+      console.error(`Makine ${machineNo} schedule'ları çekilirken hata:`, error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('fetchMachineSchedules error:', err);
+    throw err;
+  }
+}
+
+// ==================== TOPLU VERİ ====================
+
+/**
+ * Makineler ve schedule'ları birlikte getir
+ *
+ * @returns {Promise<Object>} {machines: [], schedules: []}
+ */
+async function fetchMaintenanceData() {
+  ensureSupabase();
+
+  try {
+    const [machines, schedules] = await Promise.all([
+      fetchAllMachines(false),
+      fetchAllSchedules(false)
+    ]);
+
+    return {
+      machines,
+      schedules
+    };
+  } catch (err) {
+    console.error('fetchMaintenanceData error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Tüm veriyi çek ve analiz için hazırla
+ *
+ * @returns {Promise<Object>} {machines, schedules, calendars, stats, monthlyDensity}
+ */
+async function fetchAndAnalyze() {
+  try {
+    const { machines, schedules } = await fetchMaintenanceData();
+
+    // MaintenanceAnalysis modülünü kullan
+    if (typeof window.MaintenanceAnalysis === 'undefined') {
+      throw new Error('MaintenanceAnalysis modülü yüklenmemiş!');
+    }
+
+    const MA = window.MaintenanceAnalysis;
+
+    const calendars = MA.getAllMachineCalendars(machines, schedules);
+    const stats = MA.calculateStatistics(machines, schedules);
+    const monthlyDensity = MA.getMonthlyDensity(schedules);
+
+    return {
+      machines,
+      schedules,
+      calendars,
+      stats,
+      monthlyDensity
+    };
+  } catch (err) {
+    console.error('fetchAndAnalyze error:', err);
+    throw err;
+  }
+}
+
+// ==================== SEARCH & FILTER ====================
+
+/**
+ * Makine ara (machine_no veya machine_name)
+ *
+ * @param {string} searchTerm - Arama terimi
+ * @returns {Promise<Array>} Bulunan makineler
+ */
+async function searchMachines(searchTerm) {
+  ensureSupabase();
+
+  try {
+    const { data, error } = await window.supabase
+      .from('machines')
+      .select('*')
+      .or(`machine_no.ilike.%${searchTerm}%,machine_name.ilike.%${searchTerm}%`)
+      .eq('is_active', true)
+      .order('machine_no', { ascending: true });
+
+    if (error) {
+      console.error('Makine arama hatası:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('searchMachines error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Belirli frequency'ye sahip schedule'ları getir
+ *
+ * @param {string} frequency - Frequency tipi
+ * @returns {Promise<Array>} Schedule'lar
+ */
+async function fetchSchedulesByFrequency(frequency) {
+  ensureSupabase();
+
+  try {
+    const { data, error } = await window.supabase
+      .from('maintenance_schedules')
+      .select('*')
+      .eq('frequency', frequency)
+      .eq('is_active', true)
+      .order('machine_no', { ascending: true });
+
+    if (error) {
+      console.error(`Frequency ${frequency} schedule'ları çekilirken hata:`, error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('fetchSchedulesByFrequency error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Schedule olmayan makineleri bul
+ *
+ * @returns {Promise<Array>} Schedule olmayan makineler
+ */
+async function fetchMachinesWithoutSchedule() {
+  ensureSupabase();
+
+  try {
+    const { machines, schedules } = await fetchMaintenanceData();
+
+    const machinesWithSchedule = new Set(
+      schedules.map(s => s.machine_no)
+    );
+
+    return machines.filter(m => !machinesWithSchedule.has(m.machine_no));
+  } catch (err) {
+    console.error('fetchMachinesWithoutSchedule error:', err);
+    throw err;
+  }
+}
+
+// ==================== EXPORT ====================
+
+window.MaintenanceData = {
+  isSupabaseReady,
+  fetchAllMachines,
+  fetchMachine,
+  fetchAllSchedules,
+  fetchMachineSchedules,
+  fetchMaintenanceData,
+  fetchAndAnalyze,
+  searchMachines,
+  fetchSchedulesByFrequency,
+  fetchMachinesWithoutSchedule
+};
