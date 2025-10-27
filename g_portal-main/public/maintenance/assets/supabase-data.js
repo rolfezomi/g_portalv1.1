@@ -31,7 +31,7 @@ function ensureSupabase() {
 /**
  * Tüm makineleri Supabase'den çek
  *
- * @param {boolean} includeInactive - Pasif makineleri de getir
+ * @param {boolean} includeInactive - Pasif makineleri de getir (şu an kullanılmıyor, is_active kolonu yok)
  * @returns {Promise<Array>} Makineler listesi
  */
 async function fetchAllMachines(includeInactive = false) {
@@ -43,9 +43,10 @@ async function fetchAllMachines(includeInactive = false) {
       .select('*')
       .order('machine_no', { ascending: true });
 
-    if (!includeInactive) {
-      query = query.eq('is_active', true);
-    }
+    // NOT: is_active kolonu yoksa filter yapma
+    // if (!includeInactive) {
+    //   query = query.eq('is_active', true);
+    // }
 
     const { data, error } = await query;
 
@@ -94,7 +95,7 @@ async function fetchMachine(machineNo) {
 /**
  * Tüm bakım periyotlarını Supabase'den çek (JOIN ile machine bilgisi dahil)
  *
- * @param {boolean} includeInactive - Pasif schedule'ları da getir
+ * @param {boolean} includeInactive - Pasif schedule'ları da getir (şu an kullanılmıyor)
  * @returns {Promise<Array>} Schedule'lar listesi
  */
 async function fetchAllSchedules(includeInactive = false) {
@@ -102,22 +103,21 @@ async function fetchAllSchedules(includeInactive = false) {
 
   try {
     // JOIN ile machine bilgisini çek
+    // NOT: machines.is_active yok, sadece machine_no ve machine_name çek
     let query = window.supabase
       .from('maintenance_schedules')
       .select(`
         *,
         machines!inner (
           machine_no,
-          machine_name,
-          is_active
+          machine_name
         )
       `);
 
-    if (!includeInactive) {
-      query = query.eq('is_active', true);
-      // NOT: machines.is_active filtresini Supabase query'de YAPAMAYIZ
-      // Bunun yerine client-side filter yapacağız
-    }
+    // NOT: is_active kolonu yoksa filter yapma
+    // if (!includeInactive) {
+    //   query = query.eq('is_active', true);
+    // }
 
     const { data, error } = await query;
 
@@ -127,17 +127,11 @@ async function fetchAllSchedules(includeInactive = false) {
     }
 
     // Flatten the data - machines objesini dışarı çıkar
-    let flattenedData = (data || []).map(item => ({
+    const flattenedData = (data || []).map(item => ({
       ...item,
       machine_no: item.machines.machine_no,
-      machine_name: item.machines.machine_name,
-      machine_is_active: item.machines.is_active
+      machine_name: item.machines.machine_name
     }));
-
-    // İnactive makineleri filtrele (client-side)
-    if (!includeInactive) {
-      flattenedData = flattenedData.filter(item => item.machine_is_active === true);
-    }
 
     return flattenedData;
   } catch (err) {
@@ -167,7 +161,6 @@ async function fetchMachineSchedules(machineNo) {
       .from('maintenance_schedules')
       .select('*')
       .eq('machine_id', machine.id)
-      .eq('is_active', true)
       .order('maintenance_type', { ascending: true });
 
     if (error) {
@@ -264,7 +257,6 @@ async function searchMachines(searchTerm) {
       .from('machines')
       .select('*')
       .or(`machine_no.ilike.%${searchTerm}%,machine_name.ilike.%${searchTerm}%`)
-      .eq('is_active', true)
       .order('machine_no', { ascending: true });
 
     if (error) {
@@ -298,8 +290,7 @@ async function fetchSchedulesByFrequency(frequency) {
           machine_name
         )
       `)
-      .eq('frequency', frequency)
-      .eq('is_active', true);
+      .eq('frequency', frequency);
 
     if (error) {
       console.error(`Frequency ${frequency} schedule'ları çekilirken hata:`, error);
