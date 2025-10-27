@@ -115,8 +115,8 @@ async function fetchAllSchedules(includeInactive = false) {
 
     if (!includeInactive) {
       query = query.eq('is_active', true);
-      // Machine'in de aktif olması lazım
-      query = query.eq('machines.is_active', true);
+      // NOT: machines.is_active filtresini Supabase query'de YAPAMAYIZ
+      // Bunun yerine client-side filter yapacağız
     }
 
     const { data, error } = await query;
@@ -127,11 +127,17 @@ async function fetchAllSchedules(includeInactive = false) {
     }
 
     // Flatten the data - machines objesini dışarı çıkar
-    const flattenedData = (data || []).map(item => ({
+    let flattenedData = (data || []).map(item => ({
       ...item,
       machine_no: item.machines.machine_no,
-      machine_name: item.machines.machine_name
+      machine_name: item.machines.machine_name,
+      machine_is_active: item.machines.is_active
     }));
+
+    // İnactive makineleri filtrele (client-side)
+    if (!includeInactive) {
+      flattenedData = flattenedData.filter(item => item.machine_is_active === true);
+    }
 
     return flattenedData;
   } catch (err) {
