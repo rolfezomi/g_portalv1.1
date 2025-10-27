@@ -92,7 +92,7 @@ async function fetchMachine(machineNo) {
 // ==================== BAKIM PERİYOTLARI ====================
 
 /**
- * Tüm bakım periyotlarını Supabase'den çek
+ * Tüm bakım periyotlarını Supabase'den çek (JOIN ile machine bilgisi dahil)
  *
  * @param {boolean} includeInactive - Pasif schedule'ları da getir
  * @returns {Promise<Array>} Schedule'lar listesi
@@ -101,14 +101,22 @@ async function fetchAllSchedules(includeInactive = false) {
   ensureSupabase();
 
   try {
+    // JOIN ile machine bilgisini çek
     let query = window.supabase
       .from('maintenance_schedules')
-      .select('*')
-      .order('machine_no', { ascending: true })
-      .order('schedule_id', { ascending: true });
+      .select(`
+        *,
+        machines!inner (
+          machine_no,
+          machine_name,
+          is_active
+        )
+      `);
 
     if (!includeInactive) {
       query = query.eq('is_active', true);
+      // Machine'in de aktif olması lazım
+      query = query.eq('machines.is_active', true);
     }
 
     const { data, error } = await query;
@@ -118,7 +126,14 @@ async function fetchAllSchedules(includeInactive = false) {
       throw error;
     }
 
-    return data || [];
+    // Flatten the data - machines objesini dışarı çıkar
+    const flattenedData = (data || []).map(item => ({
+      ...item,
+      machine_no: item.machines.machine_no,
+      machine_name: item.machines.machine_name
+    }));
+
+    return flattenedData;
   } catch (err) {
     console.error('fetchAllSchedules error:', err);
     throw err;
@@ -135,19 +150,33 @@ async function fetchMachineSchedules(machineNo) {
   ensureSupabase();
 
   try {
+    // İlk önce machine'in ID'sini bul
+    const machine = await fetchMachine(machineNo);
+    if (!machine) {
+      throw new Error(`Makine ${machineNo} bulunamadı!`);
+    }
+
+    // machine_id ile schedules çek
     const { data, error } = await window.supabase
       .from('maintenance_schedules')
       .select('*')
-      .eq('machine_no', machineNo)
+      .eq('machine_id', machine.id)
       .eq('is_active', true)
-      .order('schedule_id', { ascending: true });
+      .order('maintenance_type', { ascending: true });
 
     if (error) {
       console.error(`Makine ${machineNo} schedule'ları çekilirken hata:`, error);
       throw error;
     }
 
-    return data || [];
+    // machine_no ve machine_name ekle
+    const schedulesWithMachineInfo = (data || []).map(item => ({
+      ...item,
+      machine_no: machine.machine_no,
+      machine_name: machine.machine_name
+    }));
+
+    return schedulesWithMachineInfo;
   } catch (err) {
     console.error('fetchMachineSchedules error:', err);
     throw err;
@@ -256,17 +285,29 @@ async function fetchSchedulesByFrequency(frequency) {
   try {
     const { data, error } = await window.supabase
       .from('maintenance_schedules')
-      .select('*')
+      .select(`
+        *,
+        machines!inner (
+          machine_no,
+          machine_name
+        )
+      `)
       .eq('frequency', frequency)
-      .eq('is_active', true)
-      .order('machine_no', { ascending: true });
+      .eq('is_active', true);
 
     if (error) {
       console.error(`Frequency ${frequency} schedule'ları çekilirken hata:`, error);
       throw error;
     }
 
-    return data || [];
+    // Flatten the data
+    const flattenedData = (data || []).map(item => ({
+      ...item,
+      machine_no: item.machines.machine_no,
+      machine_name: item.machines.machine_name
+    }));
+
+    return flattenedData;
   } catch (err) {
     console.error('fetchSchedulesByFrequency error:', err);
     throw err;
@@ -284,11 +325,13 @@ async function fetchMachinesWithoutSchedule() {
   try {
     const { machines, schedules } = await fetchMaintenanceData();
 
-    const machinesWithSchedule = new Set(
-      schedules.map(s => s.machine_no)
+    // Schedule'lardaki machine_id'leri topla
+    const machineIdsWithSchedule = new Set(
+      schedules.map(s => s.machine_id)
     );
 
-    return machines.filter(m => !machinesWithSchedule.has(m.machine_no));
+    // Schedule olmayan makineleri filtrele
+    return machines.filter(m => !machineIdsWithSchedule.has(m.id));
   } catch (err) {
     console.error('fetchMachinesWithoutSchedule error:', err);
     throw err;
