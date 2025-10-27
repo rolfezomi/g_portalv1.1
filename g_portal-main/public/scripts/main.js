@@ -657,43 +657,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Kullanıcı rolünü al
     await loadUserRole(username);
 
-    // Rol bazlı menü gösterimi
+    // Rol bazlı menü gösterimi (merkezileştirilmiş)
+    refreshMenusBasedOnRole();
+
+    // Rol bazlı sayfa yükleme ve başlangıç işlemleri
     if (currentUserRole === 'admin') {
-      showFullAccessMenu(); // Trend Analizi
-      showAdminMenu(); // Logs + User Management
-      showExecutiveMenu(); // Dashboard
-      showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
-      showRevisionAnalyticsMenu(); // Revizyon Analiz (Admin tüm modülleri görür)
-      showMaintenanceMenu(); // Bakım Yönetimi (Admin tüm modülleri görür)
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
     } else if (currentUserRole === 'maintenance') {
-      // Bakım kullanıcısı SADECE bakım modülünü görsün
-      const allMenuItems = document.querySelectorAll('.menu ul li');
-      allMenuItems.forEach(item => {
-        if (item.id !== 'maintenance-menu') {
-          item.style.display = 'none';
-        }
-      });
-      showMaintenanceMenu();
       showMaintenanceModule(); // Direkt bakım modülüne yönlendir
     } else if (currentUserRole === 'purchasing') {
-      // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
-      hideAllMenusExceptPurchasing(); // Önce tüm menüleri gizle
-      showPurchasingMenu();
-      showRevisionAnalyticsMenu();
       showSection('purchasing'); // Direkt satın alma sayfasına yönlendir
     } else if (currentUserRole === 'full') {
-      // Kalite Yönetim: Tüm ölçüm sayfaları + Trend Analizi + Dashboard (Satın Alma ve Revizyon Analiz HARİÇ)
-      showFullAccessMenu(); // Trend Analizi
-      showExecutiveMenu(); // Dashboard
       showHomepage();
       await loadRecent();
       updateTrendFromStorage();
     } else if (currentUserRole === 'executive') {
-      showFullAccessMenu(); // Trend Analizi
-      showExecutiveMenu(); // Dashboard (Executive menü kısıtlamaları sonrasında uygulanır)
       await loadRecent(); // Verileri yükle (Trend Analizi için gerekli)
       showSection('executive-dashboard'); // Executive için anasayfa Dashboard
     } else {
@@ -996,6 +976,46 @@ function showMaintenanceModule() {
 
   // Bakım modülüne yönlendir
   window.location.href = '/maintenance/';
+}
+
+// Menüleri role göre yeniden göster (sayfa yenileme olmadan)
+function refreshMenusBasedOnRole() {
+  console.log('🔄 Menüler yenileniyor, rol:', currentUserRole);
+
+  // Önce tüm menüleri gizle
+  const allMenuItems = document.querySelectorAll('.menu ul li');
+  allMenuItems.forEach(item => {
+    item.style.display = 'none';
+  });
+
+  // Role göre menüleri göster
+  if (currentUserRole === 'admin') {
+    showFullAccessMenu(); // Trend Analizi
+    showAdminMenu(); // Logs + User Management
+    showExecutiveMenu(); // Dashboard
+    showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
+    showRevisionAnalyticsMenu(); // Revizyon Analiz (Admin tüm modülleri görür)
+    showMaintenanceMenu(); // Bakım Yönetimi (Admin tüm modülleri görür)
+  } else if (currentUserRole === 'maintenance') {
+    // Bakım kullanıcısı SADECE bakım modülünü görsün
+    showMaintenanceMenu();
+  } else if (currentUserRole === 'purchasing') {
+    // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
+    showPurchasingMenu();
+    showRevisionAnalyticsMenu();
+  } else if (currentUserRole === 'full') {
+    // Kalite Yönetim: Tüm ölçüm sayfaları + Trend Analizi + Dashboard (Satın Alma ve Revizyon Analiz HARİÇ)
+    showFullAccessMenu(); // Trend Analizi
+    showExecutiveMenu(); // Dashboard
+  } else if (currentUserRole === 'executive') {
+    showFullAccessMenu(); // Trend Analizi
+    showExecutiveMenu(); // Dashboard (Executive menü kısıtlamaları sonrasında uygulanır)
+  } else {
+    // Restricted kullanıcı: Sadece ölçüm sayfaları (Trend Analizi ve Dashboard HARİÇ)
+    // Hiçbir ek menü gösterme, sadece default menüler
+  }
+
+  console.log('✅ Menüler güncellendi');
 }
 
 // ====== NAVİGASYON ======
@@ -1842,6 +1862,13 @@ async function updateUserRoleByEmail(email, existingRoleId) {
     }
 
     showToast(result?.message || `${email} kullanıcısının rolü güncellendi`);
+
+    // Eğer güncellenen kullanıcı şu anda oturum açmış kullanıcıysa, menüleri yenile
+    if (email === currentUserEmail) {
+      console.log('🔄 Kendi rolünüz güncellendi, menüler yenileniyor...');
+      await loadUserRole(email); // Rolü yeniden yükle
+      refreshMenusBasedOnRole(); // Menüleri güncelle
+    }
 
     // Sayfayı yenile
     setTimeout(() => initUsersPage(), 1000);
