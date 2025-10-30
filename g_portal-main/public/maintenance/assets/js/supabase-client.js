@@ -159,7 +159,7 @@ class SupabaseClient {
           maintenance_schedules!inner (
             id,
             maintenance_type,
-            description
+            frequency
           )
         `)
         .gte('scheduled_date', startDate)
