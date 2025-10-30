@@ -29,9 +29,24 @@ class AuthManager {
         this.currentUser = session.user;
         console.log('✅ User authenticated:', this.currentUser.email);
       } else {
-        console.log('⚠️ No active session');
-        this.redirectToLogin();
-        return;
+        console.log('⚠️ No active session in maintenance module');
+
+        // Ana portaldan session olup olmadığını kontrol et
+        // Supabase session localStorage'da otomatik saklanır
+        // Bir süre bekleyip tekrar deneyelim (async yükleme için)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const { data: { session: retrySession } } = await supabaseClient.getClient().auth.getSession();
+
+        if (retrySession) {
+          this.session = retrySession;
+          this.currentUser = retrySession.user;
+          console.log('✅ Session found on retry:', this.currentUser.email);
+        } else {
+          console.log('❌ No session found, redirecting to login');
+          this.redirectToLogin();
+          return;
+        }
       }
 
       // Auth state değişikliklerini dinle
