@@ -105,16 +105,33 @@ const CalendarView = {
   attachEventListeners() {
     document.getElementById('year-selector').addEventListener('change', async (e) => {
       this.currentYear = parseInt(e.target.value);
-      const events = await supabaseClient.getYearCalendar(this.currentYear);
-      this.calendar.removeAllEvents();
-      this.calendar.addEventSource(events);
+
+      // Show loading
+      const calendarEl = document.getElementById('calendar-container');
+      calendarEl.innerHTML = '<div class="loading-spinner" style="padding: 40px; text-align: center;">Takvim yükleniyor...</div>';
+
+      try {
+        // Destroy existing calendar
+        if (this.calendar) {
+          this.calendar.destroy();
+          this.calendar = null;
+        }
+
+        // Reinitialize calendar with new year
+        await this.initCalendar();
+
+        console.log(`✅ Takvim ${this.currentYear} yılına güncellendi`);
+      } catch (error) {
+        console.error('Takvim güncelleme hatası:', error);
+        alert('Takvim yüklenirken hata oluştu: ' + error.message);
+      }
     });
   },
 
   getYearOptions() {
     const currentYear = new Date().getFullYear();
     let options = '';
-    for (let year = currentYear - 1; year <= currentYear + 2; year++) {
+    for (let year = currentYear - 1; year <= currentYear + 3; year++) {
       options += `<option value="${year}" ${year === this.currentYear ? 'selected' : ''}>${year}</option>`;
     }
     return options;
