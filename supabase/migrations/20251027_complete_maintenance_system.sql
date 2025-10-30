@@ -102,6 +102,78 @@ CREATE TABLE IF NOT EXISTS maintenance_calendar (
   UNIQUE(schedule_id, scheduled_date)
 );
 
+-- 1.5) MEVCUT MAINTENANCE_RECORDS TABLOSUNU GÜNCELLE
+-- maintenance_records tablosu zaten var ama bazı kolonlar eksik olabilir
+DO $$
+BEGIN
+  -- scheduled_date kolonu yoksa ekle
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'scheduled_date'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN scheduled_date DATE;
+    RAISE NOTICE '✅ maintenance_records.scheduled_date kolonu eklendi';
+  END IF;
+
+  -- calendar_id kolonu yoksa ekle (maintenance_calendar oluşturulduktan sonra)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'calendar_id'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN calendar_id UUID REFERENCES maintenance_calendar(id) ON DELETE CASCADE;
+    RAISE NOTICE '✅ maintenance_records.calendar_id kolonu eklendi';
+  END IF;
+
+  -- priority kolonu yoksa ekle
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'priority'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN priority INTEGER DEFAULT 0;
+    RAISE NOTICE '✅ maintenance_records.priority kolonu eklendi';
+  END IF;
+
+  -- checklist_results kolonu yoksa ekle
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'checklist_results'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN checklist_results JSONB DEFAULT '[]'::jsonb;
+    RAISE NOTICE '✅ maintenance_records.checklist_results kolonu eklendi';
+  END IF;
+
+  -- photos kolonu yoksa ekle
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'photos'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN photos TEXT[] DEFAULT ARRAY[]::TEXT[];
+    RAISE NOTICE '✅ maintenance_records.photos kolonu eklendi';
+  END IF;
+
+  -- materials_used kolonu yoksa ekle
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'materials_used'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN materials_used TEXT;
+    RAISE NOTICE '✅ maintenance_records.materials_used kolonu eklendi';
+  END IF;
+
+  -- next_maintenance_date kolonu yoksa ekle
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'maintenance_records' AND column_name = 'next_maintenance_date'
+  ) THEN
+    ALTER TABLE maintenance_records ADD COLUMN next_maintenance_date DATE;
+    RAISE NOTICE '✅ maintenance_records.next_maintenance_date kolonu eklendi';
+  END IF;
+
+  RAISE NOTICE '✅ maintenance_records tablosu güncellendi';
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE '⚠️ maintenance_records güncelleme hatası: %', SQLERRM;
+END $$;
+
 -- 2) BAKIM KAYITLARI TABLOSU (maintenance_calendar'dan sonra oluştur)
 -- NOT: Bu tablo zaten mevcut olabilir, IF NOT EXISTS ile güvenli oluştur
 CREATE TABLE IF NOT EXISTS maintenance_records (
