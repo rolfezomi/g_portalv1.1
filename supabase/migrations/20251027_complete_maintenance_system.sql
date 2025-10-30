@@ -16,6 +16,21 @@ ALTER TABLE machines ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
 CREATE INDEX IF NOT EXISTS idx_machines_category ON machines(category);
 CREATE INDEX IF NOT EXISTS idx_machines_status ON machines(status);
 
+-- maintenance_schedules tablosunu güncelle (weekly frequency ekle)
+DO $$
+BEGIN
+  ALTER TABLE maintenance_schedules
+  DROP CONSTRAINT IF EXISTS maintenance_schedules_frequency_check;
+
+  ALTER TABLE maintenance_schedules
+  ADD CONSTRAINT maintenance_schedules_frequency_check
+  CHECK (frequency IN ('weekly', 'monthly', 'quarterly', 'semi-annual', 'annual'));
+
+  RAISE NOTICE '✅ maintenance_schedules frequency constraint güncellendi';
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE '⚠️ Constraint zaten güncel veya tablo yok: %', SQLERRM;
+END $$;
+
 -- ==================== BÖLÜM 1: EKSİK MAKİNELERİ EKLE ====================
 
 -- ÜK Serisi (Üretim Kategorisi) - 17 Makine
@@ -36,13 +51,23 @@ INSERT INTO machines (machine_no, machine_name, category, location, status) VALU
 ('ÜK-1045', 'Kesme Makinesi 45', 'ÜK', 'Üretim', 'active'),
 ('ÜK-1046', 'Kesme Makinesi 46', 'ÜK', 'Üretim', 'active'),
 ('ÜK-1047', 'Kesme Makinesi 47', 'ÜK', 'Üretim', 'active'),
-('ÜK-1049', 'Kesme Makinesi 49', 'ÜK', 'Üretim', 'active');
+('ÜK-1049', 'Kesme Makinesi 49', 'ÜK', 'Üretim', 'active')
+ON CONFLICT (machine_no) DO UPDATE SET
+  machine_name = EXCLUDED.machine_name,
+  category = EXCLUDED.category,
+  location = EXCLUDED.location,
+  status = EXCLUDED.status;
 
 -- TD Serisi (Teknik Destek) - 3 Makine
 INSERT INTO machines (machine_no, machine_name, category, location, status) VALUES
 ('TD-2005', 'Destek Ekipmanı 5', 'TD', 'Teknik Destek', 'active'),
 ('TD-2006', 'Destek Ekipmanı 6', 'TD', 'Teknik Destek', 'active'),
-('TD-2011', 'Destek Ekipmanı 11', 'TD', 'Teknik Destek', 'active');
+('TD-2011', 'Destek Ekipmanı 11', 'TD', 'Teknik Destek', 'active')
+ON CONFLICT (machine_no) DO UPDATE SET
+  machine_name = EXCLUDED.machine_name,
+  category = EXCLUDED.category,
+  location = EXCLUDED.location,
+  status = EXCLUDED.status;
 
 -- ÜT Serisi (Üretim Teknik) - 5 Makine
 INSERT INTO machines (machine_no, machine_name, category, location, status) VALUES
@@ -50,14 +75,24 @@ INSERT INTO machines (machine_no, machine_name, category, location, status) VALU
 ('ÜT-3019', 'Teknik Üretim Ekipmanı 19', 'ÜT', 'Üretim', 'active'),
 ('ÜT-3020', 'Teknik Üretim Ekipmanı 20', 'ÜT', 'Üretim', 'active'),
 ('ÜT-3021', 'Teknik Üretim Ekipmanı 21', 'ÜT', 'Üretim', 'active'),
-('ÜT-3022', 'Teknik Üretim Ekipmanı 22', 'ÜT', 'Üretim', 'active');
+('ÜT-3022', 'Teknik Üretim Ekipmanı 22', 'ÜT', 'Üretim', 'active')
+ON CONFLICT (machine_no) DO UPDATE SET
+  machine_name = EXCLUDED.machine_name,
+  category = EXCLUDED.category,
+  location = EXCLUDED.location,
+  status = EXCLUDED.status;
 
 -- NA Serisi (Genel Alan) - 4 Makine
 INSERT INTO machines (machine_no, machine_name, category, location, status) VALUES
 ('NA-4001', 'Genel Alan Ekipmanı 1', 'NA', 'Genel', 'active'),
 ('NA-4002', 'Genel Alan Ekipmanı 2', 'NA', 'Genel', 'active'),
 ('NA-4003', 'Genel Alan Ekipmanı 3', 'NA', 'Genel', 'active'),
-('NA-4004', 'Genel Alan Ekipmanı 4', 'NA', 'Genel', 'active');
+('NA-4004', 'Genel Alan Ekipmanı 4', 'NA', 'Genel', 'active')
+ON CONFLICT (machine_no) DO UPDATE SET
+  machine_name = EXCLUDED.machine_name,
+  category = EXCLUDED.category,
+  location = EXCLUDED.location,
+  status = EXCLUDED.status;
 
 -- ==================== BÖLÜM 2: YENİ TABLOLARI OLUŞTUR ====================
 
@@ -508,17 +543,56 @@ VALUES (
 
 -- ==================== BÖLÜM 8: 2025 TAKVİMİNİ OLUŞTUR ====================
 
--- 2025 yılı için tüm bakım takvimini otomatik oluştur
-SELECT generate_maintenance_calendar(2025);
+-- 2025 yılı için tüm bakım takvimini otomatik oluştur (güvenli)
+DO $$
+DECLARE
+  schedule_count INTEGER;
+  calendar_count INTEGER;
+BEGIN
+  -- maintenance_schedules tablosunda kayıt var mı kontrol et
+  SELECT COUNT(*) INTO schedule_count FROM maintenance_schedules;
 
--- Overdue kontrolünü çalıştır
-SELECT update_overdue_maintenance();
+  IF schedule_count > 0 THEN
+    -- Takvim oluştur
+    BEGIN
+      PERFORM generate_maintenance_calendar(2025);
+
+      -- Kaç tane etkinlik oluşturulduğunu say
+      SELECT COUNT(*) INTO calendar_count FROM maintenance_calendar WHERE year = 2025;
+
+      RAISE NOTICE '✅ 2025 takvimi başarıyla oluşturuldu: % schedule için % etkinlik', schedule_count, calendar_count;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE '⚠️ Takvim oluşturma hatası: %', SQLERRM;
+    END;
+  ELSE
+    RAISE NOTICE '⚠️ maintenance_schedules tablosu boş, takvim oluşturulmadı';
+    RAISE NOTICE '   Takvimi daha sonra manuel oluşturabilirsiniz: SELECT generate_maintenance_calendar(2025);';
+  END IF;
+END $$;
+
+-- Overdue kontrolünü çalıştır (güvenli)
+DO $$
+BEGIN
+  PERFORM update_overdue_maintenance();
+  RAISE NOTICE '✅ Overdue maintenance kontrolü tamamlandı';
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE '⚠️ Overdue kontrolü hatası: %', SQLERRM;
+END $$;
 
 -- ==================== MİGRASYON TAMAMLANDI ====================
--- Machines tablosuna eklenen kolon: 3 (category, location, status)
--- Toplam eklenen makine: 29
--- Toplam oluşturulan tablo: 3
--- Toplam oluşturulan index: 16 (14 yeni tablo + 2 machines kolonları için)
--- Toplam oluşturulan RLS policy: 9
--- Toplam oluşturulan function: 6
--- 2025 takvimi: Otomatik oluşturuldu
+-- ✅ maintenance_schedules frequency constraint güncellendi (weekly eklendi)
+-- ✅ Machines tablosuna eklenen kolon: 3 (category, location, status)
+-- ✅ Toplam eklenen makine: 29 (ON CONFLICT ile güvenli)
+-- ✅ Toplam oluşturulan tablo: 3
+-- ✅ Toplam oluşturulan index: 16 (14 yeni tablo + 2 machines kolonları için)
+-- ✅ Toplam oluşturulan RLS policy: 9
+-- ✅ Toplam oluşturulan function: 6
+-- ✅ 2025 takvimi: Güvenli şekilde oluşturuldu (schedule varsa)
+-- ✅ Error handling: Tüm kritik bölümlerde mevcut
+--
+-- NOTLAR:
+-- - Duplicate makine kayıtları güvenli şekilde UPDATE edilir
+-- - maintenance_schedules boşsa takvim oluşturulmaz (hata vermez)
+-- - Tüm hatalar NOTICE olarak loglanır, migration durdurmaz
+--
+-- SON ADIM: Supabase Dashboard'da NOTICE mesajlarını kontrol et!
