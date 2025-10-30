@@ -232,6 +232,7 @@ const CONFIG = {
     PENDING_TASKS: 'pending-tasks',
     MACHINE_DETAILS: 'machine-details',
     MAINTENANCE_FORM: 'maintenance-form',
+    SCHEDULES: 'schedules',
     REPORTS: 'reports'
   },
 

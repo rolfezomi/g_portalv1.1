@@ -137,6 +137,12 @@ const App = {
           await MaintenanceFormView.render('main-content', params.recordId);
           break;
 
+        case CONFIG.VIEWS.SCHEDULES:
+        case 'schedules':
+          this.currentView = SchedulesView;
+          await SchedulesView.render('main-content');
+          break;
+
         case CONFIG.VIEWS.REPORTS:
         case 'reports':
           this.currentView = ReportsView;
