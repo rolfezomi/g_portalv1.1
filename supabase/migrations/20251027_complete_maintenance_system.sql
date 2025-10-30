@@ -337,7 +337,7 @@ $$ LANGUAGE plpgsql;
 
 -- ==================== BÖLÜM 6: TAKVİM OLUŞTURMA FONKSİYONLARI ====================
 
--- Haftalık bakımları günlere dağıt (Pazartesi-Cuma arası)
+-- Haftalık bakımları günlere dağıt (Pazartesi-Cuma arası) - Dengeli dağılım
 CREATE OR REPLACE FUNCTION distribute_weekly_maintenance(
   p_schedule_id UUID,
   p_machine_id UUID,
@@ -346,22 +346,26 @@ CREATE OR REPLACE FUNCTION distribute_weekly_maintenance(
 )
 RETURNS void AS $$
 DECLARE
-  v_day_offset INTEGER := 0;
   v_current_date DATE;
   v_week_num INTEGER;
   v_day_of_week INTEGER;
   v_hour INTEGER;
   v_minute INTEGER;
+  v_machine_hash INTEGER;
 BEGIN
+  -- Machine ID'ye göre hash oluştur (dengeli dağılım için)
+  -- Her makine için sabit bir gün atanır böylece aynı makinenin bakımları hep aynı günde olur
+  v_machine_hash := ('x' || substring(p_machine_id::text from 1 for 8))::bit(32)::integer;
+
+  -- Hash'e göre hafta içi günü belirle (1-5: Pazartesi-Cuma)
+  v_day_of_week := (abs(v_machine_hash) % 5) + 1;
+
   -- Her hafta için bir gün oluştur (52 hafta)
   FOR week_counter IN 0..51 LOOP
     -- Yılın başından itibaren hafta hesapla
     v_current_date := DATE(p_year || '-01-01') + (week_counter * 7);
 
-    -- Haftanın gününü belirle (1-5 arası, Pazartesi-Cuma)
-    v_day_of_week := (week_counter % 5) + 1; -- 1=Pzt, 2=Sal, 3=Çar, 4=Per, 5=Cum
-
-    -- O haftanın başına git ve günü ayarla
+    -- O haftanın başına git ve belirlenen günü ayarla
     v_current_date := date_trunc('week', v_current_date)::date + (v_day_of_week - 1);
 
     -- Yıl sınırını aşmasın
@@ -374,9 +378,10 @@ BEGIN
         ELSE 4
       END;
 
-      -- Saat dağıt (09:00 - 16:00 arası, her makine için farklı)
-      v_hour := 9 + (week_counter % 8); -- 9-16 arası
-      v_minute := (week_counter % 4) * 15; -- 0, 15, 30, 45
+      -- Saat dağıt (09:00 - 16:00 arası, her makine için farklı ama sabit)
+      -- Machine hash'e göre sabit saat belirle
+      v_hour := 9 + (abs(v_machine_hash) % 8); -- 9-16 arası
+      v_minute := ((abs(v_machine_hash) / 10) % 4) * 15; -- 0, 15, 30, 45
 
       -- Takvim kaydı ekle
       INSERT INTO maintenance_calendar (
@@ -598,27 +603,49 @@ VALUES (
 
 -- ==================== BÖLÜM 8: 2025 TAKVİMİNİ OLUŞTUR ====================
 
--- 2025 yılı için tüm bakım takvimini otomatik oluştur (güvenli)
+-- 2025, 2026 ve 2027 yılları için tüm bakım takvimini otomatik oluştur (güvenli)
 DO $$
 DECLARE
   schedule_count INTEGER;
-  calendar_count INTEGER;
+  calendar_count_2025 INTEGER;
+  calendar_count_2026 INTEGER;
+  calendar_count_2027 INTEGER;
+  current_year INTEGER;
 BEGIN
   -- maintenance_schedules tablosunda kayıt var mı kontrol et
   SELECT COUNT(*) INTO schedule_count FROM maintenance_schedules;
 
   IF schedule_count > 0 THEN
-    -- Takvim oluştur
+    -- 2025 takvimi oluştur
     BEGIN
       PERFORM generate_maintenance_calendar(2025);
-
-      -- Kaç tane etkinlik oluşturulduğunu say
-      SELECT COUNT(*) INTO calendar_count FROM maintenance_calendar WHERE year = 2025;
-
-      RAISE NOTICE '✅ 2025 takvimi başarıyla oluşturuldu: % schedule için % etkinlik', schedule_count, calendar_count;
+      SELECT COUNT(*) INTO calendar_count_2025 FROM maintenance_calendar WHERE year = 2025;
+      RAISE NOTICE '✅ 2025 takvimi başarıyla oluşturuldu: % schedule için % etkinlik', schedule_count, calendar_count_2025;
     EXCEPTION WHEN OTHERS THEN
-      RAISE NOTICE '⚠️ Takvim oluşturma hatası: %', SQLERRM;
+      RAISE NOTICE '⚠️ 2025 takvim oluşturma hatası: %', SQLERRM;
     END;
+
+    -- 2026 takvimi oluştur
+    BEGIN
+      PERFORM generate_maintenance_calendar(2026);
+      SELECT COUNT(*) INTO calendar_count_2026 FROM maintenance_calendar WHERE year = 2026;
+      RAISE NOTICE '✅ 2026 takvimi başarıyla oluşturuldu: % schedule için % etkinlik', schedule_count, calendar_count_2026;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE '⚠️ 2026 takvim oluşturma hatası: %', SQLERRM;
+    END;
+
+    -- 2027 takvimi oluştur
+    BEGIN
+      PERFORM generate_maintenance_calendar(2027);
+      SELECT COUNT(*) INTO calendar_count_2027 FROM maintenance_calendar WHERE year = 2027;
+      RAISE NOTICE '✅ 2027 takvimi başarıyla oluşturuldu: % schedule için % etkinlik', schedule_count, calendar_count_2027;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE '⚠️ 2027 takvim oluşturma hatası: %', SQLERRM;
+    END;
+
+    RAISE NOTICE '📊 TOPLAM: % schedule için toplam % etkinlik (2025-2027)',
+      schedule_count,
+      calendar_count_2025 + calendar_count_2026 + calendar_count_2027;
   ELSE
     RAISE NOTICE '⚠️ maintenance_schedules tablosu boş, takvim oluşturulmadı';
     RAISE NOTICE '   Takvimi daha sonra manuel oluşturabilirsiniz: SELECT generate_maintenance_calendar(2025);';

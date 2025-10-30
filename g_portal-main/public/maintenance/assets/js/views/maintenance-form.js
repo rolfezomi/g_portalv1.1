@@ -39,7 +39,7 @@ const MaintenanceFormView = {
       <div class="maintenance-form-view">
         <div class="form-header">
           <h1>${isEdit ? 'Bakım Kaydı Düzenle' : 'Yeni Bakım Kaydı'}</h1>
-          <button class="btn btn-secondary" onclick="history.back()">
+          <button class="btn btn-secondary" onclick="App.goBack()">
             ← Geri
           </button>
         </div>
@@ -93,7 +93,7 @@ const MaintenanceFormView = {
 
           ${!isCompleted ? `
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" onclick="history.back()">
+              <button type="button" class="btn btn-secondary" onclick="App.goBack()">
                 İptal
               </button>
               <button type="submit" class="btn btn-primary">

@@ -5,6 +5,7 @@
 
 const App = {
   currentView: null,
+  previousView: null,
   isInitialized: false,
 
   /**
@@ -93,6 +94,11 @@ const App = {
       return;
     }
 
+    // Save previous view for navigation
+    if (this.currentView && viewName !== this.previousView) {
+      this.previousView = localStorage.getItem(CONFIG.STORAGE_KEYS.LAST_VIEW);
+    }
+
     // Cleanup current view
     if (this.currentView && this.currentView.cleanup) {
       this.currentView.cleanup();
@@ -157,6 +163,15 @@ const App = {
    */
   showMaintenanceForm(recordId = null) {
     this.showView(CONFIG.VIEWS.MAINTENANCE_FORM, { recordId });
+  },
+
+  /**
+   * Bir önceki view'a geri dön
+   */
+  goBack() {
+    const targetView = this.previousView || CONFIG.VIEWS.PENDING_TASKS;
+    console.log('⬅️ Geri dönülüyor:', targetView);
+    this.showView(targetView);
   },
 
   /**
