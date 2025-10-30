@@ -55,6 +55,7 @@ const CalendarView = {
     this.calendar = new FullCalendar.Calendar(calendarEl, {
       ...CONFIG.FULLCALENDAR_LOCALE,
       initialView: 'dayGridMonth',
+      initialDate: `${this.currentYear}-01-01`,
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
