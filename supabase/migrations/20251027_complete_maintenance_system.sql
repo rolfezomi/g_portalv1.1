@@ -4,6 +4,18 @@
 -- Açıklama: Eksik makineler, yeni tablolar ve takvim sistemi
 -- =====================================================
 
+-- ==================== BÖLÜM 0: MAKİNELER TABLOSUNU GENİŞLET ====================
+
+-- Eksik kolonları ekle (IF NOT EXISTS ile güvenli)
+-- Bu kolonlar frontend kategorileme, lokasyon ve durum için gerekli
+ALTER TABLE machines ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE machines ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE machines ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+
+-- Kategori bazlı index ekle (performans için)
+CREATE INDEX IF NOT EXISTS idx_machines_category ON machines(category);
+CREATE INDEX IF NOT EXISTS idx_machines_status ON machines(status);
+
 -- ==================== BÖLÜM 1: EKSİK MAKİNELERİ EKLE ====================
 
 -- ÜK Serisi (Üretim Kategorisi) - 17 Makine
@@ -49,28 +61,7 @@ INSERT INTO machines (machine_no, machine_name, category, location, status) VALU
 
 -- ==================== BÖLÜM 2: YENİ TABLOLARI OLUŞTUR ====================
 
--- 1) BAKIM KAYITLARI TABLOSU
-CREATE TABLE IF NOT EXISTS maintenance_records (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  calendar_id UUID REFERENCES maintenance_calendar(id) ON DELETE CASCADE,
-  machine_id UUID REFERENCES machines(id) ON DELETE CASCADE NOT NULL,
-  maintenance_type TEXT NOT NULL,
-  scheduled_date DATE NOT NULL,
-  completed_date TIMESTAMPTZ,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled', 'overdue')),
-  priority INTEGER DEFAULT 0, -- 0=normal, 1=high, 2=urgent
-  performed_by UUID REFERENCES auth.users(id),
-  duration_minutes INTEGER,
-  notes TEXT,
-  checklist_results JSONB DEFAULT '[]'::jsonb,
-  photos TEXT[] DEFAULT ARRAY[]::TEXT[],
-  materials_used TEXT,
-  next_maintenance_date DATE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- 2) BAKIM TAKVİMİ TABLOSU
+-- 1) BAKIM TAKVİMİ TABLOSU (önce oluştur - maintenance_records'a referans edilecek)
 CREATE TABLE IF NOT EXISTS maintenance_calendar (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   schedule_id UUID REFERENCES maintenance_schedules(id) ON DELETE CASCADE NOT NULL,
@@ -89,6 +80,27 @@ CREATE TABLE IF NOT EXISTS maintenance_calendar (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(schedule_id, scheduled_date)
+);
+
+-- 2) BAKIM KAYITLARI TABLOSU (maintenance_calendar'dan sonra oluştur)
+CREATE TABLE IF NOT EXISTS maintenance_records (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  calendar_id UUID REFERENCES maintenance_calendar(id) ON DELETE CASCADE,
+  machine_id UUID REFERENCES machines(id) ON DELETE CASCADE NOT NULL,
+  maintenance_type TEXT NOT NULL,
+  scheduled_date DATE NOT NULL,
+  completed_date TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled', 'overdue')),
+  priority INTEGER DEFAULT 0, -- 0=normal, 1=high, 2=urgent
+  performed_by UUID REFERENCES auth.users(id),
+  duration_minutes INTEGER,
+  notes TEXT,
+  checklist_results JSONB DEFAULT '[]'::jsonb,
+  photos TEXT[] DEFAULT ARRAY[]::TEXT[],
+  materials_used TEXT,
+  next_maintenance_date DATE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- 3) CHECKLIST ŞABLONLARı TABLOSU
@@ -503,9 +515,10 @@ SELECT generate_maintenance_calendar(2025);
 SELECT update_overdue_maintenance();
 
 -- ==================== MİGRASYON TAMAMLANDI ====================
+-- Machines tablosuna eklenen kolon: 3 (category, location, status)
 -- Toplam eklenen makine: 29
 -- Toplam oluşturulan tablo: 3
--- Toplam oluşturulan index: 14
+-- Toplam oluşturulan index: 16 (14 yeni tablo + 2 machines kolonları için)
 -- Toplam oluşturulan RLS policy: 9
 -- Toplam oluşturulan function: 6
 -- 2025 takvimi: Otomatik oluşturuldu
