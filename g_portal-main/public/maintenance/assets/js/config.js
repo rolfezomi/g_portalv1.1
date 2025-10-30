@@ -237,11 +237,8 @@ const CONFIG = {
 
   // FullCalendar locale ayarları
   FULLCALENDAR_LOCALE: {
-    code: 'tr',
-    week: {
-      dow: 1, // Pazartesi ile başla
-      doy: 4
-    },
+    locale: 'tr',
+    firstDay: 1, // Pazartesi ile başla
     buttonText: {
       prev: 'Önceki',
       next: 'Sonraki',
@@ -254,7 +251,12 @@ const CONFIG = {
     weekText: 'Hf',
     allDayText: 'Tüm gün',
     moreLinkText: 'daha fazla',
-    noEventsText: 'Gösterilecek etkinlik yok'
+    noEventsText: 'Gösterilecek etkinlik yok',
+    dayHeaderFormat: { weekday: 'short' },
+    dayNames: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
+    dayNamesShort: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
+    monthNames: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+    monthNamesShort: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
   },
 
   // Export ayarları
