@@ -415,7 +415,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Aylık/Üç Aylık/Altı Aylık/Yıllık bakımları oluştur
+-- Aylık/Üç Aylık/Altı Aylık/Yıllık bakımları oluştur - Dengeli dağılım
 CREATE OR REPLACE FUNCTION generate_scheduled_maintenance(
   p_schedule_id UUID,
   p_machine_id UUID,
@@ -432,7 +432,14 @@ DECLARE
   v_day_of_week INTEGER;
   v_hour INTEGER;
   v_minute INTEGER;
+  v_machine_hash INTEGER;
 BEGIN
+  -- Machine ID'ye göre hash oluştur (dengeli dağılım için)
+  v_machine_hash := ('x' || substring(p_machine_id::text from 1 for 8))::bit(32)::integer;
+
+  -- Hash'e göre hafta içi günü belirle (1-5: Pazartesi-Cuma)
+  v_day_of_week := (abs(v_machine_hash) % 5) + 1;
+
   -- Belirtilen her ay için
   FOREACH v_month IN ARRAY p_months LOOP
     -- Her hafta için (1-4)
@@ -442,13 +449,12 @@ BEGIN
 
       -- Ayın sınırını aşmasın
       IF EXTRACT(MONTH FROM v_date) = v_month THEN
-        -- Haftanın ortası (Çarşamba)
-        v_day_of_week := 3;
-        v_date := date_trunc('week', v_date)::date + 2; -- Çarşamba
+        -- O haftanın başına git ve belirlenen günü ayarla
+        v_date := date_trunc('week', v_date)::date + (v_day_of_week - 1);
 
-        -- Saat dağıt
-        v_hour := 10 + (v_week - 1) * 2; -- 10, 12, 14, 16
-        v_minute := v_month * 5 % 60; -- Aya göre dakika
+        -- Saat dağıt (machine hash'e göre sabit saat)
+        v_hour := 10 + (abs(v_machine_hash) % 7); -- 10-16 arası
+        v_minute := ((abs(v_machine_hash) / 10) % 4) * 15; -- 0, 15, 30, 45
 
         -- Takvim kaydı ekle
         INSERT INTO maintenance_calendar (
