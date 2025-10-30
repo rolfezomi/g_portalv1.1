@@ -43,7 +43,10 @@
       "Bash(https://api.github.com/repos/rolfezomi/g_portalv1.1/actions/secrets/public-key)",
       "Bash(rm -rf api/)",
       "Bash(rm -rf scripts/)",
-      "Bash(rm -f index.html.backup_20251016_135140 nul _redirects)"
+      "Bash(rm -f index.html.backup_20251016_135140 nul _redirects)",
+      "Read(//c/Users/Onars/OneDrive/Masaüstü/Siveno Geliştirmeler/maintenance_vanilla_tracking/project/src/**)",
+      "Read(//c/Users/Onars/OneDrive/Masaüstü/Siveno Geliştirmeler/maintenance_vanilla_tracking/project/**)",
+      "Bash(cmd.exe /c \"xcopy g_portal-main\\public\\maintenance g_portal-main\\.backup\\maintenance_old_20251027\\ /E /I /H /Y\")"
     ],
     "deny": [],
     "ask": []
