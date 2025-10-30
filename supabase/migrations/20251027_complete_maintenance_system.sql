@@ -16,20 +16,22 @@ ALTER TABLE machines ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
 CREATE INDEX IF NOT EXISTS idx_machines_category ON machines(category);
 CREATE INDEX IF NOT EXISTS idx_machines_status ON machines(status);
 
--- maintenance_schedules tablosunu güncelle (weekly frequency ekle)
-DO $$
-BEGIN
-  ALTER TABLE maintenance_schedules
-  DROP CONSTRAINT IF EXISTS maintenance_schedules_frequency_check;
+-- ==================== BÖLÜM 0.5: BAKIM ÇİZELGESİ TABLOSUNU OLUŞTUR ====================
 
-  ALTER TABLE maintenance_schedules
-  ADD CONSTRAINT maintenance_schedules_frequency_check
-  CHECK (frequency IN ('weekly', 'monthly', 'quarterly', 'semi-annual', 'annual'));
+-- maintenance_schedules tablosunu oluştur (diğer tablolar buna referans verecek)
+CREATE TABLE IF NOT EXISTS maintenance_schedules (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  machine_id UUID REFERENCES machines(id) ON DELETE CASCADE NOT NULL,
+  maintenance_type TEXT NOT NULL,
+  frequency TEXT NOT NULL CHECK (frequency IN ('weekly', 'monthly', 'quarterly', 'semi-annual', 'annual')),
+  months TEXT, -- "{1,4,7,10}" formatında - hangi aylarda bakım yapılacak
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-  RAISE NOTICE '✅ maintenance_schedules frequency constraint güncellendi';
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE '⚠️ Constraint zaten güncel veya tablo yok: %', SQLERRM;
-END $$;
+-- maintenance_schedules indexes
+CREATE INDEX IF NOT EXISTS idx_maintenance_schedules_machine_id ON maintenance_schedules(machine_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_schedules_frequency ON maintenance_schedules(frequency);
 
 -- ==================== BÖLÜM 1: EKSİK MAKİNELERİ EKLE ====================
 
@@ -176,6 +178,29 @@ CREATE INDEX IF NOT EXISTS idx_checklist_templates_category ON checklist_templat
 
 -- ==================== BÖLÜM 4: RLS POLİCYLERİ ====================
 
+-- maintenance_schedules RLS
+ALTER TABLE maintenance_schedules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view schedules"
+  ON maintenance_schedules FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Authenticated users can insert schedules"
+  ON maintenance_schedules FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can update schedules"
+  ON maintenance_schedules FOR UPDATE
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Authenticated users can delete schedules"
+  ON maintenance_schedules FOR DELETE
+  TO authenticated
+  USING (true);
+
 -- maintenance_records RLS
 ALTER TABLE maintenance_records ENABLE ROW LEVEL SECURITY;
 
@@ -256,6 +281,12 @@ CREATE TRIGGER update_maintenance_calendar_updated_at
 -- checklist_templates updated_at trigger
 CREATE TRIGGER update_checklist_templates_updated_at
   BEFORE UPDATE ON checklist_templates
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- maintenance_schedules updated_at trigger
+CREATE TRIGGER update_maintenance_schedules_updated_at
+  BEFORE UPDATE ON maintenance_schedules
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -580,19 +611,40 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 
 -- ==================== MİGRASYON TAMAMLANDI ====================
--- ✅ maintenance_schedules frequency constraint güncellendi (weekly eklendi)
 -- ✅ Machines tablosuna eklenen kolon: 3 (category, location, status)
+-- ✅ Toplam oluşturulan tablo: 4 (maintenance_schedules, maintenance_calendar, maintenance_records, checklist_templates)
 -- ✅ Toplam eklenen makine: 29 (ON CONFLICT ile güvenli)
--- ✅ Toplam oluşturulan tablo: 3
--- ✅ Toplam oluşturulan index: 16 (14 yeni tablo + 2 machines kolonları için)
--- ✅ Toplam oluşturulan RLS policy: 9
+-- ✅ Toplam oluşturulan index: 18
+--    - 2 machines (category, status)
+--    - 2 maintenance_schedules (machine_id, frequency)
+--    - 6 maintenance_records
+--    - 5 maintenance_calendar
+--    - 2 checklist_templates
+-- ✅ Toplam oluşturulan RLS policy: 13
+--    - 4 maintenance_schedules (view, insert, update, delete)
+--    - 3 maintenance_records (view, insert, update)
+--    - 3 maintenance_calendar (view, insert, update)
+--    - 3 checklist_templates (view, insert, update)
 -- ✅ Toplam oluşturulan function: 6
+--    - update_updated_at_column()
+--    - update_overdue_maintenance()
+--    - distribute_weekly_maintenance()
+--    - generate_scheduled_maintenance()
+--    - generate_maintenance_calendar()
+-- ✅ Toplam trigger: 4 (maintenance_schedules, maintenance_records, maintenance_calendar, checklist_templates)
 -- ✅ 2025 takvimi: Güvenli şekilde oluşturuldu (schedule varsa)
 -- ✅ Error handling: Tüm kritik bölümlerde mevcut
 --
+-- TABLO OLUŞTURMA SIRASI (ÖNEMLİ):
+-- 1. maintenance_schedules (EN ÖNCE - diğer tablolar buna referans veriyor)
+-- 2. maintenance_calendar (maintenance_schedules'a referans veriyor)
+-- 3. maintenance_records (maintenance_calendar'a referans veriyor)
+-- 4. checklist_templates (bağımsız)
+--
 -- NOTLAR:
--- - Duplicate makine kayıtları güvenli şekilde UPDATE edilir
+-- - Duplicate makine kayıtları güvenli şekilde UPDATE edilir (ON CONFLICT)
 -- - maintenance_schedules boşsa takvim oluşturulmaz (hata vermez)
 -- - Tüm hatalar NOTICE olarak loglanır, migration durdurmaz
+-- - Tablo oluşturma sırası foreign key dependency'ler için kritik
 --
--- SON ADIM: Supabase Dashboard'da NOTICE mesajlarını kontrol et!
+-- SON ADIM: Supabase Dashboard'da bu SQL'i çalıştır ve NOTICE mesajlarını kontrol et!
