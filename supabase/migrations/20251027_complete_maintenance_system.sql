@@ -411,7 +411,6 @@ CREATE OR REPLACE FUNCTION generate_maintenance_calendar(p_year INTEGER)
 RETURNS void AS $$
 DECLARE
   v_schedule RECORD;
-  v_months INTEGER[];
 BEGIN
   -- Tüm aktif schedule'ları al
   FOR v_schedule IN
@@ -424,9 +423,6 @@ BEGIN
     FROM maintenance_schedules ms
     INNER JOIN machines m ON m.id = ms.machine_id
   LOOP
-    -- Months string'ini array'e çevir: "{1,4,7,10}" -> [1,4,7,10]
-    v_months := string_to_array(trim(both '{}' from v_schedule.months), ',')::INTEGER[];
-
     -- Frequency'ye göre takvim oluştur
     IF v_schedule.frequency = 'weekly' THEN
       -- Haftalık bakımları dağıt
@@ -438,12 +434,13 @@ BEGIN
       );
     ELSE
       -- Aylık/Üç Aylık/Altı Aylık/Yıllık
+      -- months kolonu zaten int4[] tipinde, direkt kullan
       PERFORM generate_scheduled_maintenance(
         v_schedule.schedule_id,
         v_schedule.machine_id,
         v_schedule.maintenance_type,
         v_schedule.frequency,
-        v_months,
+        v_schedule.months, -- Direkt int4[] olarak kullan
         p_year
       );
     END IF;
