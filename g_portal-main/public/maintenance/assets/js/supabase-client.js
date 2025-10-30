@@ -225,12 +225,8 @@ class SupabaseClient {
             machine_no,
             machine_name,
             category,
-            location
-          ),
-          performed_by_user:auth.users!performed_by (
-            id,
-            email,
-            raw_user_meta_data
+            location,
+            status
           )
         `)
         .order('scheduled_date', { ascending: true });
@@ -263,8 +259,10 @@ class SupabaseClient {
       // Flatten data
       return (data || []).map(item => ({
         ...item,
-        machine: item.machines,
-        performed_by_data: item.performed_by_user
+        machine: item.machines
+        // NOT: performed_by user bilgisi auth.users'dan direkt çekilemez
+        // Frontend'de performed_by UUID'si ile ayrı sorgu yapılmalı veya
+        // user_profiles gibi bir tablo oluşturulmalı
       }));
     } catch (error) {
       console.error('getMaintenanceRecords error:', error);
