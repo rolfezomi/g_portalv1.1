@@ -95,8 +95,13 @@ class AuthManager {
     this.currentUser = null;
     this.session = null;
     try {
-      localStorage.removeItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN);
-      localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_DATA);
+      // Tüm localStorage'ı temizle
+      localStorage.clear();
+
+      // SessionStorage'ı da temizle
+      sessionStorage.clear();
+
+      console.log('✅ Tüm session bilgileri temizlendi');
     } catch (error) {
       console.error('Session clear error:', error);
     }
@@ -106,8 +111,11 @@ class AuthManager {
    * Login sayfasına yönlendir
    */
   redirectToLogin() {
-    // Ana portal login sayfasına git
-    window.location.href = '/';
+    // Inactivity timer'ı durdur
+    this.stopInactivityTimer();
+
+    // Ana portal login sayfasına git (cache'i atla)
+    window.location.replace('/');
   }
 
   /**
@@ -115,15 +123,25 @@ class AuthManager {
    */
   async logout() {
     try {
-      const { error } = await supabaseClient.getClient().auth.signOut();
+      console.log('🚪 Logout işlemi başlatılıyor...');
 
-      if (error) throw error;
+      // Supabase'den çıkış yap (global scope'tan)
+      const { error } = await supabaseClient.getClient().auth.signOut({ scope: 'global' });
 
+      if (error) {
+        console.warn('Supabase logout warning:', error);
+      }
+
+      // Tüm session bilgilerini temizle
       this.clearSession();
+
+      console.log('✅ Logout başarılı, login sayfasına yönlendiriliyor...');
+
+      // Login sayfasına yönlendir
       this.redirectToLogin();
     } catch (error) {
       console.error('Logout error:', error);
-      // Hata olsa bile local session'ı temizle ve yönlendir
+      // Hata olsa bile session'ı temizle ve yönlendir
       this.clearSession();
       this.redirectToLogin();
     }

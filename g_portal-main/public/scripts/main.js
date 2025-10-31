@@ -806,10 +806,29 @@ if (loginForm) {
 }
 
 async function logout() {
-  await logActivity('LOGOUT', 'Auth', { email: currentUserEmail });
-  await supabaseClient.auth.signOut();
-  localStorage.clear();
-  location.reload();
+  try {
+    console.log('🚪 Logout işlemi başlatılıyor...');
+
+    await logActivity('LOGOUT', 'Auth', { email: currentUserEmail });
+
+    // Supabase'den global olarak çıkış yap
+    await supabaseClient.auth.signOut({ scope: 'global' });
+
+    // Tüm storage'ları temizle
+    localStorage.clear();
+    sessionStorage.clear();
+
+    console.log('✅ Logout başarılı, login sayfasına yönlendiriliyor...');
+
+    // Login sayfasına yönlendir (cache'i atla)
+    window.location.replace('/');
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Hata olsa bile temizle ve yönlendir
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace('/');
+  }
 }
 
 // ====== KULLANICI ROL SİSTEMİ ======
