@@ -764,9 +764,16 @@ if (loginForm) {
         showExecutiveMenu(); // Dashboard
         showPurchasingMenu(); // Satın Alma (Admin tüm modülleri görür)
         showRevisionAnalyticsMenu(); // Revizyon Analiz (Admin tüm modülleri görür)
+        showMaintenanceMenu(); // Bakım Yönetimi (Admin tüm modülleri görür)
         await logActivity('LOGIN', 'Auth', { email });
         showHomepage();
         loadRecent();
+      } else if (currentUserRole === 'maintenance') {
+        // Bakım kullanıcısı SADECE bakım modülünü görsün
+        hideAllMenusExceptMaintenance(); // Önce tüm menüleri gizle
+        showMaintenanceMenu();
+        await logActivity('LOGIN', 'Auth', { email });
+        showMaintenanceModule(); // Direkt bakım modülüne yönlendir
       } else if (currentUserRole === 'purchasing') {
         // Satın alma kullanıcısı SADECE purchasing ve revizyon analiz modüllerini görsün
         hideAllMenusExceptPurchasing(); // Önce tüm menüleri gizle
@@ -960,6 +967,23 @@ function hideAllMenusExceptPurchasing() {
   });
 
   console.log('🚫 Purchasing rolü için diğer menüler gizlendi');
+}
+
+function hideAllMenusExceptMaintenance() {
+  // Tüm menü itemlerini gizle
+  const menu = document.querySelector('.menu ul');
+  if (!menu) return;
+
+  const allMenuItems = menu.querySelectorAll('li');
+  allMenuItems.forEach(item => {
+    const itemId = item.id;
+    // Sadece maintenance hariç hepsini gizle
+    if (itemId !== 'maintenance-menu') {
+      item.style.display = 'none';
+    }
+  });
+
+  console.log('🚫 Maintenance rolü için diğer menüler gizlendi');
 }
 
 function showPurchasingMenu() {
