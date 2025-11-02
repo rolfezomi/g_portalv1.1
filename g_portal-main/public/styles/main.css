@@ -4380,7 +4380,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .exec-table-wrapper {
-  overflow-x: auto;
   overflow-y: auto;
   max-height: 320px;
   position: relative;
