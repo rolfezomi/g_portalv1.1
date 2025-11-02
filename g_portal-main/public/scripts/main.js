@@ -458,7 +458,16 @@ function handleRealtimeChange(payload) {
     // Cache'e ekle
     cachedRecords.unshift(newRecord);
 
-    // Tüm ilgili görünümleri güncelle
+    // Cache'i yeniden sırala (en yeni kayıtlar önce)
+    cachedRecords.sort((a, b) => {
+      const dateComp = b.date.localeCompare(a.date);
+      return dateComp !== 0 ? dateComp : b.time.localeCompare(a.time);
+    });
+
+    // "Son Kaydedilen Değerler" tablosunu hemen güncelle
+    renderRecent();
+
+    // Diğer görünümleri de güncelle
     updateRecentRecordsDisplay();
 
     if (currentSection === 'home') {
@@ -481,6 +490,9 @@ function handleRealtimeChange(payload) {
       cachedRecords[index] = newRecord;
     }
 
+    // "Son Kaydedilen Değerler" tablosunu güncelle
+    renderRecent();
+
     // Tüm görünümleri yenile
     refreshCurrentSection();
     updateTrendFromStorage();
@@ -494,6 +506,9 @@ function handleRealtimeChange(payload) {
 
     // Cache'den kaldır
     cachedRecords = cachedRecords.filter(r => r.id !== oldRecord.id);
+
+    // "Son Kaydedilen Değerler" tablosunu güncelle
+    renderRecent();
 
     // Tüm görünümleri yenile
     refreshCurrentSection();
