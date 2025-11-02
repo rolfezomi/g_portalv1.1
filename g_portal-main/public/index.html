@@ -247,38 +247,113 @@
             </div>
           </div>
         </div>
-        <div id="saved-values" class="saved-values">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
-            <h3 style="margin: 0;">Son Kaydedilen Değerler</h3>
-            <button id="excel-export-btn" class="btn btn-primary" onclick="exportToExcel()" style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Tüm Verileri İndir (Excel)</span>
-            </button>
+        <!-- Son Aktiviteler - Modern Professional Design -->
+        <div class="exec-activity-container">
+          <div class="exec-chart-card-modern">
+            <div class="exec-chart-header">
+              <div>
+                <h3 class="exec-chart-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                  </svg>
+                  Son Aktiviteler
+                </h3>
+                <p class="exec-chart-subtitle">Anlık güncellenen ölçüm kayıtları</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="excel-export-btn" class="btn btn-primary" onclick="exportToExcel()" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 13px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Excel İndir</span>
+                </button>
+                <span style="font-size: 11px; color: #16a34a; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                  <span style="width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                  CANLI
+                </span>
+              </div>
+            </div>
+            <div class="exec-chart-body" style="padding:0;">
+              <div class="exec-table-wrapper">
+                <table class="exec-table-modern exec-table-ultra" id="exec-activity-table-modern">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                          </svg>
+                          Tarih
+                        </div>
+                      </th>
+                      <th style="width: 80px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          Saat
+                        </div>
+                      </th>
+                      <th style="width: 140px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 6h16M4 12h16M4 18h16"></path>
+                          </svg>
+                          Kategori
+                        </div>
+                      </th>
+                      <th>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                          </svg>
+                          Kontrol Noktası
+                        </div>
+                      </th>
+                      <th style="width: 140px; text-align: right;">
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="16"></line>
+                          </svg>
+                          Değer
+                        </div>
+                      </th>
+                      <th style="width: 120px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                          Kullanıcı
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="exec-activity-tbody">
+                    <tr><td colspan="6" style="text-align:center; padding:60px; color:#cbd5e1;">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 16px; opacity: 0.3;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                      </svg>
+                      <div style="font-weight: 500;">Veriler yükleniyor...</div>
+                    </td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-          <div style="overflow:auto;">
-            <table id="recent-table" style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-              <thead>
-                <tr>
-                  <th style="text-align:left; padding:8px 10px;">Kategori</th>
-                  <th style="text-align:left; padding:8px 10px;">Kontrol Noktası</th>
-                  <th style="text-align:left; padding:8px 10px;">Değer</th>
-                  <th style="text-align:left; padding:8px 10px;">Birim</th>
-                  <th style="text-align:left; padding:8px 10px;">Tarih</th>
-                  <th style="text-align:left; padding:8px 10px;">Saat</th>
-                  <th style="text-align:left; padding:8px 10px;">Kullanıcı</th>
-                  <th style="text-align:left; padding:8px 10px;">Açıklama</th>
-                </tr>
-              </thead>
-              <tbody id="recent-tbody">
-                <tr class="empty"><td colspan="8" style="padding:12px 10px; opacity:.7;">Henüz kayıt yok.</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div style="margin-top:24px;">
+        </div>
+
+        <div style="margin-top:24px;">
             <div class="toolbar" style="margin-bottom:12px;">
               <h3 style="margin:0; color:#1b5e20; font-size:18px;">📈 Trend Analizi</h3>
               <div>

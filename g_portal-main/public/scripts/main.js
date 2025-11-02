@@ -464,8 +464,8 @@ function handleRealtimeChange(payload) {
       return dateComp !== 0 ? dateComp : b.time.localeCompare(a.time);
     });
 
-    // "Son Kaydedilen Değerler" tablosunu hemen güncelle
-    renderRecent();
+    // "Son Aktiviteler" tablosunu hemen güncelle
+    updateRecentActivity(cachedRecords);
 
     // Diğer görünümleri de güncelle
     updateRecentRecordsDisplay();
@@ -490,8 +490,8 @@ function handleRealtimeChange(payload) {
       cachedRecords[index] = newRecord;
     }
 
-    // "Son Kaydedilen Değerler" tablosunu güncelle
-    renderRecent();
+    // "Son Aktiviteler" tablosunu güncelle
+    updateRecentActivity(cachedRecords);
 
     // Tüm görünümleri yenile
     refreshCurrentSection();
@@ -507,8 +507,8 @@ function handleRealtimeChange(payload) {
     // Cache'den kaldır
     cachedRecords = cachedRecords.filter(r => r.id !== oldRecord.id);
 
-    // "Son Kaydedilen Değerler" tablosunu güncelle
-    renderRecent();
+    // "Son Aktiviteler" tablosunu güncelle
+    updateRecentActivity(cachedRecords);
 
     // Tüm görünümleri yenile
     refreshCurrentSection();
@@ -1339,15 +1339,16 @@ async function loadRecent() {
       .from('measurements')
       .select('*')
       .limit(200);
-    
+
     if (error) return console.error('Veri yükleme hatası:', error);
-    
+
     cachedRecords = (data || []).sort((a, b) => {
       const dateComp = b.date.localeCompare(a.date);
       return dateComp !== 0 ? dateComp : b.time.localeCompare(a.time);
     });
-    
-    renderRecent();
+
+    // Anasayfada "Son Aktiviteler" tablosunu güncelle
+    updateRecentActivity(cachedRecords);
     updateTrendFromStorage();
   } catch (err) {
     console.error('Beklenmeyen hata:', err);
