@@ -455,14 +455,11 @@ function handleRealtimeChange(payload) {
   if (eventType === 'INSERT') {
     console.log('✅ REAL-TIME: Yeni ölçüm eklendi -', newRecord.category, newRecord.point, newRecord.value);
 
-    // Cache'e ekle
+    // Cache'e ekle (en başa - yeni kayıt her zaman en büyük ID'ye sahip)
     cachedRecords.unshift(newRecord);
 
-    // Cache'i yeniden sırala (en yeni kayıtlar önce)
-    cachedRecords.sort((a, b) => {
-      const dateComp = b.date.localeCompare(a.date);
-      return dateComp !== 0 ? dateComp : b.time.localeCompare(a.time);
-    });
+    // Cache'i ID'ye göre sırala (en yeni önce - ID büyükten küçüğe)
+    cachedRecords.sort((a, b) => b.id - a.id);
 
     // "Son Aktiviteler" tablosunu hemen güncelle
     updateRecentActivity(cachedRecords);
@@ -1338,14 +1335,14 @@ async function loadRecent() {
     const { data, error } = await supabaseClient
       .from('measurements')
       .select('*')
+      .order('id', { ascending: false })
       .limit(200);
 
     if (error) return console.error('Veri yükleme hatası:', error);
 
-    cachedRecords = (data || []).sort((a, b) => {
-      const dateComp = b.date.localeCompare(a.date);
-      return dateComp !== 0 ? dateComp : b.time.localeCompare(a.time);
-    });
+    // Veritabanından zaten ID'ye göre sıralı geliyor (en yeni önce)
+    // Ek client-side sıralama yapmaya gerek yok
+    cachedRecords = data || [];
 
     // Anasayfada "Son Aktiviteler" tablosunu güncelle
     updateRecentActivity(cachedRecords);
