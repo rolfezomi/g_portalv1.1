@@ -1356,63 +1356,9 @@ async function loadRecent() {
 }
 
 function renderRecent() {
-  const tbody = document.getElementById('recent-tbody');
-  if (!tbody) return;
-
-  // Kısıtlı kullanıcılar için tabloyu ve Excel butonunu gizle
-  const savedValuesDiv = document.getElementById('saved-values');
-  const excelBtn = document.getElementById('excel-export-btn');
-
-  if (currentUserRole === 'restricted') {
-    if (savedValuesDiv) savedValuesDiv.style.display = 'none';
-    if (excelBtn) excelBtn.style.display = 'none';
-    return;
-  }
-
-  // Admin ve Full kullanıcılar için göster
-  if (savedValuesDiv) savedValuesDiv.style.display = '';
-  if (excelBtn) excelBtn.style.display = 'inline-flex';
-
-  const rows = cachedRecords.slice(0, 5);
-  tbody.innerHTML = '';
-
-  if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty"><td colspan="8" style="padding:12px 10px; opacity:.7;">Henüz kayıt yok.</td></tr>';
-    return;
-  }
-  
-  rows.forEach((r, i) => {
-    const tr = document.createElement('tr');
-    tr.style.cssText = 'background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); border-radius:10px; overflow:hidden;';
-    tr.style.animation = `fadeInRow 0.3s ease ${i * 0.05}s both`;
-
-    // Değer için ondalık formatlama
-    let displayValue = '-';
-    if (r.value != null && r.value !== '') {
-      let numValue = parseTRNumber(r.value); // <— parseFloat yerine TR parse
-      if (!isNaN(numValue)) {
-        // Virgülden sonra en fazla 3 basamak olacak şekilde kes
-        numValue = Math.trunc(numValue * 1000) / 1000;
-
-        displayValue = numValue.toLocaleString('tr-TR', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 3
-        });
-      }
-    }
-
-    tr.innerHTML = `
-      <td style="padding:10px 12px; font-weight:700; color:#1b5e20;">${r.category}</td>
-      <td style="padding:10px 12px;">${r.point || '-'}</td>
-      <td style="padding:10px 12px; font-weight:600;">${displayValue}</td>
-      <td style="padding:10px 12px;">${r.unit || '-'}</td>
-      <td style="padding:10px 12px;">${r.date || '-'}</td>
-      <td style="padding:10px 12px;">${r.time || '-'}</td>
-      <td style="padding:10px 12px;">${r.user || '-'}</td>
-      <td style="padding:10px 12px; font-size:13px; opacity:0.8;">${r.note || '-'}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  // Bu fonksiyon artık kullanılmıyor - "Son Aktiviteler" için updateRecentActivity() kullanılıyor
+  // Geriye dönük uyumluluk için boş bırakıldı
+  return;
 }
 
 async function addRecent(entry) {
@@ -4494,6 +4440,20 @@ function updateTopPoints(measurements) {
 function updateRecentActivity(measurements) {
   const tbody = document.getElementById('exec-activity-tbody');
   if (!tbody) return;
+
+  // Kısıtlı kullanıcılar için Son Aktiviteler bölümünü gizle
+  const activityContainer = document.querySelector('.exec-activity-container');
+  const excelBtn = document.getElementById('excel-export-btn');
+
+  if (currentUserRole === 'restricted') {
+    if (activityContainer) activityContainer.style.display = 'none';
+    if (excelBtn) excelBtn.style.display = 'none';
+    return;
+  }
+
+  // Admin ve Full kullanıcılar için göster
+  if (activityContainer) activityContainer.style.display = '';
+  if (excelBtn) excelBtn.style.display = 'inline-flex';
 
   // Son 10 ölçümü göster
   const recent = measurements.slice(0, 10);
