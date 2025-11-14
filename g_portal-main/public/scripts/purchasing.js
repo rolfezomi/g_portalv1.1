@@ -205,10 +205,13 @@ function renderPurchasingStats() {
 
 function renderPurchasingFilters() {
   // Benzersiz tedarikçileri al
-  const uniqueSuppliers = [...new Set(purchasingOrders.map(o => o.tedarikci_tanimi).filter(Boolean))];
+  const uniqueSuppliers = [...new Set(purchasingOrders.map(o => o.tedarikci_tanimi || o.tedarikci).filter(Boolean))].sort();
 
-  // Benzersiz ödeme koşullarını al
-  const uniquePaymentTerms = [...new Set(purchasingOrders.map(o => o.odeme_kosulu).filter(Boolean))];
+  // Benzersiz ödeme koşullarını al (AÇIKLAMA kullan, kod değil!)
+  const uniquePaymentTerms = [...new Set(purchasingOrders
+    .map(o => o.odeme_kosulu_tanimi || o.odeme_kosulu)
+    .filter(Boolean)
+  )].sort();
 
   const filtersHTML = `
     <div class="purchasing-filters">
@@ -291,8 +294,8 @@ function applyPurchasingFilters() {
 
   filteredOrders = purchasingOrders.filter(order => {
     // Dropdown filtreler
-    if (supplier && order.tedarikci_tanimi !== supplier) return false;
-    if (payment && order.odeme_kosulu !== payment) return false;
+    if (supplier && (order.tedarikci_tanimi !== supplier && order.tedarikci !== supplier)) return false;
+    if (payment && (order.odeme_kosulu_tanimi !== payment && order.odeme_kosulu !== payment)) return false;
     if (dateStart && order.siparis_tarihi < dateStart) return false;
     if (dateEnd && order.siparis_tarihi > dateEnd) return false;
 
