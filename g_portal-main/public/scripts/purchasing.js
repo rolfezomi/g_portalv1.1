@@ -113,24 +113,23 @@ async function refreshPurchasingData() {
 // =====================================================
 
 function renderPurchasingStats() {
-  const today = new Date().toISOString().split('T')[0];
-  const thisMonth = new Date().toISOString().slice(0, 7);
+  // Toplam siparişler
+  const totalOrders = purchasingOrders.length;
 
-  // Bugünkü siparişler
-  const todayOrders = purchasingOrders.filter(o => o.siparis_tarihi === today);
+  // Açık siparişler (teslimat durumu = 'Açık')
+  const openOrders = purchasingOrders.filter(o => o.teslimat_durumu === 'Açık');
 
-  // Bu ayki siparişler
-  const monthOrders = purchasingOrders.filter(o =>
-    o.siparis_tarihi && o.siparis_tarihi.startsWith(thisMonth)
-  );
+  // Kısmi teslimat (teslimat durumu = 'Kısmi')
+  const partialOrders = purchasingOrders.filter(o => o.teslimat_durumu === 'Kısmi');
 
-  // Toplam tutar (TL)
-  const totalAmount = monthOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
+  // Toplam tutar (TL) - tüm siparişler
+  const totalAmount = purchasingOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
 
-  // Bekleyen siparişler (gelen_miktar < miktar)
-  const pendingOrders = purchasingOrders.filter(o =>
-    (parseFloat(o.gelen_miktar) || 0) < (parseFloat(o.miktar) || 0)
-  );
+  // Ortalama Termin Farkı (sadece tamamlanmış siparişler için)
+  const completedOrders = purchasingOrders.filter(o => o.termin_farki !== null && o.termin_farki !== undefined);
+  const avgTerminFarki = completedOrders.length > 0
+    ? completedOrders.reduce((sum, o) => sum + (parseFloat(o.termin_farki) || 0), 0) / completedOrders.length
+    : 0;
 
   const statsHTML = `
     <div class="purchasing-stats-grid">
@@ -142,35 +141,8 @@ function renderPurchasingStats() {
           </svg>
         </div>
         <div class="stat-content">
-          <div class="stat-label">Bugünkü Siparişler</div>
-          <div class="stat-value">${todayOrders.length}</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #f3e5f5;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7b1fa2" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-label">Bu Ay Toplam</div>
-          <div class="stat-value">${monthOrders.length}</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #e8f5e9;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2">
-            <line x1="12" y1="1" x2="12" y2="23"></line>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-label">Bu Ay Tutar</div>
-          <div class="stat-value">${formatCurrency(totalAmount)}</div>
+          <div class="stat-label">Toplam Sipariş</div>
+          <div class="stat-value">${totalOrders}</div>
         </div>
       </div>
 
@@ -182,8 +154,35 @@ function renderPurchasingStats() {
           </svg>
         </div>
         <div class="stat-content">
-          <div class="stat-label">Bekleyen Siparişler</div>
-          <div class="stat-value">${pendingOrders.length}</div>
+          <div class="stat-label">Açık Siparişler</div>
+          <div class="stat-value">${openOrders.length}</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #e8f5e9;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Toplam Tutar (TL)</div>
+          <div class="stat-value">${formatCurrency(totalAmount)}</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: ${avgTerminFarki > 0 ? '#ffebee' : avgTerminFarki < 0 ? '#e8f5e9' : '#fff3e0'};">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${avgTerminFarki > 0 ? '#c62828' : avgTerminFarki < 0 ? '#2e7d32' : '#f57c00'}" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Ort. Termin Farkı</div>
+          <div class="stat-value" style="color:${avgTerminFarki > 0 ? '#c62828' : avgTerminFarki < 0 ? '#2e7d32' : '#f57c00'};">
+            ${avgTerminFarki > 0 ? '+' : ''}${avgTerminFarki.toFixed(1)} gün
+          </div>
         </div>
       </div>
     </div>
@@ -396,9 +395,27 @@ function renderPurchasingTable() {
       : '<span class="sort-icon active">▼</span>';
   };
 
+  // Sadece son 100 kaydı göster, ama toplam sayıyı belirt
+  const displayOrders = filteredOrders.slice(0, 100);
+  const totalCount = filteredOrders.length;
+
   const tableHTML = `
     <div class="purchasing-table-container">
-      <h3>Rapor Formatı - Siparişler (${filteredOrders.length})</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0;">Satın Alma Raporu
+          <span style="font-size: 14px; color: #666; font-weight: normal;">
+            (${displayOrders.length} / ${totalCount} gösteriliyor)
+          </span>
+        </h3>
+        <button class="btn btn-primary" onclick="exportPurchasingToExcel()" style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Excel İndir (${totalCount} kayıt)
+        </button>
+      </div>
       <div class="table-wrapper">
         <table class="purchasing-table rapor-format-table">
           <thead>
@@ -431,13 +448,13 @@ function renderPurchasingTable() {
             </tr>
           </thead>
           <tbody>
-            ${filteredOrders.length === 0 ? `
+            ${displayOrders.length === 0 ? `
               <tr>
                 <td colspan="25" style="text-align:center; padding:40px; color:#999;">
                   ${searchQuery ? '🔍 Arama sonucu bulunamadı' : 'Sipariş bulunamadı'}
                 </td>
               </tr>
-            ` : filteredOrders.map(order => `
+            ` : displayOrders.map(order => `
               <tr>
                 <td>${order.firma || '-'}</td>
                 <td><span class="badge badge-info">${order.siparis_tip || '-'}</span></td>
@@ -1507,6 +1524,134 @@ function addDays(dateStr, days) {
   } catch (error) {
     console.warn('Tarih ekleme hatası:', dateStr, days, error);
     return null;
+  }
+}
+
+// =====================================================
+// EXCEL EXPORT - RAPOR FORMATI (25 KOLON)
+// =====================================================
+
+/**
+ * Tüm satın alma verilerini Excel'e export et (Rapor Formatı - 25 kolon)
+ */
+async function exportPurchasingToExcel() {
+  try {
+    // SheetJS kontrolü
+    if (typeof XLSX === 'undefined') {
+      showToast('❌ Excel kütüphanesi yüklenmemiş', 'error');
+      return;
+    }
+
+    showToast('📊 Excel hazırlanıyor...', 'info');
+
+    // Tüm verileri çek (filtreli)
+    let dataToExport = [...purchasingOrders];
+
+    // Aktif filtreleri uygula
+    if (currentFilters.firma) {
+      dataToExport = dataToExport.filter(o => o.firma === currentFilters.firma);
+    }
+    if (currentFilters.durum) {
+      dataToExport = dataToExport.filter(o => o.teslimat_durumu === currentFilters.durum);
+    }
+    if (currentFilters.startDate) {
+      dataToExport = dataToExport.filter(o => o.siparis_olusturma_tarihi >= currentFilters.startDate);
+    }
+    if (currentFilters.endDate) {
+      dataToExport = dataToExport.filter(o => o.siparis_olusturma_tarihi <= currentFilters.endDate);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      dataToExport = dataToExport.filter(order =>
+        (order.siparis_no && order.siparis_no.toLowerCase().includes(query)) ||
+        (order.malzeme && order.malzeme.toLowerCase().includes(query)) ||
+        (order.malzeme_tanimi && order.malzeme_tanimi.toLowerCase().includes(query)) ||
+        (order.tedarikci && order.tedarikci.toLowerCase().includes(query))
+      );
+    }
+
+    if (dataToExport.length === 0) {
+      showToast('⚠️ Export edilecek veri bulunamadı', 'warning');
+      return;
+    }
+
+    // Rapor Formatı - 25 kolon (Excel için düzenlenmiş veriler)
+    const excelData = dataToExport.map(order => ({
+      'Firma': order.firma || '',
+      'Talep Tipi': order.siparis_tip || '',
+      'Talep No': order.talep_no || '',
+      'Sipariş No': order.siparis_no || '',
+      'Malzeme Kodu': order.malzeme || '',
+      'Malzeme Tanımı': order.malzeme_tanimi || '',
+      'Talep Oluşturma Tarihi': order.talep_olusturma_tarihi || '',
+      'Sipariş Dönüştürme Tarihi': order.siparis_olusturma_tarihi || '',
+      'İstenen Teslim Tarihi': order.ihtiyac_tarihi || '',
+      'Standart Termin (Gün)': order.standart_termin_suresi || 30,
+      'Standart Termin Tarihi': order.standart_termin_tarihi || '',
+      'Mal Kabul Tarihi': order.mal_kabul_tarihi || '',
+      'Planlama Sapması (Gün)': order.planlama_sapmasi ?? '',
+      'Termin Farkı (Gün)': order.termin_farki ?? '',
+      'Sipariş Miktarı': order.miktar || 0,
+      'Gelen Miktarı': order.toplam_gelen_miktar || order.gelen_miktar || 0,
+      'Kalan Miktar': order.kalan_miktar ?? '',
+      'Birim Fiyat': order.birim_fiyat || 0,
+      'Tutar': order.para_birimi_tutar || 0,
+      'Para Birimi': order.para_birimi || '',
+      'Kur Değeri': order.kur_degeri || 0,
+      'Toplam TL': order.tutar_tl || 0,
+      'Ödeme Koşulu': order.odeme_kosulu_tanimi || order.odeme_kosulu || '',
+      'Ödeme Tarihi': order.siparis_teslim_odeme_vadesi || order.vadeye_gore || '',
+      'Teslimat Durumu': order.teslimat_durumu || ''
+    }));
+
+    // Workbook oluştur
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Kolon genişliklerini ayarla
+    ws['!cols'] = [
+      { wch: 15 }, // Firma
+      { wch: 12 }, // Talep Tipi
+      { wch: 15 }, // Talep No
+      { wch: 15 }, // Sipariş No
+      { wch: 15 }, // Malzeme Kodu
+      { wch: 40 }, // Malzeme Tanımı
+      { wch: 12 }, // Talep Oluşturma Tarihi
+      { wch: 12 }, // Sipariş Dönüştürme Tarihi
+      { wch: 12 }, // İstenen Teslim Tarihi
+      { wch: 10 }, // Standart Termin
+      { wch: 12 }, // Standart Termin Tarihi
+      { wch: 12 }, // Mal Kabul Tarihi
+      { wch: 12 }, // Planlama Sapması
+      { wch: 12 }, // Termin Farkı
+      { wch: 12 }, // Sipariş Miktarı
+      { wch: 12 }, // Gelen Miktarı
+      { wch: 12 }, // Kalan Miktar
+      { wch: 12 }, // Birim Fiyat
+      { wch: 12 }, // Tutar
+      { wch: 10 }, // Para Birimi
+      { wch: 10 }, // Kur Değeri
+      { wch: 15 }, // Toplam TL
+      { wch: 25 }, // Ödeme Koşulu
+      { wch: 12 }, // Ödeme Tarihi
+      { wch: 15 }  // Teslimat Durumu
+    ];
+
+    // Worksheet'i workbook'a ekle
+    XLSX.utils.book_append_sheet(wb, ws, 'Satın Alma Raporu');
+
+    // Dosya adı (tarih ile)
+    const today = new Date().toISOString().split('T')[0];
+    const fileName = `Satin_Alma_Raporu_${today}.xlsx`;
+
+    // Excel dosyasını indir
+    XLSX.writeFile(wb, fileName);
+
+    showToast(`✅ Excel başarıyla indirildi (${dataToExport.length} kayıt)`, 'success');
+
+  } catch (error) {
+    console.error('Excel export hatası:', error);
+    showToast('❌ Excel indirme hatası', 'error');
   }
 }
 
