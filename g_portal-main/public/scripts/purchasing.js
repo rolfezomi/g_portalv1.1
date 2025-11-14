@@ -204,10 +204,16 @@ function renderPurchasingStats() {
 // =====================================================
 
 function renderPurchasingFilters() {
-  // Benzersiz tedarikçileri al
+  // Benzersiz firmalar
+  const uniqueFirmas = [...new Set(purchasingOrders.map(o => o.firma).filter(Boolean))].sort();
+
+  // Benzersiz teslimat durumları
+  const uniqueStatuses = [...new Set(purchasingOrders.map(o => o.teslimat_durumu).filter(Boolean))].sort();
+
+  // Benzersiz tedarikçiler
   const uniqueSuppliers = [...new Set(purchasingOrders.map(o => o.tedarikci_tanimi || o.tedarikci).filter(Boolean))].sort();
 
-  // Benzersiz ödeme koşullarını al (AÇIKLAMA kullan, kod değil!)
+  // Benzersiz ödeme koşulları (AÇIKLAMA kullan, kod değil!)
   const uniquePaymentTerms = [...new Set(purchasingOrders
     .map(o => o.odeme_kosulu_tanimi || o.odeme_kosulu)
     .filter(Boolean)
@@ -232,8 +238,24 @@ function renderPurchasingFilters() {
         </div>
       </div>
 
-      <!-- Filtreler -->
+      <!-- Filtreler - 1. Satır -->
       <div class="filter-row">
+        <div class="filter-group">
+          <label>Firma</label>
+          <select id="filter-firma" onchange="applyPurchasingFilters()">
+            <option value="">Tümü</option>
+            ${uniqueFirmas.map(f => `<option value="${f}">${f}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Teslimat Durumu</label>
+          <select id="filter-status" onchange="applyPurchasingFilters()">
+            <option value="">Tümü</option>
+            ${uniqueStatuses.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+
         <div class="filter-group">
           <label>Tedarikçi</label>
           <select id="filter-supplier" onchange="applyPurchasingFilters()">
@@ -249,7 +271,10 @@ function renderPurchasingFilters() {
             ${uniquePaymentTerms.map(p => `<option value="${p}">${p}</option>`).join('')}
           </select>
         </div>
+      </div>
 
+      <!-- Filtreler - 2. Satır (Tarihler ve Temizle) -->
+      <div class="filter-row">
         <div class="filter-group">
           <label>Başlangıç Tarihi</label>
           <input type="date" id="filter-date-start" onchange="applyPurchasingFilters()">
@@ -261,7 +286,9 @@ function renderPurchasingFilters() {
         </div>
 
         <div class="filter-group">
-          <button class="btn btn-secondary" onclick="clearPurchasingFilters()">Tümünü Temizle</button>
+          <button class="btn btn-secondary" onclick="clearPurchasingFilters()" style="margin-top: 24px;">
+            🗑️ Tümünü Temizle
+          </button>
         </div>
       </div>
     </div>
@@ -287,6 +314,8 @@ function handlePurchasingSearch(value) {
 }
 
 function applyPurchasingFilters() {
+  const firma = document.getElementById('filter-firma')?.value || '';
+  const status = document.getElementById('filter-status')?.value || '';
   const supplier = document.getElementById('filter-supplier')?.value || '';
   const payment = document.getElementById('filter-payment')?.value || '';
   const dateStart = document.getElementById('filter-date-start')?.value || '';
@@ -294,6 +323,8 @@ function applyPurchasingFilters() {
 
   filteredOrders = purchasingOrders.filter(order => {
     // Dropdown filtreler
+    if (firma && order.firma !== firma) return false;
+    if (status && order.teslimat_durumu !== status) return false;
     if (supplier && (order.tedarikci_tanimi !== supplier && order.tedarikci !== supplier)) return false;
     if (payment && (order.odeme_kosulu_tanimi !== payment && order.odeme_kosulu !== payment)) return false;
     if (dateStart && order.siparis_tarihi < dateStart) return false;
@@ -325,6 +356,8 @@ function applyPurchasingFilters() {
 }
 
 function clearPurchasingFilters() {
+  document.getElementById('filter-firma').value = '';
+  document.getElementById('filter-status').value = '';
   document.getElementById('filter-supplier').value = '';
   document.getElementById('filter-payment').value = '';
   document.getElementById('filter-date-start').value = '';
