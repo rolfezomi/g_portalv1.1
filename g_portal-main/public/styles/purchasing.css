@@ -187,27 +187,13 @@
    RAPOR FORMATI - 25 KOLON GENİŞLİKLERİ
    ===================================================== */
 
-/* Sticky Kolonlar - İlk 2 kolon sabit */
-.purchasing-table .col-firma,
-.purchasing-table .col-siparis-no {
-  position: sticky;
-  z-index: 11;
-  background: #ffffff;
-}
-
-.purchasing-table thead .col-firma,
-.purchasing-table thead .col-siparis-no {
-  background: #e3f2fd;
-}
-
+/* İlk 2 kolon genişlikleri */
 .purchasing-table .col-firma {
-  left: 0;
   min-width: 120px;
   max-width: 120px;
 }
 
 .purchasing-table .col-siparis-no {
-  left: 120px;
   min-width: 130px;
   max-width: 130px;
 }
@@ -308,18 +294,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Sticky kolonlar için tbody stilleri */
-.purchasing-table tbody .col-firma,
-.purchasing-table tbody .col-siparis-no {
-  background: #ffffff;
-  box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-}
-
-.purchasing-table tbody tr:hover .col-firma,
-.purchasing-table tbody tr:hover .col-siparis-no {
-  background: #f5f9fc;
 }
 
 /* Toplam TL kolonu vurgusu */
