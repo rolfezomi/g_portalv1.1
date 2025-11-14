@@ -559,10 +559,10 @@ async function processOrdersWithRevision(orders, userEmail) {
         .eq('siparis_tip', order.siparis_tip || '')
         .eq('tedarikci_kodu', order.tedarikci_kodu || '')
         .eq('is_latest', true)
-        .single();
+        .maybeSingle(); // Kayıt yoksa null döner, hata vermez (406 hatası yok)
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        // PGRST116 = kayıt bulunamadı (normal)
+      if (fetchError) {
+        // Gerçek hata (maybeSingle kullandığımız için PGRST116 olmayacak)
         console.error(`Hata (${orderKey}):`, fetchError);
         results.errors.push({ order: orderKey, error: fetchError.message });
         continue;
