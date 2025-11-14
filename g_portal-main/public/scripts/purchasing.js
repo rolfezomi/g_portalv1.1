@@ -31,11 +31,13 @@ async function refreshPurchasingData() {
 
   try {
     // Siparişleri yükle - SADECE EN GÜNCEL REVİZYONLAR (is_latest = true)
+    // NOT: Supabase default limiti 1000'dir, tüm kayıtları çekmek için yüksek limit
     const { data: orders, error: ordersError } = await supabaseClient
       .from('purchasing_orders')
       .select('*')
       .eq('is_latest', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(50000); // Maksimum 50.000 kayıt çek
 
     if (ordersError) {
       console.error('Sipariş yükleme hatası:', ordersError);
