@@ -398,72 +398,79 @@ function renderPurchasingTable() {
 
   const tableHTML = `
     <div class="purchasing-table-container">
-      <h3>Siparişler (${filteredOrders.length})</h3>
-      <div class="table-wrapper">
-        <table class="purchasing-table">
+      <h3>Rapor Formatı - Siparişler (${filteredOrders.length})</h3>
+      <div class="table-wrapper" style="overflow-x: auto;">
+        <table class="purchasing-table" style="min-width: 3000px;">
           <thead>
             <tr>
-              <th class="sortable" onclick="handleSort('siparis_no')">
-                Sipariş No ${getSortIcon('siparis_no')}
-              </th>
-              <th class="sortable" onclick="handleSort('siparis_tip')">
-                Tip ${getSortIcon('siparis_tip')}
-              </th>
-              <th class="sortable" onclick="handleSort('siparis_tarihi')">
-                Tarih ${getSortIcon('siparis_tarihi')}
-              </th>
-              <th class="sortable" onclick="handleSort('tedarikci_tanimi')">
-                Tedarikçi ${getSortIcon('tedarikci_tanimi')}
-              </th>
-              <th class="sortable" onclick="handleSort('malzeme_tanimi')">
-                Malzeme ${getSortIcon('malzeme_tanimi')}
-              </th>
-              <th class="sortable" onclick="handleSort('miktar')">
-                Miktar ${getSortIcon('miktar')}
-              </th>
-              <th class="sortable" onclick="handleSort('gelen_miktar')">
-                Gelen ${getSortIcon('gelen_miktar')}
-              </th>
-              <th class="sortable" onclick="handleSort('birim_fiyat')">
-                Birim Fiyat ${getSortIcon('birim_fiyat')}
-              </th>
-              <th class="sortable" onclick="handleSort('tutar_tl')">
-                Tutar (TL) ${getSortIcon('tutar_tl')}
-              </th>
-              <th class="sortable" onclick="handleSort('odeme_kosulu')">
-                Ödeme Koşulu ${getSortIcon('odeme_kosulu')}
-              </th>
-              <th class="sortable" onclick="handleSort('vadeye_gore')">
-                Vade Tarihi ${getSortIcon('vadeye_gore')}
-              </th>
-              <th>Durum</th>
+              <th class="sortable" onclick="handleSort('firma')">Firma ${getSortIcon('firma')}</th>
+              <th class="sortable" onclick="handleSort('siparis_tip')">TalepTip ${getSortIcon('siparis_tip')}</th>
+              <th class="sortable" onclick="handleSort('talep_no')">TalepNo ${getSortIcon('talep_no')}</th>
+              <th class="sortable" onclick="handleSort('siparis_no')">Sipariş No ${getSortIcon('siparis_no')}</th>
+              <th class="sortable" onclick="handleSort('malzeme')">Mlz.Kodu ${getSortIcon('malzeme')}</th>
+              <th class="sortable" onclick="handleSort('malzeme_tanimi')">Malzeme Tanım ${getSortIcon('malzeme_tanimi')}</th>
+              <th class="sortable" onclick="handleSort('talep_olusturma_tarihi')">Talep Oluş. ${getSortIcon('talep_olusturma_tarihi')}</th>
+              <th class="sortable" onclick="handleSort('siparis_olusturma_tarihi')">Sip.Dönüş. ${getSortIcon('siparis_olusturma_tarihi')}</th>
+              <th class="sortable" onclick="handleSort('ihtiyac_tarihi')">İhtiyaç Tar. ${getSortIcon('ihtiyac_tarihi')}</th>
+              <th class="sortable" onclick="handleSort('standart_termin_suresi')">Std.Termin (gün) ${getSortIcon('standart_termin_suresi')}</th>
+              <th class="sortable" onclick="handleSort('standart_termin_tarihi')">Std.Termin Tar. ${getSortIcon('standart_termin_tarihi')}</th>
+              <th class="sortable" onclick="handleSort('mal_kabul_tarihi')">Mal Kabul ${getSortIcon('mal_kabul_tarihi')}</th>
+              <th class="sortable" onclick="handleSort('planlama_sapmasi')">Plan.Sapma ${getSortIcon('planlama_sapmasi')}</th>
+              <th class="sortable" onclick="handleSort('termin_farki')">Termin Farkı ${getSortIcon('termin_farki')}</th>
+              <th class="sortable" onclick="handleSort('miktar')">Sip.Miktar ${getSortIcon('miktar')}</th>
+              <th class="sortable" onclick="handleSort('toplam_gelen_miktar')">Gelen ${getSortIcon('toplam_gelen_miktar')}</th>
+              <th class="sortable" onclick="handleSort('kalan_miktar')">Kalan ${getSortIcon('kalan_miktar')}</th>
+              <th class="sortable" onclick="handleSort('birim_fiyat')">Brm.Fiyat ${getSortIcon('birim_fiyat')}</th>
+              <th class="sortable" onclick="handleSort('para_birimi_tutar')">Tutar ${getSortIcon('para_birimi_tutar')}</th>
+              <th class="sortable" onclick="handleSort('para_birimi')">P.Birimi ${getSortIcon('para_birimi')}</th>
+              <th class="sortable" onclick="handleSort('kur_degeri')">Kur ${getSortIcon('kur_degeri')}</th>
+              <th class="sortable" onclick="handleSort('tutar_tl')">Toplam TL ${getSortIcon('tutar_tl')}</th>
+              <th class="sortable" onclick="handleSort('odeme_kosulu_tanimi')">Ödeme Koş. ${getSortIcon('odeme_kosulu_tanimi')}</th>
+              <th class="sortable" onclick="handleSort('siparis_teslim_odeme_vadesi')">Ödeme Tar. ${getSortIcon('siparis_teslim_odeme_vadesi')}</th>
+              <th class="sortable" onclick="handleSort('teslimat_durumu')">Teslimat ${getSortIcon('teslimat_durumu')}</th>
             </tr>
           </thead>
           <tbody>
             ${filteredOrders.length === 0 ? `
               <tr>
-                <td colspan="12" style="text-align:center; padding:40px; color:#999;">
+                <td colspan="25" style="text-align:center; padding:40px; color:#999;">
                   ${searchQuery ? '🔍 Arama sonucu bulunamadı' : 'Sipariş bulunamadı'}
                 </td>
               </tr>
             ` : filteredOrders.map(order => `
               <tr>
-                <td>${order.siparis_no || '-'}</td>
-                <td><span style="font-size:11px; padding:2px 6px; background:#e3f2fd; border-radius:3px; white-space:nowrap;">${order.siparis_tip || '-'}</span></td>
-                <td>${formatDate(order.siparis_tarihi)}</td>
-                <td>${order.tedarikci_tanimi || '-'}</td>
+                <td>${order.firma || '-'}</td>
+                <td><span class="badge badge-info">${order.siparis_tip || '-'}</span></td>
+                <td>${order.talep_no || '-'}</td>
+                <td><strong>${order.siparis_no || '-'}</strong></td>
+                <td style="font-size:11px;">${order.malzeme || '-'}</td>
                 <td>${order.malzeme_tanimi || '-'}</td>
-                <td>${formatNumber(order.miktar)} ${order.birim || ''}</td>
-                <td>${formatNumber(order.gelen_miktar)}</td>
-                <td>${formatCurrency(order.birim_fiyat)}</td>
-                <td>${formatCurrency(order.tutar_tl)}</td>
-                <td>${order.odeme_kosulu || '-'}</td>
-                <td>${formatVadeDate(order.vadeye_gore)}</td>
-                <td>${getOrderStatus(order)}</td>
+                <td>${formatDate(order.talep_olusturma_tarihi)}</td>
+                <td>${formatDate(order.siparis_olusturma_tarihi)}</td>
+                <td>${formatDate(order.ihtiyac_tarihi)}</td>
+                <td style="text-align:center;">${order.standart_termin_suresi || 30}</td>
+                <td>${formatDate(order.standart_termin_tarihi)}</td>
+                <td>${formatDate(order.mal_kabul_tarihi)}</td>
+                <td style="text-align:center;">${formatSapma(order.planlama_sapmasi)}</td>
+                <td style="text-align:center;">${formatTerminFarki(order.termin_farki)}</td>
+                <td style="text-align:right;">${formatNumber(order.miktar)} ${order.birim || ''}</td>
+                <td style="text-align:right;">${formatNumber(order.toplam_gelen_miktar || order.gelen_miktar)}</td>
+                <td style="text-align:right;">${formatKalanMiktar(order.kalan_miktar)}</td>
+                <td style="text-align:right;">${formatCurrency(order.birim_fiyat)}</td>
+                <td style="text-align:right;">${formatNumber(order.para_birimi_tutar)}</td>
+                <td style="text-align:center;">${order.para_birimi || '-'}</td>
+                <td style="text-align:right;">${formatNumber(order.kur_degeri)}</td>
+                <td style="text-align:right;"><strong>${formatCurrency(order.tutar_tl)}</strong></td>
+                <td>${order.odeme_kosulu_tanimi || order.odeme_kosulu || '-'}</td>
+                <td>${formatDate(order.siparis_teslim_odeme_vadesi || order.vadeye_gore)}</td>
+                <td>${getTeslimatDurumuBadge(order.teslimat_durumu)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
+      </div>
+      <div style="margin-top:10px; color:#999; font-size:12px; text-align:center;">
+        💡 Yatay scroll için fareyi tablo üzerinde hareket ettirin
       </div>
     </div>
   `;
@@ -486,12 +493,9 @@ function renderPurchasingTable() {
 // CSV UPLOAD
 // =====================================================
 
+// Geriye dönük uyumluluk için CSV upload fonksiyonunu koru
 function openCSVUpload() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.csv';
-  input.onchange = (e) => handleCSVFile(e.target.files[0]);
-  input.click();
+  openFileUpload(); // Yeni fonksiyona yönlendir
 }
 
 async function handleCSVFile(file) {
@@ -948,6 +952,103 @@ function getOrderStatus(order) {
   }
 }
 
+/**
+ * Planlama sapmasını renkli gösterir
+ * Negatif = Erken (Yeşil), Pozitif = Geç (Kırmızı)
+ */
+function formatSapma(days) {
+  if (days === null || days === undefined) return '-';
+
+  const num = parseFloat(days);
+  if (isNaN(num)) return '-';
+
+  let color = '#666';
+  let icon = '';
+
+  if (num < 0) {
+    color = '#2e7d32'; // Yeşil (erken)
+    icon = '▼';
+  } else if (num > 0) {
+    color = '#d32f2f'; // Kırmızı (geç)
+    icon = '▲';
+  } else {
+    color = '#1976d2'; // Mavi (zamanında)
+    icon = '●';
+  }
+
+  return `<span style="color:${color}; font-weight:600;">${icon} ${Math.abs(num)} gün</span>`;
+}
+
+/**
+ * Termin farkını renkli gösterir
+ * Negatif = Erken (Yeşil), Pozitif = Geç (Kırmızı)
+ */
+function formatTerminFarki(days) {
+  if (days === null || days === undefined) return '-';
+
+  const num = parseFloat(days);
+  if (isNaN(num)) return '-';
+
+  let color = '#666';
+  let text = '';
+
+  if (num < 0) {
+    color = '#2e7d32'; // Yeşil (erken teslim)
+    text = `${Math.abs(num)} gün erken`;
+  } else if (num > 0) {
+    color = '#d32f2f'; // Kırmızı (geç teslim)
+    text = `${num} gün geç`;
+  } else {
+    color = '#1976d2'; // Mavi (zamanında)
+    text = 'Zamanında';
+  }
+
+  return `<span style="color:${color}; font-weight:600;">${text}</span>`;
+}
+
+/**
+ * Kalan miktarı renkli gösterir
+ * > 0 = Turuncu (bekliyor), = 0 = Yeşil (tamamlandı)
+ */
+function formatKalanMiktar(miktar) {
+  if (miktar === null || miktar === undefined) return '-';
+
+  const num = parseFloat(miktar);
+  if (isNaN(num)) return '-';
+
+  let color = '#666';
+
+  if (num > 0) {
+    color = '#f57c00'; // Turuncu (bekliyor)
+  } else if (num === 0) {
+    color = '#2e7d32'; // Yeşil (tamamlandı)
+  } else {
+    color = '#666'; // Gri (negatif - hata?)
+  }
+
+  return `<span style="color:${color}; font-weight:600;">${formatNumber(num)}</span>`;
+}
+
+/**
+ * Teslimat durumu badge'i
+ * Açık = Kırmızı, Kısmi = Turuncu, Kapalı = Yeşil
+ */
+function getTeslimatDurumuBadge(durum) {
+  if (!durum) return '<span class="badge badge-secondary">Bilinmiyor</span>';
+
+  const durumLower = durum.toLowerCase();
+
+  if (durumLower === 'açık') {
+    return '<span class="badge badge-danger">Açık</span>';
+  } else if (durumLower === 'kısmi') {
+    return '<span class="badge badge-warning">Kısmi</span>';
+  } else if (durumLower === 'kapalı') {
+    return '<span class="badge badge-success">Kapalı</span>';
+  } else {
+    return `<span class="badge badge-secondary">${durum}</span>`;
+  }
+}
+
 // Boş durum göster (henüz CSV yüklenmemiş)
 function showEmptyState() {
   const contentEl = document.getElementById('purchasing-content');
@@ -987,10 +1088,433 @@ function showEmptyState() {
 }
 
 // =====================================================
+// XLSX UPLOAD FONKSİYONLARI (Satınalma360 Formatı)
+// =====================================================
+
+/**
+ * XLSX dosya yükleme dialog'u aç
+ * Hem .csv hem .xlsx formatlarını destekler
+ */
+function openFileUpload() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,.xlsx';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Dosya uzantısına göre uygun fonksiyonu çağır
+    const fileName = file.name.toLowerCase();
+    if (fileName.endsWith('.xlsx')) {
+      await handleXLSXFile(file);
+    } else if (fileName.endsWith('.csv')) {
+      await handleCSVFile(file);
+    } else {
+      showToast('❌ Geçersiz dosya formatı. Lütfen .csv veya .xlsx dosyası yükleyin.', 'error');
+    }
+  };
+  input.click();
+}
+
+/**
+ * XLSX dosyası işleme fonksiyonu
+ * @param {File} file - Excel dosyası
+ */
+async function handleXLSXFile(file) {
+  if (!file) return;
+
+  showToast('📤 Excel dosyası işleniyor...', 'info');
+
+  try {
+    // Dosyayı ArrayBuffer olarak oku
+    const arrayBuffer = await file.arrayBuffer();
+
+    // XLSX parse et
+    const orders = parseXLSX(arrayBuffer);
+
+    console.log(`📦 ${orders.length} sipariş parse edildi`);
+
+    // Kullanıcı email'ini al
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const userEmail = user?.email;
+
+    if (!userEmail) {
+      showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
+      return;
+    }
+
+    // REVIZYON MANTIĞI: Her sipariş için kontrol et ve işle
+    const results = await processOrdersWithRevision(orders, userEmail);
+
+    console.log('✅ İşlem tamamlandı:', results);
+    showToast(
+      `✅ ${results.inserted} yeni, ${results.updated} güncellendi, ${results.unchanged} değişmedi`,
+      'success'
+    );
+    await refreshPurchasingData();
+
+  } catch (error) {
+    console.error('XLSX işleme hatası:', error);
+    console.error('Hata stack:', error.stack);
+    showToast('❌ Excel dosyası işlenemedi: ' + error.message, 'error');
+  }
+}
+
+/**
+ * XLSX dosyasını parse eder ve Satınalma360 formatından database formatına dönüştürür
+ * @param {ArrayBuffer} arrayBuffer - Excel dosyasının binary içeriği
+ * @returns {Array} - Parse edilmiş siparişler dizisi
+ */
+function parseXLSX(arrayBuffer) {
+  // SheetJS kütüphanesini kontrol et
+  if (typeof XLSX === 'undefined') {
+    throw new Error('SheetJS kütüphanesi yüklenmemiş. Lütfen sayfayı yenileyin.');
+  }
+
+  // Excel dosyasını oku
+  const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+
+  // İlk sheet'i al
+  const firstSheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[firstSheetName];
+
+  // Sheet'i JSON'a çevir (başlıkları kullan)
+  const rawData = XLSX.utils.sheet_to_json(worksheet, {
+    raw: false, // Tarihleri string olarak al
+    defval: null // Boş hücreler null olsun
+  });
+
+  console.log(`📋 Excel'den ${rawData.length} satır okundu`);
+
+  if (rawData.length === 0) {
+    throw new Error('Excel dosyası boş veya okunamadı');
+  }
+
+  // İlk satırı kontrol et (örnek)
+  console.log('📝 İlk satır örneği:', rawData[0]);
+
+  // Her satırı Satınalma360 formatından database formatına map et
+  const orders = rawData.map((row, index) => {
+    try {
+      return mapSatinalma360ToDatabase(row);
+    } catch (error) {
+      console.warn(`⚠️ Satır ${index + 2} işlenemedi:`, error.message, row);
+      return null;
+    }
+  }).filter(order => order !== null);
+
+  console.log(`✅ ${orders.length} sipariş başarıyla işlendi`);
+
+  if (orders.length > 0) {
+    console.log('📝 İlk sipariş örneği (işlenmiş):', orders[0]);
+  }
+
+  return orders;
+}
+
+/**
+ * Satınalma360 Excel satırını database formatına dönüştürür
+ * @param {Object} row - Excel satırı (Satınalma360 formatı, 46 kolon)
+ * @returns {Object} - Database formatı
+ */
+function mapSatinalma360ToDatabase(row) {
+  // Satınalma360 → Database Field Mapping
+  const mapped = {
+    // Firma Bilgileri
+    firma: row['Şirket'] || null,
+    tedarikci: row['Tedarikçi'] || null,
+    tedarikci_kodu: row['Tedarikçi'] || null, // Kod ve isim aynı field'da olabilir
+    tedarikci_tanimi: row['TedarikçiTanımı'] || null,
+
+    // Talep Bilgileri
+    talep_tipi: row['TalepTipi'] || null,
+    talep_no: row['TalepNo'] || null,
+    talep_miktari: parseNumber(row['TalepMiktarı']),
+    talep_birimi: row['TalepBirimi'] || null,
+    talep_olustruran: row['TalepOluşturan'] || null,
+    talep_olusturma_tarihi: parseExcelDate(row['TalepOluşturmaTarihi']),
+    ihtiyac_tarihi: parseExcelDate(row['İhtiyaçTarihi']),
+
+    // Sipariş Bilgileri
+    siparis_tip: row['SiparişTipi'] || null, // NOT: Bu veri TalepTip başlığında gösterilecek
+    siparis_no: row['SiparişNo'] || null,
+    siparis_kalemi: row['SipKalemNo'] || null,
+    siparis_kalem_no: row['SipKalemNo'] || null,
+    siparis_tarihi: parseExcelDate(row['SiparişOluşturmaTarihi']),
+    siparis_olusturma_tarihi: parseExcelDate(row['SiparişOluşturmaTarihi']),
+    siparis_teslim_tarihi: parseExcelDate(row['SiparişTeslimTarihi']),
+
+    // Malzeme Bilgileri
+    malzeme: row['MalzemeKod'] || null,
+    malzeme_tanimi: row['MalzemeTanım'] || null,
+    birim: row['SiparişBirimi'] || null,
+
+    // Miktar Bilgileri
+    miktar: parseNumber(row['SiparişMiktarı']),
+    gelen_miktar: parseNumber(row['ToplamGelenMiktar']),
+    toplam_gelen_miktar: parseNumber(row['ToplamGelenMiktar']),
+    toplam_fatura_miktar: parseNumber(row['ToplamFaturaMiktar']),
+
+    // Finansal Bilgiler
+    birim_fiyat: parseNumber(row['BirimFiyat']),
+    para_birimi: row['ParaBirimi'] || null,
+    kur: row['ParaBirimi'] || null, // Para birimi text olarak
+    kur_degeri: parseNumber(row['Kur']),
+    para_birimi_tutar: parseNumber(row['ParaBirimiTutar']),
+    tutar_tl: parseNumber(row['TutarTL']),
+
+    // Ödeme Bilgileri
+    odeme_kosulu: row['ÖdemeKoşulu'] || null,
+    odeme_kosulu_kod: row['ÖdemeKoşulu'] || null,
+    odeme_kosulu_tanimi: row['ÖdemeKoşuluTanımı'] || null,
+    siparis_teslim_odeme_vadesi: parseExcelDate(row['SiparisTeslimOdemeVadesi']),
+    vadeye_gore: parseExcelDate(row['SiparisTeslimOdemeVadesi']), // Geriye dönük uyumluluk
+
+    // Stok ve Teslimat
+    mal_kabul_tarihi: parseExcelDate(row['StokGirişTarihi']),
+    stok_giris_tarihi: parseExcelDate(row['StokGirişTarihi']),
+    mal_kabul_statu: row['MalKabulStatü'] || null,
+    fatura_statu: row['FaturaStatü'] || null,
+
+    // Stok Belge Bilgileri
+    irsaliye_no: row['IrsaliyeNo'] || null,
+    stok_belge_tipi: row['StokBelgeTipi'] || null,
+    stok_belge_no: row['StokBelgeNo'] || null,
+    stok_belge_kalem_no: row['StokBelgeKalemNo'] || null,
+    stok_belge_miktari: parseNumber(row['StokBelgeMiktarı']),
+    stok_belge_birimi: row['StokBelgeBirimi'] || null,
+
+    // Fatura Bilgileri
+    fatura_miktar: parseNumber(row['FaturaMiktar']),
+    fatura_tutar: parseNumber(row['FaturaTutar']),
+    fatura_tipi: row['FaturaTipi'] || null,
+    fatura_no: row['FaturaNo'] || null,
+    e_fatura_no: row['EFaturaNo'] || null,
+    fatura_tarihi: parseExcelDate(row['FaturaTarihi']),
+    fatura_vade_tarihi: parseExcelDate(row['FaturaVadeTarihi'])
+  };
+
+  // Hesaplanan alanları ekle
+  calculatePurchasingFields(mapped);
+
+  // Geçerlilik kontrolü - en az sipariş no veya malzeme olmalı
+  const isValid = mapped.siparis_no || mapped.malzeme_tanimi || mapped.talep_no;
+
+  if (!isValid) {
+    throw new Error('Geçersiz satır: Sipariş No, Malzeme veya Talep No bulunamadı');
+  }
+
+  return mapped;
+}
+
+/**
+ * Hesaplanan alanları doldurur (client-side hesaplama)
+ * NOT: Trigger database'de de aynı hesaplamaları yapıyor, bu yedek
+ * @param {Object} order - Sipariş nesnesi (referans olarak değiştirilir)
+ */
+function calculatePurchasingFields(order) {
+  // Standart termin süresi (default: 30 gün, ileride ayarlanabilir)
+  if (!order.standart_termin_suresi) {
+    order.standart_termin_suresi = 30;
+  }
+
+  // Standart termin tarihi hesapla
+  if (order.talep_olusturma_tarihi && order.standart_termin_suresi) {
+    order.standart_termin_tarihi = addDays(
+      order.talep_olusturma_tarihi,
+      order.standart_termin_suresi
+    );
+  }
+
+  // Planlama sapması (gün farkı)
+  if (order.standart_termin_tarihi && order.mal_kabul_tarihi) {
+    order.planlama_sapmasi = daysDiff(
+      order.standart_termin_tarihi,
+      order.mal_kabul_tarihi
+    );
+  }
+
+  // Termin farkı (gün farkı)
+  if (order.mal_kabul_tarihi && order.siparis_teslim_tarihi) {
+    order.termin_farki = daysDiff(
+      order.siparis_teslim_tarihi,
+      order.mal_kabul_tarihi
+    );
+  }
+
+  // Kalan miktar
+  if (order.miktar !== null && order.miktar !== undefined) {
+    const gelen = order.toplam_gelen_miktar || 0;
+    order.kalan_miktar = order.miktar - gelen;
+  }
+
+  // Teslimat durumu
+  const gelen = order.toplam_gelen_miktar || 0;
+  const siparis = order.miktar || 0;
+
+  if (gelen === 0) {
+    order.teslimat_durumu = 'Açık';
+  } else if (gelen < siparis) {
+    order.teslimat_durumu = 'Kısmi';
+  } else {
+    order.teslimat_durumu = 'Kapalı';
+  }
+}
+
+// =====================================================
+// YARDIMCI FONKSİYONLAR (Helper Functions)
+// =====================================================
+
+/**
+ * Excel tarih formatını PostgreSQL DATE formatına çevir
+ * @param {string|number|Date} excelDate - Excel'den gelen tarih
+ * @returns {string|null} - YYYY-MM-DD formatında tarih veya null
+ */
+function parseExcelDate(excelDate) {
+  if (!excelDate) return null;
+
+  try {
+    let date;
+
+    // Eğer zaten Date objesi ise
+    if (excelDate instanceof Date) {
+      date = excelDate;
+    }
+    // Excel serial number ise (sayı)
+    else if (typeof excelDate === 'number') {
+      // Excel serial date: 1899-12-30'dan itibaren gün sayısı
+      date = XLSX.SSF.parse_date_code(excelDate);
+      if (date) {
+        date = new Date(date.y, date.m - 1, date.d);
+      }
+    }
+    // String ise (çeşitli formatlar olabilir)
+    else if (typeof excelDate === 'string') {
+      // Türkçe format: GG.AA.YYYY veya DD.MM.YYYY
+      if (excelDate.includes('.')) {
+        const parts = excelDate.split('.');
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10);
+          const year = parseInt(parts[2], 10);
+          date = new Date(year, month - 1, day);
+        }
+      }
+      // ISO format: YYYY-MM-DD
+      else if (excelDate.includes('-')) {
+        date = new Date(excelDate);
+      }
+      // Slash format: MM/DD/YYYY
+      else if (excelDate.includes('/')) {
+        date = new Date(excelDate);
+      }
+    }
+
+    if (!date || isNaN(date.getTime())) {
+      console.warn('Geçersiz tarih:', excelDate);
+      return null;
+    }
+
+    // PostgreSQL formatına çevir: YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+
+  } catch (error) {
+    console.warn('Tarih parse hatası:', excelDate, error);
+    return null;
+  }
+}
+
+/**
+ * Sayı parse et (Türkçe ve İngilizce format desteği)
+ * @param {string|number} value - Parse edilecek değer
+ * @returns {number|null} - Sayı veya null
+ */
+function parseNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return value;
+
+  try {
+    // String ise temizle
+    let str = String(value).trim();
+
+    // Boş veya geçersiz değerler
+    if (str === '' || str === '-' || str === 'Hic') return null;
+
+    // Türkçe format: 1.234,56 → 1234.56
+    if (str.includes(',')) {
+      str = str.replace(/\./g, '').replace(',', '.');
+    }
+
+    const num = parseFloat(str);
+    return isNaN(num) ? null : num;
+  } catch (error) {
+    console.warn('Sayı parse hatası:', value, error);
+    return null;
+  }
+}
+
+/**
+ * İki tarih arasındaki gün farkını hesapla
+ * @param {string} date1 - İlk tarih (YYYY-MM-DD)
+ * @param {string} date2 - İkinci tarih (YYYY-MM-DD)
+ * @returns {number|null} - Gün farkı (date2 - date1) veya null
+ */
+function daysDiff(date1, date2) {
+  if (!date1 || !date2) return null;
+
+  try {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
+      return null;
+    }
+
+    const diffMs = d2.getTime() - d1.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  } catch (error) {
+    console.warn('Tarih farkı hesaplama hatası:', date1, date2, error);
+    return null;
+  }
+}
+
+/**
+ * Tarihe gün ekle
+ * @param {string} dateStr - Tarih (YYYY-MM-DD)
+ * @param {number} days - Eklenecek gün sayısı
+ * @returns {string|null} - Yeni tarih (YYYY-MM-DD) veya null
+ */
+function addDays(dateStr, days) {
+  if (!dateStr || days === null || days === undefined) return null;
+
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return null;
+
+    date.setDate(date.getDate() + days);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.warn('Tarih ekleme hatası:', dateStr, days, error);
+    return null;
+  }
+}
+
+// =====================================================
 // SAYFA AÇILDIĞINDA VERİLERİ YÜKLE
 // =====================================================
 
 // showSection('purchasing') çağrıldığında bu fonksiyon otomatik çalışacak
 // main.js'deki showSection fonksiyonuna hook eklemek gerekebilir
 
-console.log('✅ Purchasing modülü yüklendi');
+console.log('✅ Purchasing modülü yüklendi (XLSX desteği aktif)');
