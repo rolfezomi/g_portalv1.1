@@ -651,8 +651,9 @@ async function processOrdersWithRevision(orders, userEmail) {
   // Her sipariş için işle
   for (const order of orders) {
     try {
-      // Benzersiz anahtar: SiparisNo + SiparisKalemi + SiparisTip + TedarikciKodu
-      const orderKey = `${order.siparis_no}-${order.siparis_kalemi || ''}-${order.siparis_tip || ''}-${order.tedarikci_kodu || ''}`;
+      // Benzersiz anahtar: SiparisNo + SiparisKalemi + StokBelgeNo + IrsaliyeNo + FaturaNo
+      // NOT: Aynı sipariş numarasına sahip farklı teslimat satırlarını ayırt etmek için
+      const orderKey = `${order.siparis_no}-${order.siparis_kalemi || ''}-${order.stok_belge_no || ''}-${order.irsaliye_no || ''}-${order.fatura_no || ''}`;
 
       // Mevcut en güncel kaydı bul
       const { data: existing, error: fetchError } = await supabaseClient
@@ -660,8 +661,9 @@ async function processOrdersWithRevision(orders, userEmail) {
         .select('*')
         .eq('siparis_no', order.siparis_no)
         .eq('siparis_kalemi', order.siparis_kalemi || '')
-        .eq('siparis_tip', order.siparis_tip || '')
-        .eq('tedarikci_kodu', order.tedarikci_kodu || '')
+        .eq('stok_belge_no', order.stok_belge_no || '')
+        .eq('irsaliye_no', order.irsaliye_no || '')
+        .eq('fatura_no', order.fatura_no || '')
         .eq('is_latest', true)
         .maybeSingle(); // Kayıt yoksa null döner, hata vermez (406 hatası yok)
 
