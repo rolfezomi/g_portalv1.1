@@ -35,7 +35,7 @@ async function refreshPurchasingData() {
       .from('purchasing_orders')
       .select('*')
       .eq('is_latest', true)
-      .order('siparis_tarihi', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (ordersError) {
       console.error('Sipariş yükleme hatası:', ordersError);
