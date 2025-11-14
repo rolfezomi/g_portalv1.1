@@ -327,7 +327,13 @@ function renderPurchasingFilters() {
 
         <div class="filter-group">
           <button class="btn btn-secondary" onclick="clearPurchasingFilters()" style="margin-top: 24px;">
-            🗑️ Tümünü Temizle
+            🗑️ Filtreleri Temizle
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <button class="btn" onclick="clearAllPurchasingData()" style="margin-top: 24px; background: #f44336; color: white;">
+            🗑️ Veritabanını Temizle
           </button>
         </div>
       </div>
@@ -421,6 +427,57 @@ function clearPurchasingFilters() {
   renderPurchasingTable();
 
   showToast('✅ Filtreler temizlendi', 'success');
+}
+
+/**
+ * Veritabanındaki tüm satın alma verilerini temizle
+ * NOT: Bu işlem geri alınamaz!
+ */
+async function clearAllPurchasingData() {
+  // Onay iste
+  const confirmed = confirm(
+    '⚠️ UYARI: Veritabanındaki TÜM satın alma verileri silinecek.\n\n' +
+    'Bu işlem geri alınamaz!\n\n' +
+    'Emin misiniz?'
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  // İkinci onay
+  const doubleConfirmed = confirm(
+    '⚠️ SON UYARI!\n\n' +
+    'Tüm sipariş verileri kalıcı olarak silinecek.\n\n' +
+    'Devam etmek istiyor musunuz?'
+  );
+
+  if (!doubleConfirmed) {
+    return;
+  }
+
+  try {
+    showToast('🗑️ Veritabanı temizleniyor...', 'info');
+
+    // Tüm kayıtları sil (Supabase'de tüm kayıtları silmek için trick)
+    const { error } = await supabaseClient
+      .from('purchasing_orders')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Tüm kayıtları sil
+
+    if (error) {
+      throw error;
+    }
+
+    showToast('✅ Veritabanı temizlendi. Şimdi Excel\'i tekrar yükleyin.', 'success');
+
+    // Verileri yenile
+    await refreshPurchasingData();
+
+  } catch (error) {
+    console.error('Veritabanı temizleme hatası:', error);
+    showToast('❌ Temizleme hatası: ' + error.message, 'error');
+  }
 }
 
 // =====================================================
