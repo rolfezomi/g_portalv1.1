@@ -116,11 +116,33 @@ function renderPurchasingStats() {
   // Toplam siparişler
   const totalOrders = purchasingOrders.length;
 
-  // Açık siparişler (teslimat durumu = 'Açık')
-  const openOrders = purchasingOrders.filter(o => o.teslimat_durumu === 'Açık');
+  // Açık siparişler - kalan_miktar kontrolü ile (daha güvenilir)
+  const openOrders = purchasingOrders.filter(o => {
+    const siparisMiktar = parseFloat(o.miktar) || 0;
+    const gelenMiktar = parseFloat(o.toplam_gelen_miktar || o.gelen_miktar) || 0;
+    const kalanMiktar = parseFloat(o.kalan_miktar);
 
-  // Kısmi teslimat (teslimat durumu = 'Kısmi')
-  const partialOrders = purchasingOrders.filter(o => o.teslimat_durumu === 'Kısmi');
+    // Eğer kalan_miktar hesaplanmışsa onu kullan
+    if (kalanMiktar !== null && kalanMiktar !== undefined && !isNaN(kalanMiktar)) {
+      return kalanMiktar > 0 && gelenMiktar === 0; // Hiç gelmemiş
+    }
+
+    // Yoksa manuel hesapla
+    return siparisMiktar > 0 && gelenMiktar === 0;
+  });
+
+  // Kısmi teslimat
+  const partialOrders = purchasingOrders.filter(o => {
+    const siparisMiktar = parseFloat(o.miktar) || 0;
+    const gelenMiktar = parseFloat(o.toplam_gelen_miktar || o.gelen_miktar) || 0;
+    const kalanMiktar = parseFloat(o.kalan_miktar);
+
+    if (kalanMiktar !== null && kalanMiktar !== undefined && !isNaN(kalanMiktar)) {
+      return kalanMiktar > 0 && gelenMiktar > 0; // Kısmen gelmiş
+    }
+
+    return gelenMiktar > 0 && gelenMiktar < siparisMiktar;
+  });
 
   // Toplam tutar (TL) - tüm siparişler
   const totalAmount = purchasingOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
@@ -130,6 +152,14 @@ function renderPurchasingStats() {
   const avgTerminFarki = completedOrders.length > 0
     ? completedOrders.reduce((sum, o) => sum + (parseFloat(o.termin_farki) || 0), 0) / completedOrders.length
     : 0;
+
+  // Debug için
+  console.log('📊 Stats hesaplamaları:', {
+    total: totalOrders,
+    open: openOrders.length,
+    partial: partialOrders.length,
+    sampleOrder: purchasingOrders[0]
+  });
 
   const statsHTML = `
     <div class="purchasing-stats-grid">
