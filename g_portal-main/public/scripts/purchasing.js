@@ -9,6 +9,14 @@ let filteredOrders = [];
 let currentSortField = 'siparis_tarihi';
 let currentSortDirection = 'desc';
 let searchQuery = '';
+let currentFilters = {
+  firma: '',
+  durum: '',
+  tedarikci: '',
+  odemeKosulu: '',
+  startDate: '',
+  endDate: ''
+};
 
 // =====================================================
 // VERİ YÜKLEME FONKSİYONLARI
@@ -346,21 +354,22 @@ function handlePurchasingSearch(value) {
 }
 
 function applyPurchasingFilters() {
-  const firma = document.getElementById('filter-firma')?.value || '';
-  const status = document.getElementById('filter-status')?.value || '';
-  const supplier = document.getElementById('filter-supplier')?.value || '';
-  const payment = document.getElementById('filter-payment')?.value || '';
-  const dateStart = document.getElementById('filter-date-start')?.value || '';
-  const dateEnd = document.getElementById('filter-date-end')?.value || '';
+  // Global currentFilters objesini güncelle
+  currentFilters.firma = document.getElementById('filter-firma')?.value || '';
+  currentFilters.durum = document.getElementById('filter-status')?.value || '';
+  currentFilters.tedarikci = document.getElementById('filter-supplier')?.value || '';
+  currentFilters.odemeKosulu = document.getElementById('filter-payment')?.value || '';
+  currentFilters.startDate = document.getElementById('filter-date-start')?.value || '';
+  currentFilters.endDate = document.getElementById('filter-date-end')?.value || '';
 
   filteredOrders = purchasingOrders.filter(order => {
     // Dropdown filtreler
-    if (firma && order.firma !== firma) return false;
-    if (status && order.teslimat_durumu !== status) return false;
-    if (supplier && (order.tedarikci_tanimi !== supplier && order.tedarikci !== supplier)) return false;
-    if (payment && (order.odeme_kosulu_tanimi !== payment && order.odeme_kosulu !== payment)) return false;
-    if (dateStart && order.siparis_tarihi < dateStart) return false;
-    if (dateEnd && order.siparis_tarihi > dateEnd) return false;
+    if (currentFilters.firma && order.firma !== currentFilters.firma) return false;
+    if (currentFilters.durum && order.teslimat_durumu !== currentFilters.durum) return false;
+    if (currentFilters.tedarikci && (order.tedarikci_tanimi !== currentFilters.tedarikci && order.tedarikci !== currentFilters.tedarikci)) return false;
+    if (currentFilters.odemeKosulu && (order.odeme_kosulu_tanimi !== currentFilters.odemeKosulu && order.odeme_kosulu !== currentFilters.odemeKosulu)) return false;
+    if (currentFilters.startDate && order.siparis_tarihi < currentFilters.startDate) return false;
+    if (currentFilters.endDate && order.siparis_tarihi > currentFilters.endDate) return false;
 
     // Arama filtresi
     if (searchQuery) {
@@ -395,6 +404,16 @@ function clearPurchasingFilters() {
   document.getElementById('filter-date-start').value = '';
   document.getElementById('filter-date-end').value = '';
   document.getElementById('purchasing-search').value = '';
+
+  // Global filtreleri sıfırla
+  currentFilters = {
+    firma: '',
+    durum: '',
+    tedarikci: '',
+    odemeKosulu: '',
+    startDate: '',
+    endDate: ''
+  };
 
   searchQuery = '';
   filteredOrders = [...purchasingOrders];
@@ -1606,7 +1625,15 @@ async function exportPurchasingToExcel() {
   try {
     // SheetJS kontrolü
     if (typeof XLSX === 'undefined') {
-      showToast('❌ Excel kütüphanesi yüklenmemiş', 'error');
+      showToast('❌ Excel kütüphanesi yüklenmemiş. Sayfayı yenileyin.', 'error');
+      console.error('XLSX kütüphanesi yüklenmemiş');
+      return;
+    }
+
+    // Veri kontrolü
+    if (!purchasingOrders || purchasingOrders.length === 0) {
+      showToast('❌ Export edilecek veri yok. Önce Excel yükleyin.', 'warning');
+      console.warn('purchasingOrders boş');
       return;
     }
 
@@ -1615,28 +1642,9 @@ async function exportPurchasingToExcel() {
     // Tüm verileri çek (filtreli)
     let dataToExport = [...purchasingOrders];
 
-    // Aktif filtreleri uygula
-    if (currentFilters.firma) {
-      dataToExport = dataToExport.filter(o => o.firma === currentFilters.firma);
-    }
-    if (currentFilters.durum) {
-      dataToExport = dataToExport.filter(o => o.teslimat_durumu === currentFilters.durum);
-    }
-    if (currentFilters.startDate) {
-      dataToExport = dataToExport.filter(o => o.siparis_olusturma_tarihi >= currentFilters.startDate);
-    }
-    if (currentFilters.endDate) {
-      dataToExport = dataToExport.filter(o => o.siparis_olusturma_tarihi <= currentFilters.endDate);
-    }
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      dataToExport = dataToExport.filter(order =>
-        (order.siparis_no && order.siparis_no.toLowerCase().includes(query)) ||
-        (order.malzeme && order.malzeme.toLowerCase().includes(query)) ||
-        (order.malzeme_tanimi && order.malzeme_tanimi.toLowerCase().includes(query)) ||
-        (order.tedarikci && order.tedarikci.toLowerCase().includes(query))
-      );
-    }
+    // Aktif filtreleri uygula (filteredOrders kullan - zaten filtrelenmiş)
+    // NOT: filteredOrders zaten applyPurchasingFilters() ile filtrelenmiş durumda
+    dataToExport = [...filteredOrders];
 
     if (dataToExport.length === 0) {
       showToast('⚠️ Export edilecek veri bulunamadı', 'warning');
@@ -1719,7 +1727,9 @@ async function exportPurchasingToExcel() {
 
   } catch (error) {
     console.error('Excel export hatası:', error);
-    showToast('❌ Excel indirme hatası', 'error');
+    console.error('Hata detayı:', error.message);
+    console.error('Stack trace:', error.stack);
+    showToast(`❌ Excel indirme hatası: ${error.message}`, 'error');
   }
 }
 
