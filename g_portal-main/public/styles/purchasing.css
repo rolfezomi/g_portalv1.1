@@ -146,48 +146,135 @@
 }
 
 .table-wrapper {
-  overflow-x: visible;
+  overflow-x: auto;
   width: 100%;
+  max-width: 100%;
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
 /* Tablo Stilleri */
 .purchasing-table {
-  width: 100%;
-  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .purchasing-table thead {
-  background: #f5f5f5;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .purchasing-table th {
-  padding: 8px 4px;
+  padding: 12px 10px;
   text-align: left;
   font-weight: 600;
   color: #333;
-  border-bottom: 2px solid #ddd;
+  border-bottom: 2px solid #dee2e6;
+  border-right: 1px solid #e9ecef;
   white-space: nowrap;
   position: relative;
-  font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12px;
+  background: #f8f9fa;
 }
 
-/* Kolon Genişlikleri - Tam Sığması İçin */
-.purchasing-table th:nth-child(1), .purchasing-table td:nth-child(1) { width: 6%; }
-.purchasing-table th:nth-child(2), .purchasing-table td:nth-child(2) { width: 3%; text-align: center; }
-.purchasing-table th:nth-child(3), .purchasing-table td:nth-child(3) { width: 6%; }
-.purchasing-table th:nth-child(4), .purchasing-table td:nth-child(4) { width: 16%; }
-.purchasing-table th:nth-child(5), .purchasing-table td:nth-child(5) { width: 18%; }
-.purchasing-table th:nth-child(6), .purchasing-table td:nth-child(6) { width: 6%; text-align: right; }
-.purchasing-table th:nth-child(7), .purchasing-table td:nth-child(7) { width: 5%; text-align: right; }
-.purchasing-table th:nth-child(8), .purchasing-table td:nth-child(8) { width: 6%; text-align: right; }
-.purchasing-table th:nth-child(9), .purchasing-table td:nth-child(9) { width: 8%; text-align: right; }
-.purchasing-table th:nth-child(10), .purchasing-table td:nth-child(10) { width: 10%; }
-.purchasing-table th:nth-child(11), .purchasing-table td:nth-child(11) { width: 10%; }
-.purchasing-table th:nth-child(12), .purchasing-table td:nth-child(12) { width: 6%; text-align: center; }
+/* =====================================================
+   RAPOR FORMATI - 25 KOLON GENİŞLİKLERİ
+   ===================================================== */
+
+/* Sticky Kolonlar - İlk 2 kolon sabit */
+.purchasing-table .col-firma,
+.purchasing-table .col-siparis-no {
+  position: sticky;
+  z-index: 11;
+  background: #ffffff;
+}
+
+.purchasing-table thead .col-firma,
+.purchasing-table thead .col-siparis-no {
+  background: #e3f2fd;
+}
+
+.purchasing-table .col-firma {
+  left: 0;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.purchasing-table .col-siparis-no {
+  left: 120px;
+  min-width: 130px;
+  max-width: 130px;
+}
+
+/* Kategori 1: Temel Bilgiler (dar kolonlar) */
+.purchasing-table .col-talep-tip { min-width: 100px; max-width: 100px; }
+.purchasing-table .col-talep-no { min-width: 120px; max-width: 120px; }
+.purchasing-table .col-malzeme { min-width: 110px; max-width: 110px; }
+
+/* Kategori 2: Açıklamalar (geniş kolonlar) */
+.purchasing-table .col-malzeme-tanim { min-width: 250px; max-width: 350px; }
+
+/* Kategori 3: Tarihler (orta kolonlar) */
+.purchasing-table .col-date {
+  min-width: 105px;
+  max-width: 105px;
+  text-align: center;
+}
+
+/* Kategori 4: Sayısal Değerler (dar kolonlar - sağa yasla) */
+.purchasing-table .col-sayi,
+.purchasing-table .col-miktar,
+.purchasing-table .col-termin-suresi,
+.purchasing-table .col-planlama-sapmasi,
+.purchasing-table .col-termin-farki,
+.purchasing-table .col-kalan-miktar {
+  min-width: 90px;
+  max-width: 90px;
+  text-align: right;
+}
+
+/* Kategori 5: Finansal Değerler (orta kolonlar - sağa yasla) */
+.purchasing-table .col-fiyat,
+.purchasing-table .col-tutar,
+.purchasing-table .col-kur,
+.purchasing-table .col-toplam-tl {
+  min-width: 110px;
+  max-width: 110px;
+  text-align: right;
+}
+
+.purchasing-table .col-toplam-tl {
+  min-width: 130px;
+  max-width: 130px;
+  font-weight: 600;
+  background: #fff8e1;
+}
+
+/* Kategori 6: Para Birimi (çok dar) */
+.purchasing-table .col-para-birimi {
+  min-width: 70px;
+  max-width: 70px;
+  text-align: center;
+}
+
+/* Kategori 7: Ödeme Bilgileri (orta) */
+.purchasing-table .col-odeme {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+/* Kategori 8: Durum Badge (dar) */
+.purchasing-table .col-durum {
+  min-width: 100px;
+  max-width: 100px;
+  text-align: center;
+}
 
 /* Sıralanabilir Başlıklar */
 .purchasing-table th.sortable {
@@ -214,15 +301,44 @@
 }
 
 .purchasing-table td {
-  padding: 8px 4px;
-  border-bottom: 1px solid #eee;
-  color: #555;
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f5f5f5;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sticky kolonlar için tbody stilleri */
+.purchasing-table tbody .col-firma,
+.purchasing-table tbody .col-siparis-no {
+  background: #ffffff;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+}
+
+.purchasing-table tbody tr:hover .col-firma,
+.purchasing-table tbody tr:hover .col-siparis-no {
+  background: #f5f9fc;
+}
+
+/* Toplam TL kolonu vurgusu */
+.purchasing-table tbody .col-toplam-tl {
+  background: #fffbf0;
+  font-weight: 600;
+  color: #1976d2;
 }
 
 .purchasing-table tbody tr:hover {
-  background: #f9f9f9;
+  background: #f8f9fa;
+}
+
+.purchasing-table tbody tr:hover td {
+  background: #f8f9fa;
+}
+
+.purchasing-table tbody tr:hover .col-toplam-tl {
+  background: #fff8e1;
 }
 
 .purchasing-table tbody tr:last-child td {
@@ -449,52 +565,45 @@
 }
 
 /* =====================================================
-   RAPOR FORMATI TABLO STYLES (25 Kolon)
+   RAPOR FORMATI - EK STILLER
    ===================================================== */
 
-/* Genişletilmiş tablo için özel stiller */
-.purchasing-table thead th {
-  font-size: 12px;
-  padding: 10px 8px;
-  white-space: nowrap;
-}
-
-.purchasing-table tbody td {
-  font-size: 13px;
-  padding: 8px;
-  white-space: nowrap;
-}
-
-/* Önemli kolonları vurgula */
-.purchasing-table tbody td:nth-child(4) {
-  /* Sipariş No - Kalın */
-  font-weight: 600;
-}
-
-.purchasing-table tbody td:nth-child(22) {
-  /* Toplam TL - Kalın ve büyük */
-  font-weight: 700;
-  font-size: 14px;
-}
-
-/* Scroll ipucu */
-.table-wrapper {
-  position: relative;
-}
-
-.table-wrapper::after {
-  content: '';
+/* Scroll göstergesi - sağda daha fazla kolon var */
+.table-wrapper::before {
+  content: '← Kaydırarak tüm kolonları görüntüleyin →';
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 40px;
-  background: linear-gradient(to left, rgba(255,255,255,0.9), transparent);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+  white-space: nowrap;
 }
 
-.table-wrapper:not(:hover)::after {
-  opacity: 1;
+/* Tooltip stilleri (başlıklar için) */
+.purchasing-table th[title] {
+  cursor: help;
+}
+
+.purchasing-table th[title]:hover {
+  background: #e3f2fd;
+  transition: background 0.2s;
+}
+
+/* Kategori grupları için arka plan renkleri */
+.purchasing-table .category-info {
+  background: #f0f4ff;
+}
+
+.purchasing-table .category-dates {
+  background: #fff4e6;
+}
+
+.purchasing-table .category-financial {
+  background: #f0fff4;
+}
+
+.purchasing-table .category-status {
+  background: #fff0f6;
 }

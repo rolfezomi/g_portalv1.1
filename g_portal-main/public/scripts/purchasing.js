@@ -399,35 +399,35 @@ function renderPurchasingTable() {
   const tableHTML = `
     <div class="purchasing-table-container">
       <h3>Rapor Formatı - Siparişler (${filteredOrders.length})</h3>
-      <div class="table-wrapper" style="overflow-x: auto;">
-        <table class="purchasing-table" style="min-width: 3000px;">
+      <div class="table-wrapper">
+        <table class="purchasing-table rapor-format-table">
           <thead>
             <tr>
-              <th class="sortable" onclick="handleSort('firma')">Firma ${getSortIcon('firma')}</th>
-              <th class="sortable" onclick="handleSort('siparis_tip')">TalepTip ${getSortIcon('siparis_tip')}</th>
-              <th class="sortable" onclick="handleSort('talep_no')">TalepNo ${getSortIcon('talep_no')}</th>
-              <th class="sortable" onclick="handleSort('siparis_no')">Sipariş No ${getSortIcon('siparis_no')}</th>
-              <th class="sortable" onclick="handleSort('malzeme')">Mlz.Kodu ${getSortIcon('malzeme')}</th>
-              <th class="sortable" onclick="handleSort('malzeme_tanimi')">Malzeme Tanım ${getSortIcon('malzeme_tanimi')}</th>
-              <th class="sortable" onclick="handleSort('talep_olusturma_tarihi')">Talep Oluş. ${getSortIcon('talep_olusturma_tarihi')}</th>
-              <th class="sortable" onclick="handleSort('siparis_olusturma_tarihi')">Sip.Dönüş. ${getSortIcon('siparis_olusturma_tarihi')}</th>
-              <th class="sortable" onclick="handleSort('ihtiyac_tarihi')">İhtiyaç Tar. ${getSortIcon('ihtiyac_tarihi')}</th>
-              <th class="sortable" onclick="handleSort('standart_termin_suresi')">Std.Termin (gün) ${getSortIcon('standart_termin_suresi')}</th>
-              <th class="sortable" onclick="handleSort('standart_termin_tarihi')">Std.Termin Tar. ${getSortIcon('standart_termin_tarihi')}</th>
-              <th class="sortable" onclick="handleSort('mal_kabul_tarihi')">Mal Kabul ${getSortIcon('mal_kabul_tarihi')}</th>
-              <th class="sortable" onclick="handleSort('planlama_sapmasi')">Plan.Sapma ${getSortIcon('planlama_sapmasi')}</th>
-              <th class="sortable" onclick="handleSort('termin_farki')">Termin Farkı ${getSortIcon('termin_farki')}</th>
-              <th class="sortable" onclick="handleSort('miktar')">Sip.Miktar ${getSortIcon('miktar')}</th>
-              <th class="sortable" onclick="handleSort('toplam_gelen_miktar')">Gelen ${getSortIcon('toplam_gelen_miktar')}</th>
-              <th class="sortable" onclick="handleSort('kalan_miktar')">Kalan ${getSortIcon('kalan_miktar')}</th>
-              <th class="sortable" onclick="handleSort('birim_fiyat')">Brm.Fiyat ${getSortIcon('birim_fiyat')}</th>
-              <th class="sortable" onclick="handleSort('para_birimi_tutar')">Tutar ${getSortIcon('para_birimi_tutar')}</th>
-              <th class="sortable" onclick="handleSort('para_birimi')">P.Birimi ${getSortIcon('para_birimi')}</th>
-              <th class="sortable" onclick="handleSort('kur_degeri')">Kur ${getSortIcon('kur_degeri')}</th>
-              <th class="sortable" onclick="handleSort('tutar_tl')">Toplam TL ${getSortIcon('tutar_tl')}</th>
-              <th class="sortable" onclick="handleSort('odeme_kosulu_tanimi')">Ödeme Koş. ${getSortIcon('odeme_kosulu_tanimi')}</th>
-              <th class="sortable" onclick="handleSort('siparis_teslim_odeme_vadesi')">Ödeme Tar. ${getSortIcon('siparis_teslim_odeme_vadesi')}</th>
-              <th class="sortable" onclick="handleSort('teslimat_durumu')">Teslimat ${getSortIcon('teslimat_durumu')}</th>
+              <th class="sortable col-firma" onclick="handleSort('firma')" title="Firma">Firma ${getSortIcon('firma')}</th>
+              <th class="sortable col-talep-tip" onclick="handleSort('siparis_tip')" title="Talep Tipi">TalepTip ${getSortIcon('siparis_tip')}</th>
+              <th class="sortable col-talep-no" onclick="handleSort('talep_no')" title="Talep Numarası">TalepNo ${getSortIcon('talep_no')}</th>
+              <th class="sortable col-siparis-no" onclick="handleSort('siparis_no')" title="Sipariş Numarası">Sipariş No ${getSortIcon('siparis_no')}</th>
+              <th class="sortable col-malzeme-kod" onclick="handleSort('malzeme')" title="Malzeme Kodu">Malzeme Kodu ${getSortIcon('malzeme')}</th>
+              <th class="sortable col-malzeme-tanim" onclick="handleSort('malzeme_tanimi')" title="Malzeme Tanımı">Malzeme Tanım ${getSortIcon('malzeme_tanimi')}</th>
+              <th class="sortable col-date" onclick="handleSort('talep_olusturma_tarihi')" title="Talep Oluşturma Tarihi">Talep Oluş.Tar. ${getSortIcon('talep_olusturma_tarihi')}</th>
+              <th class="sortable col-date" onclick="handleSort('siparis_olusturma_tarihi')" title="Talebin Siparişe Dönüştürülme Tarihi">Sip.Dönüş.Tar. ${getSortIcon('siparis_olusturma_tarihi')}</th>
+              <th class="sortable col-date" onclick="handleSort('ihtiyac_tarihi')" title="Talebin İstenen Teslim Tarihi">İstenen Tes.Tar. ${getSortIcon('ihtiyac_tarihi')}</th>
+              <th class="sortable col-termin" onclick="handleSort('standart_termin_suresi')" title="Standart Termin Süresi (Gün)">Std.Termin ${getSortIcon('standart_termin_suresi')}</th>
+              <th class="sortable col-date" onclick="handleSort('standart_termin_tarihi')" title="Standart Termine Göre Teslim Tarihi">Std.Termin Tar. ${getSortIcon('standart_termin_tarihi')}</th>
+              <th class="sortable col-date" onclick="handleSort('mal_kabul_tarihi')" title="Siparişin Mal Kabul Tarihi (Depo)">Mal Kabul Tar. ${getSortIcon('mal_kabul_tarihi')}</th>
+              <th class="sortable col-sapma" onclick="handleSort('planlama_sapmasi')" title="Standart Termine Göre Planlama Sapması (Gün)">Plan.Sapması ${getSortIcon('planlama_sapmasi')}</th>
+              <th class="sortable col-sapma" onclick="handleSort('termin_farki')" title="Gerçekleşene Göre Termin Farkı (Satınalma ve Tedarikçi Performansı)">Termin Farkı ${getSortIcon('termin_farki')}</th>
+              <th class="sortable col-miktar" onclick="handleSort('miktar')" title="Sipariş Miktarı">Sip.Miktarı ${getSortIcon('miktar')}</th>
+              <th class="sortable col-miktar" onclick="handleSort('toplam_gelen_miktar')" title="Gelen Miktarı">Gelen Miktarı ${getSortIcon('toplam_gelen_miktar')}</th>
+              <th class="sortable col-miktar" onclick="handleSort('kalan_miktar')" title="Kalan Miktar">Kalan Miktar ${getSortIcon('kalan_miktar')}</th>
+              <th class="sortable col-fiyat" onclick="handleSort('birim_fiyat')" title="Birim Fiyat">Birim Fiyat ${getSortIcon('birim_fiyat')}</th>
+              <th class="sortable col-fiyat" onclick="handleSort('para_birimi_tutar')" title="Tutar">Tutar ${getSortIcon('para_birimi_tutar')}</th>
+              <th class="sortable col-para" onclick="handleSort('para_birimi')" title="Para Birimi">Para Birimi ${getSortIcon('para_birimi')}</th>
+              <th class="sortable col-kur" onclick="handleSort('kur_degeri')" title="Kur Değeri">Kur Değeri ${getSortIcon('kur_degeri')}</th>
+              <th class="sortable col-fiyat" onclick="handleSort('tutar_tl')" title="Toplam TL">Toplam TL ${getSortIcon('tutar_tl')}</th>
+              <th class="sortable col-odeme" onclick="handleSort('odeme_kosulu_tanimi')" title="Ödeme Koşulu">Ödeme Koşulu ${getSortIcon('odeme_kosulu_tanimi')}</th>
+              <th class="sortable col-date" onclick="handleSort('siparis_teslim_odeme_vadesi')" title="Ödeme Tarihi">Ödeme Tarihi ${getSortIcon('siparis_teslim_odeme_vadesi')}</th>
+              <th class="sortable col-durum" onclick="handleSort('teslimat_durumu')" title="Teslimat Durumu">Teslimat Durumu ${getSortIcon('teslimat_durumu')}</th>
             </tr>
           </thead>
           <tbody>
