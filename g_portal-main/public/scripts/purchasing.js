@@ -1619,6 +1619,27 @@ function addDays(dateStr, days) {
 // =====================================================
 
 /**
+ * Tarihi Excel formatına çevir (YYYY-MM-DD → DD.MM.YYYY)
+ * @param {string} dateStr - Tarih (YYYY-MM-DD formatında)
+ * @returns {string} - Excel için formatlanmış tarih (DD.MM.YYYY)
+ */
+function formatDateForExcel(dateStr) {
+  if (!dateStr) return '';
+
+  try {
+    // YYYY-MM-DD formatını parse et
+    const parts = dateStr.split('T')[0].split('-'); // T varsa onu at (timestamp)
+    if (parts.length !== 3) return dateStr; // Geçersiz format
+
+    const [year, month, day] = parts;
+    return `${day}.${month}.${year}`; // DD.MM.YYYY
+  } catch (error) {
+    console.warn('Tarih formatı hatası:', dateStr, error);
+    return dateStr; // Hata durumunda orijinali döndür
+  }
+}
+
+/**
  * Tüm satın alma verilerini Excel'e export et (Rapor Formatı - 25 kolon)
  */
 async function exportPurchasingToExcel() {
@@ -1659,12 +1680,12 @@ async function exportPurchasingToExcel() {
       'Sipariş No': order.siparis_no || '',
       'Malzeme Kodu': order.malzeme || '',
       'Malzeme Tanımı': order.malzeme_tanimi || '',
-      'Talep Oluşturma Tarihi': order.talep_olusturma_tarihi || '',
-      'Sipariş Dönüştürme Tarihi': order.siparis_olusturma_tarihi || '',
-      'İstenen Teslim Tarihi': order.ihtiyac_tarihi || '',
+      'Talep Oluşturma Tarihi': formatDateForExcel(order.talep_olusturma_tarihi),
+      'Sipariş Dönüştürme Tarihi': formatDateForExcel(order.siparis_olusturma_tarihi),
+      'İstenen Teslim Tarihi': formatDateForExcel(order.ihtiyac_tarihi),
       'Standart Termin (Gün)': order.standart_termin_suresi || 30,
-      'Standart Termin Tarihi': order.standart_termin_tarihi || '',
-      'Mal Kabul Tarihi': order.mal_kabul_tarihi || '',
+      'Standart Termin Tarihi': formatDateForExcel(order.standart_termin_tarihi),
+      'Mal Kabul Tarihi': formatDateForExcel(order.mal_kabul_tarihi),
       'Planlama Sapması (Gün)': order.planlama_sapmasi ?? '',
       'Termin Farkı (Gün)': order.termin_farki ?? '',
       'Sipariş Miktarı': order.miktar || 0,
@@ -1676,7 +1697,7 @@ async function exportPurchasingToExcel() {
       'Kur Değeri': order.kur_degeri || 0,
       'Toplam TL': order.tutar_tl || 0,
       'Ödeme Koşulu': order.odeme_kosulu_tanimi || order.odeme_kosulu || '',
-      'Ödeme Tarihi': order.siparis_teslim_odeme_vadesi || order.vadeye_gore || '',
+      'Ödeme Tarihi': formatDateForExcel(order.siparis_teslim_odeme_vadesi || order.vadeye_gore),
       'Teslimat Durumu': order.teslimat_durumu || ''
     }));
 
