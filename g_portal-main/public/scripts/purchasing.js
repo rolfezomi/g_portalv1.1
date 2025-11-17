@@ -647,7 +647,7 @@ function renderPurchasingTable() {
                 <td>${formatDate(order.talep_olusturma_tarihi)}</td>
                 <td>${formatDate(order.siparis_olusturma_tarihi)}</td>
                 <td>${formatDate(order.ihtiyac_tarihi)}</td>
-                <td style="text-align:center;">${order.standart_termin_suresi || 30}</td>
+                <td style="text-align:center;">${order.standart_termin_suresi || 60}</td>
                 <td>${formatDate(order.standart_termin_tarihi)}</td>
                 <td>${formatDate(order.mal_kabul_tarihi)}</td>
                 <td style="text-align:center;">${formatSapma(order.planlama_sapmasi)}</td>
@@ -1529,9 +1529,9 @@ function mapSatinalma360ToDatabase(row) {
  * @param {Object} order - Sipariş nesnesi (referans olarak değiştirilir)
  */
 function calculatePurchasingFields(order) {
-  // Standart termin süresi (default: 30 gün, ileride ayarlanabilir)
+  // Standart termin süresi (default: 60 gün, ileride ayarlanabilir)
   if (!order.standart_termin_suresi) {
-    order.standart_termin_suresi = 30;
+    order.standart_termin_suresi = 60;
   }
 
   // Standart termin tarihi hesapla
@@ -1795,7 +1795,7 @@ async function exportPurchasingToExcel() {
       'Talep Oluşturma Tarihi': formatDateForExcel(order.talep_olusturma_tarihi),
       'Sipariş Dönüştürme Tarihi': formatDateForExcel(order.siparis_olusturma_tarihi),
       'İstenen Teslim Tarihi': formatDateForExcel(order.ihtiyac_tarihi),
-      'Standart Termin (Gün)': order.standart_termin_suresi || 30,
+      'Standart Termin (Gün)': order.standart_termin_suresi || 60,
       'Standart Termin Tarihi': formatDateForExcel(order.standart_termin_tarihi),
       'Mal Kabul Tarihi': formatDateForExcel(order.mal_kabul_tarihi),
       'Planlama Sapması (Gün)': order.planlama_sapmasi ?? '',
