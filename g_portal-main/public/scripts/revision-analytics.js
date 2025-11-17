@@ -6,6 +6,7 @@
 let revisionStats = null;
 let changesReport = [];
 let timelineData = [];
+let allPurchasingOrders = [];
 
 // =====================================================
 // ANA YÜKLEME FONKSİYONU
@@ -18,7 +19,8 @@ async function refreshRevisionAnalytics() {
     await Promise.all([
       loadRevisionStats(),
       loadChangesReport(),
-      loadRecentRevisions()
+      loadRecentRevisions(),
+      loadAllPurchasingOrders()
     ]);
 
     renderRevisionDashboard();
@@ -84,6 +86,46 @@ async function loadRecentRevisions() {
   console.log(`⏰ ${timelineData.length} revizyon kaydı yüklendi`);
 }
 
+async function loadAllPurchasingOrders() {
+  console.log('📦 Tüm satın alma siparişleri yükleniyor (pagination ile)...');
+
+  let allOrders = [];
+  let page = 0;
+  const pageSize = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error: pageError } = await supabaseClient
+      .from('purchasing_orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (pageError) {
+      console.error(`Sayfa ${page + 1} yükleme hatası:`, pageError);
+      throw pageError;
+    }
+
+    if (!data || data.length === 0) {
+      hasMore = false;
+    } else {
+      allOrders = [...allOrders, ...data];
+
+      if (data.length < pageSize) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    }
+  }
+
+  allPurchasingOrders = allOrders;
+  console.log(`✅ Toplam ${allPurchasingOrders.length} sipariş yüklendi (${page + 1} sayfa)`);
+}
+
 // =====================================================
 // DASHBOARD RENDER
 // =====================================================
@@ -100,13 +142,13 @@ function renderRevisionDashboard() {
 
     <!-- Tab Navigasyon -->
     <div class="revision-tabs">
-      <button class="revision-tab active" onclick="switchRevisionTab('changes')">
+      <button class="revision-tab" onclick="switchRevisionTab('changes')">
         📝 Değişiklik Raporu
       </button>
       <button class="revision-tab" onclick="switchRevisionTab('timeline')">
         ⏰ Zaman Çizelgesi
       </button>
-      <button class="revision-tab" onclick="switchRevisionTab('payment-calendar')">
+      <button class="revision-tab active" onclick="switchRevisionTab('payment-calendar')">
         💰 Ödeme Takvimi
       </button>
       <button class="revision-tab" onclick="switchRevisionTab('top-revised')">
@@ -116,16 +158,43 @@ function renderRevisionDashboard() {
 
     <!-- Tab İçerikleri -->
     <div id="revision-tab-content">
-      ${renderChangesReportTab()}
+      ${renderPaymentCalendarTab()}
     </div>
   `;
 }
 
 // KPI Kartları
 function renderKPICards() {
-  const totalOrders = timelineData.filter(o => o.revision_number === 1).length;
-  const totalRevisions = timelineData.length - totalOrders;
-  const avgRevisions = totalOrders > 0 ? (totalRevisions / totalOrders).toFixed(1) : 0;
+  // Toplam sipariş sayısı (tüm satırlar)
+  const totalOrders = allPurchasingOrders.length;
+
+  // Malzeme bazında gruplama (en çok talep edilen kalemler)
+  const materialCounts = {};
+  allPurchasingOrders.forEach(order => {
+    const material = order.malzeme_tanimi || 'Bilinmeyen';
+    if (!materialCounts[material]) {
+      materialCounts[material] = 0;
+    }
+    materialCounts[material]++;
+  });
+
+  // En çok talep edilen malzeme
+  const sortedMaterials = Object.entries(materialCounts)
+    .sort((a, b) => b[1] - a[1]);
+  const topMaterial = sortedMaterials[0] || ['Veri yok', 0];
+  const topMaterialName = topMaterial[0];
+  const topMaterialCount = topMaterial[1];
+
+  // En yüksek bedele sahip kalem
+  const ordersWithAmount = allPurchasingOrders
+    .filter(o => o.tutar_tl && !isNaN(parseFloat(o.tutar_tl)))
+    .sort((a, b) => parseFloat(b.tutar_tl) - parseFloat(a.tutar_tl));
+
+  const highestOrder = ordersWithAmount[0];
+  const highestMaterial = highestOrder?.malzeme_tanimi || 'Veri yok';
+  const highestAmount = highestOrder?.tutar_tl || 0;
+
+  // Son değişiklikler
   const recentChanges = changesReport.length;
 
   return `
@@ -135,28 +204,34 @@ function renderKPICards() {
       </div>
       <div class="kpi-content">
         <div class="kpi-label">Toplam Sipariş</div>
-        <div class="kpi-value">${totalOrders}</div>
+        <div class="kpi-value">${totalOrders.toLocaleString('tr-TR')}</div>
+        <div class="kpi-sublabel">tüm satırlar</div>
       </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-        🔄
+        🔥
       </div>
       <div class="kpi-content">
-        <div class="kpi-label">Toplam Revizyon</div>
-        <div class="kpi-value">${totalRevisions}</div>
+        <div class="kpi-label">En Çok Talep Edilen</div>
+        <div class="kpi-value" style="font-size: 16px; line-height: 1.3;" title="${topMaterialName}">
+          ${topMaterialName.length > 25 ? topMaterialName.substring(0, 25) + '...' : topMaterialName}
+        </div>
+        <div class="kpi-sublabel">${topMaterialCount} sipariş satırı</div>
       </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-        📊
+        💎
       </div>
       <div class="kpi-content">
-        <div class="kpi-label">Ortalama Revizyon</div>
-        <div class="kpi-value">${avgRevisions}</div>
-        <div class="kpi-sublabel">sipariş başına</div>
+        <div class="kpi-label">En Yüksek Bedel</div>
+        <div class="kpi-value" style="font-size: 16px; line-height: 1.3;" title="${highestMaterial}">
+          ${highestMaterial.length > 25 ? highestMaterial.substring(0, 25) + '...' : highestMaterial}
+        </div>
+        <div class="kpi-sublabel">${formatCurrency(highestAmount)}</div>
       </div>
     </div>
 
