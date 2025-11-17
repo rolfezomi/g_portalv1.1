@@ -10,6 +10,7 @@ let currentSortField = 'siparis_tarihi';
 let currentSortDirection = 'desc';
 let searchQuery = '';
 let currentFilters = {
+  siparisNo: '',
   firma: '',
   durum: '',
   tedarikci: '',
@@ -244,6 +245,9 @@ function renderPurchasingStats() {
 // =====================================================
 
 function renderPurchasingFilters() {
+  // Benzersiz sipariş numaraları
+  const uniqueOrderNumbers = [...new Set(purchasingOrders.map(o => o.siparis_no).filter(Boolean))].sort();
+
   // Benzersiz firmalar
   const uniqueFirmas = [...new Set(purchasingOrders.map(o => o.firma).filter(Boolean))].sort();
 
@@ -280,6 +284,14 @@ function renderPurchasingFilters() {
 
       <!-- Filtreler - 1. Satır -->
       <div class="filter-row">
+        <div class="filter-group">
+          <label>Sipariş No</label>
+          <select id="filter-order-no" onchange="applyPurchasingFilters()">
+            <option value="">Tümü</option>
+            ${uniqueOrderNumbers.map(n => `<option value="${n}">${n}</option>`).join('')}
+          </select>
+        </div>
+
         <div class="filter-group">
           <label>Firma</label>
           <select id="filter-firma" onchange="applyPurchasingFilters()">
@@ -361,6 +373,7 @@ function handlePurchasingSearch(value) {
 
 function applyPurchasingFilters() {
   // Global currentFilters objesini güncelle
+  currentFilters.siparisNo = document.getElementById('filter-order-no')?.value || '';
   currentFilters.firma = document.getElementById('filter-firma')?.value || '';
   currentFilters.durum = document.getElementById('filter-status')?.value || '';
   currentFilters.tedarikci = document.getElementById('filter-supplier')?.value || '';
@@ -370,6 +383,7 @@ function applyPurchasingFilters() {
 
   filteredOrders = purchasingOrders.filter(order => {
     // Dropdown filtreler
+    if (currentFilters.siparisNo && order.siparis_no !== currentFilters.siparisNo) return false;
     if (currentFilters.firma && order.firma !== currentFilters.firma) return false;
     if (currentFilters.durum && order.teslimat_durumu !== currentFilters.durum) return false;
     if (currentFilters.tedarikci && (order.tedarikci_tanimi !== currentFilters.tedarikci && order.tedarikci !== currentFilters.tedarikci)) return false;
@@ -403,6 +417,7 @@ function applyPurchasingFilters() {
 }
 
 function clearPurchasingFilters() {
+  document.getElementById('filter-order-no').value = '';
   document.getElementById('filter-firma').value = '';
   document.getElementById('filter-status').value = '';
   document.getElementById('filter-supplier').value = '';
@@ -413,6 +428,7 @@ function clearPurchasingFilters() {
 
   // Global filtreleri sıfırla
   currentFilters = {
+    siparisNo: '',
     firma: '',
     durum: '',
     tedarikci: '',
