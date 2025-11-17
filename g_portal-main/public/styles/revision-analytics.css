@@ -976,135 +976,347 @@
 
 /* Tedarikçi Bakiye Item */
 .supplier-balance-item {
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid #e8eaed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 0;
+}
+
+.supplier-balance-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .supplier-balance-item:hover {
-  border-color: #f5576c;
-  box-shadow: 0 4px 16px rgba(245, 87, 108, 0.15);
-  transform: translateY(-2px);
+  border-color: #667eea;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+  transform: translateY(-3px);
 }
 
-/* Tedarikçi Bilgileri */
-.supplier-info {
+.supplier-balance-item:hover::before {
+  opacity: 1;
+}
+
+/* Rank Badge */
+.supplier-rank-badge {
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaed 100%);
+  position: relative;
+}
+
+.supplier-rank-badge::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent 0%, #ddd 50%, transparent 100%);
+}
+
+.rank-number {
+  font-size: 20px;
+  font-weight: 800;
+  color: #666;
+}
+
+.rank-gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+}
+
+.rank-gold .rank-number {
+  color: #b8860b;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.rank-silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+}
+
+.rank-silver .rank-number {
+  color: #666;
+}
+
+.rank-bronze {
+  background: linear-gradient(135deg, #cd7f32 0%, #e6a157 100%);
+}
+
+.rank-bronze .rank-number {
+  color: #8b4513;
+}
+
+/* Main Content */
+.supplier-main-content {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header Section */
+.supplier-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  align-items: flex-start;
+  gap: 20px;
   flex-wrap: wrap;
-  gap: 10px;
+}
+
+.supplier-title-section {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 250px;
+}
+
+.supplier-icon {
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
+}
+
+.supplier-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .supplier-name {
   font-size: 18px;
   font-weight: 700;
-  color: #333;
-  flex: 1;
-  min-width: 200px;
+  color: #1a1a1a;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
 }
 
 .supplier-meta {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   align-items: center;
 }
 
-.supplier-count {
-  font-size: 13px;
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: #666;
-  background: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-}
-
-.supplier-total {
-  font-size: 22px;
-  font-weight: 700;
-  color: #f5576c;
-}
-
-/* Balance Bar (Yatay Çubuk Grafik) */
-.balance-bar-container {
-  width: 100%;
-  height: 40px;
-  background: #e0e0e0;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%);
   border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 15px;
+  border: 1px solid #b3d9ff;
+}
+
+.meta-badge svg {
+  flex-shrink: 0;
+}
+
+.supplier-total-amount {
+  text-align: right;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaed 100%);
+  border-radius: 12px;
+  border: 2px solid #dfe1e5;
+}
+
+.amount-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.amount-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Balance Visual Section */
+.supplier-balance-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Stats Row */
+.balance-stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #e8eaed;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  font-size: 28px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.stat-overdue .stat-icon {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%);
+}
+
+.stat-upcoming .stat-icon {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(139, 195, 74, 0.1) 100%);
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.stat-overdue .stat-value {
+  color: #f44336;
+}
+
+.stat-upcoming .stat-value {
+  color: #4caf50;
+}
+
+.stat-percent {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* Balance Bar Section */
+.balance-bar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.balance-bar-container {
+  flex: 1;
+  background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%);
+  border-radius: 12px;
+  height: 32px;
   position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .balance-bar-wrapper {
   height: 100%;
   display: flex;
-  transition: all 0.5s ease;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .balance-bar {
   height: 100%;
-  transition: all 0.5s ease;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .balance-bar.overdue {
-  background: linear-gradient(90deg, #f44336 0%, #e57373 100%);
+  background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .balance-bar.upcoming {
-  background: linear-gradient(90deg, #4caf50 0%, #81c784 100%);
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
-.balance-bar:hover {
-  opacity: 0.9;
-  cursor: help;
-}
-
-/* Balance Detayları */
-.balance-details {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.balance-detail {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: white;
-}
-
-.balance-detail.overdue {
-  border-left: 3px solid #f44336;
-}
-
-.balance-detail.upcoming {
-  border-left: 3px solid #4caf50;
-}
-
-.balance-detail .detail-label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-}
-
-.balance-detail .detail-value {
-  font-size: 16px;
+.bar-label {
+  font-size: 11px;
   font-weight: 700;
-  color: #333;
+  letter-spacing: 0.3px;
 }
 
-.balance-detail.overdue .detail-value {
-  color: #f44336;
-}
-
-.balance-detail.upcoming .detail-value {
-  color: #4caf50;
+.progress-percentage {
+  font-size: 14px;
+  font-weight: 700;
+  color: #666;
+  min-width: 45px;
+  text-align: right;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaed 100%);
+  border-radius: 6px;
+  border: 1px solid #dfe1e5;
 }
 
 /* Detay Listesi */
@@ -1129,24 +1341,68 @@
   }
 
   .supplier-balance-item {
-    padding: 15px;
+    flex-direction: column;
+  }
+
+  .supplier-rank-badge {
+    width: 100%;
+    height: 50px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .supplier-rank-badge::after {
+    display: none;
+  }
+
+  .supplier-main-content {
+    padding: 16px;
+  }
+
+  .supplier-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .supplier-title-section {
+    min-width: 100%;
+    gap: 12px;
+  }
+
+  .supplier-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
   }
 
   .supplier-name {
     font-size: 16px;
+  }
+
+  .supplier-total-amount {
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+  }
+
+  .amount-value {
+    font-size: 20px;
+  }
+
+  .balance-stats-row {
+    flex-direction: column;
+  }
+
+  .stat-item {
     min-width: 100%;
   }
 
-  .supplier-total {
-    font-size: 18px;
-  }
-
-  .supplier-meta {
-    gap: 10px;
-  }
-
   .balance-bar-container {
-    height: 30px;
+    height: 28px;
+  }
+
+  .progress-percentage {
+    font-size: 12px;
+    min-width: 40px;
   }
 
   .payment-summary-card {

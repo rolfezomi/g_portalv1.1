@@ -578,52 +578,90 @@ function renderSupplierBalances(supplierGroups) {
   // Maksimum tutar (ölçeklendirme için)
   const maxTotal = Math.max(...suppliers.map(s => supplierGroups[s].total));
 
-  container.innerHTML = suppliers.map(supplier => {
+  container.innerHTML = suppliers.map((supplier, index) => {
     const data = supplierGroups[supplier];
     const percentOfMax = (data.total / maxTotal) * 100;
     const overduePercent = (data.overdue / data.total) * 100;
     const upcomingPercent = (data.upcoming / data.total) * 100;
 
+    // Sıralama badge rengi
+    const rankClass = index === 0 ? 'rank-gold' : index === 1 ? 'rank-silver' : index === 2 ? 'rank-bronze' : 'rank-default';
+
     return `
       <div class="supplier-balance-item">
-        <div class="supplier-info">
-          <div class="supplier-name">${supplier}</div>
-          <div class="supplier-meta">
-            <span class="supplier-count">${data.count} sipariş</span>
-            <span class="supplier-total">${formatCurrency(data.total)}</span>
-          </div>
+        <div class="supplier-rank-badge ${rankClass}">
+          <span class="rank-number">#${index + 1}</span>
         </div>
 
-        <div class="balance-bar-container">
-          <div class="balance-bar-wrapper" style="width: ${percentOfMax}%">
-            ${data.overdue > 0 ? `
-              <div class="balance-bar overdue"
-                   style="width: ${overduePercent}%"
-                   title="Gecikmiş: ${formatCurrency(data.overdue)}">
+        <div class="supplier-main-content">
+          <div class="supplier-header">
+            <div class="supplier-title-section">
+              <div class="supplier-icon">🏢</div>
+              <div class="supplier-info">
+                <div class="supplier-name">${supplier}</div>
+                <div class="supplier-meta">
+                  <span class="meta-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    ${data.count} sipariş
+                  </span>
+                </div>
               </div>
-            ` : ''}
-            ${data.upcoming > 0 ? `
-              <div class="balance-bar upcoming"
-                   style="width: ${upcomingPercent}%"
-                   title="Yaklaşan: ${formatCurrency(data.upcoming)}">
-              </div>
-            ` : ''}
+            </div>
+            <div class="supplier-total-amount">
+              <div class="amount-label">Toplam Tutar</div>
+              <div class="amount-value">${formatCurrency(data.total)}</div>
+            </div>
           </div>
-        </div>
 
-        <div class="balance-details">
-          ${data.overdue > 0 ? `
-            <div class="balance-detail overdue">
-              <span class="detail-label">Gecikmiş</span>
-              <span class="detail-value">${formatCurrency(data.overdue)}</span>
+          <div class="supplier-balance-visual">
+            <div class="balance-stats-row">
+              ${data.overdue > 0 ? `
+                <div class="stat-item stat-overdue">
+                  <div class="stat-icon">⚠️</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Gecikmiş</div>
+                    <div class="stat-value">${formatCurrency(data.overdue)}</div>
+                    <div class="stat-percent">${overduePercent.toFixed(1)}%</div>
+                  </div>
+                </div>
+              ` : ''}
+              ${data.upcoming > 0 ? `
+                <div class="stat-item stat-upcoming">
+                  <div class="stat-icon">✅</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Yaklaşan</div>
+                    <div class="stat-value">${formatCurrency(data.upcoming)}</div>
+                    <div class="stat-percent">${upcomingPercent.toFixed(1)}%</div>
+                  </div>
+                </div>
+              ` : ''}
             </div>
-          ` : ''}
-          ${data.upcoming > 0 ? `
-            <div class="balance-detail upcoming">
-              <span class="detail-label">Yaklaşan</span>
-              <span class="detail-value">${formatCurrency(data.upcoming)}</span>
+
+            <div class="balance-bar-section">
+              <div class="balance-bar-container">
+                <div class="balance-bar-wrapper" style="width: ${percentOfMax}%">
+                  ${data.overdue > 0 ? `
+                    <div class="balance-bar overdue"
+                         style="width: ${overduePercent}%"
+                         data-tooltip="Gecikmiş: ${formatCurrency(data.overdue)}">
+                      ${overduePercent > 15 ? `<span class="bar-label">${overduePercent.toFixed(0)}%</span>` : ''}
+                    </div>
+                  ` : ''}
+                  ${data.upcoming > 0 ? `
+                    <div class="balance-bar upcoming"
+                         style="width: ${upcomingPercent}%"
+                         data-tooltip="Yaklaşan: ${formatCurrency(data.upcoming)}">
+                      ${upcomingPercent > 15 ? `<span class="bar-label">${upcomingPercent.toFixed(0)}%</span>` : ''}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="progress-percentage">${percentOfMax.toFixed(0)}%</div>
             </div>
-          ` : ''}
+          </div>
         </div>
       </div>
     `;
