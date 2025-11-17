@@ -726,35 +726,67 @@ async function processOrdersWithRevision(orders, userEmail) {
     errors: []
   };
 
-  // Her sipariş için işle
-  for (const order of orders) {
-    try {
-      // Benzersiz anahtar: SiparisNo + SiparisKalemi + StokBelgeNo + IrsaliyeNo + FaturaNo
-      // NOT: Aynı sipariş numarasına sahip farklı teslimat satırlarını ayırt etmek için
-      const orderKey = `${order.siparis_no}-${order.siparis_kalemi || ''}-${order.stok_belge_no || ''}-${order.irsaliye_no || ''}-${order.fatura_no || ''}`;
+  console.log(`🚀 Batch işlem başlıyor: ${orders.length} sipariş`);
+  const startTime = Date.now();
 
-      // Mevcut en güncel kaydı bul
-      const { data: existing, error: fetchError } = await supabaseClient
+  try {
+    // 1. ADIM: Tüm benzersiz anahtarları topla ve mevcut kayıtları TEK SORGUDA getir
+    const uniqueKeys = new Set();
+    const ordersByKey = new Map();
+
+    orders.forEach(order => {
+      const orderKey = buildOrderKey(order);
+      uniqueKeys.add(orderKey);
+      ordersByKey.set(orderKey, order);
+    });
+
+    console.log(`📊 ${uniqueKeys.size} benzersiz anahtar bulundu`);
+
+    // 2. ADIM: Tüm mevcut kayıtları pagination ile çek
+    const existingRecords = [];
+    const siparisNos = [...new Set(orders.map(o => o.siparis_no).filter(Boolean))];
+
+    // Batch halinde sipariş numaralarını çek (her seferinde 100 sipariş)
+    const batchSize = 100;
+    for (let i = 0; i < siparisNos.length; i += batchSize) {
+      const batch = siparisNos.slice(i, i + batchSize);
+
+      const { data, error } = await supabaseClient
         .from('purchasing_orders')
         .select('*')
-        .eq('siparis_no', order.siparis_no)
-        .eq('siparis_kalemi', order.siparis_kalemi || '')
-        .eq('stok_belge_no', order.stok_belge_no || '')
-        .eq('irsaliye_no', order.irsaliye_no || '')
-        .eq('fatura_no', order.fatura_no || '')
-        .eq('is_latest', true)
-        .maybeSingle(); // Kayıt yoksa null döner, hata vermez (406 hatası yok)
+        .in('siparis_no', batch)
+        .eq('is_latest', true);
 
-      if (fetchError) {
-        // Gerçek hata (maybeSingle kullandığımız için PGRST116 olmayacak)
-        console.error(`Hata (${orderKey}):`, fetchError);
-        results.errors.push({ order: orderKey, error: fetchError.message });
-        continue;
+      if (error) {
+        console.error('Mevcut kayıtlar çekilemedi:', error);
+        throw error;
       }
 
+      if (data) {
+        existingRecords.push(...data);
+      }
+    }
+
+    console.log(`✅ ${existingRecords.length} mevcut kayıt getirildi`);
+
+    // 3. ADIM: Mevcut kayıtları key'e göre Map'e koy (hızlı arama için)
+    const existingByKey = new Map();
+    existingRecords.forEach(record => {
+      const key = buildOrderKey(record);
+      existingByKey.set(key, record);
+    });
+
+    // 4. ADIM: Kategorize et: yeni, güncellenecek, değişmemiş
+    const toInsert = [];
+    const toUpdate = []; // [{ oldId, newRevision }]
+    const oldIdsToMarkNotLatest = [];
+
+    for (const [orderKey, order] of ordersByKey) {
+      const existing = existingByKey.get(orderKey);
+
       if (!existing) {
-        // YENİ SİPARİŞ - İlk kez ekleniyor
-        const newOrder = {
+        // YENİ SİPARİŞ
+        toInsert.push({
           ...order,
           revision_number: 1,
           is_latest: true,
@@ -763,106 +795,149 @@ async function processOrdersWithRevision(orders, userEmail) {
           created_by: userEmail,
           updated_by: userEmail,
           changes_from_previous: null
-        };
-
-        const { error: insertError } = await supabaseClient
-          .from('purchasing_orders')
-          .insert([newOrder]);
-
-        if (insertError) {
-          console.error(`Ekleme hatası (${orderKey}):`, insertError);
-          results.errors.push({ order: orderKey, error: insertError.message });
-        } else {
-          results.inserted++;
-          console.log(`➕ Yeni sipariş: ${orderKey}`);
-        }
-
+        });
       } else {
-        // MEVCUT SİPARİŞ - Değişiklik kontrolü yap
+        // MEVCUT SİPARİŞ - Değişiklik kontrolü
         const changes = detectChanges(existing, order);
 
         if (Object.keys(changes).length === 0) {
-          // DEĞİŞİKLİK YOK - Hiçbir şey yapma
+          // DEĞİŞİKLİK YOK
           results.unchanged++;
-          console.log(`⏭️ Değişiklik yok: ${orderKey}`);
-
         } else {
-          // DEĞİŞİKLİK VAR - Yeni revizyon oluştur
+          // DEĞİŞİKLİK VAR - Revizyon gerekli
+          oldIdsToMarkNotLatest.push(existing.id);
 
-          // 1. Eski kaydı güncelle (is_latest = false)
-          const { error: updateError } = await supabaseClient
-            .from('purchasing_orders')
-            .update({ is_latest: false })
-            .eq('id', existing.id);
-
-          if (updateError) {
-            console.error(`Güncelleme hatası (${orderKey}):`, updateError);
-            results.errors.push({ order: orderKey, error: updateError.message });
-            continue;
-          }
-
-          // 2. Yeni revizyon ekle
-          const newRevision = {
+          toUpdate.push({
             ...order,
             revision_number: existing.revision_number + 1,
             is_latest: true,
             revision_date: new Date().toISOString(),
             uploaded_by: userEmail,
-            created_by: existing.created_by, // İlk oluşturanı koru
+            created_by: existing.created_by,
             updated_by: userEmail,
             changes_from_previous: changes
-          };
-
-          const { error: revisionError } = await supabaseClient
-            .from('purchasing_orders')
-            .insert([newRevision]);
-
-          if (revisionError) {
-            console.error(`Revizyon hatası (${orderKey}):`, revisionError);
-            results.errors.push({ order: orderKey, error: revisionError.message });
-
-            // Rollback: Eski kaydı tekrar latest yap
-            await supabaseClient
-              .from('purchasing_orders')
-              .update({ is_latest: true })
-              .eq('id', existing.id);
-          } else {
-            results.updated++;
-            console.log(`🔄 Güncellendi (v${newRevision.revision_number}): ${orderKey}`, changes);
-          }
+          });
         }
       }
-
-    } catch (err) {
-      console.error('Beklenmeyen hata:', err);
-      results.errors.push({ order: order.siparis_no, error: err.message });
     }
+
+    console.log(`📦 Kategorize: ${toInsert.length} yeni, ${toUpdate.length} güncelleme, ${results.unchanged} değişmemiş`);
+
+    // 5. ADIM: Batch INSERT (yeni siparişler)
+    if (toInsert.length > 0) {
+      // Supabase max 1000 kayıt alıyor, batch'lere böl
+      const insertBatchSize = 500;
+      for (let i = 0; i < toInsert.length; i += insertBatchSize) {
+        const batch = toInsert.slice(i, i + insertBatchSize);
+
+        const { error } = await supabaseClient
+          .from('purchasing_orders')
+          .insert(batch);
+
+        if (error) {
+          console.error(`Batch insert hatası (${i}-${i + batch.length}):`, error);
+          results.errors.push({ error: `Batch insert: ${error.message}` });
+        } else {
+          results.inserted += batch.length;
+          console.log(`✅ ${batch.length} yeni sipariş eklendi`);
+        }
+      }
+    }
+
+    // 6. ADIM: Batch UPDATE (eski kayıtları is_latest=false yap)
+    if (oldIdsToMarkNotLatest.length > 0) {
+      const updateBatchSize = 500;
+      for (let i = 0; i < oldIdsToMarkNotLatest.length; i += updateBatchSize) {
+        const batch = oldIdsToMarkNotLatest.slice(i, i + updateBatchSize);
+
+        const { error } = await supabaseClient
+          .from('purchasing_orders')
+          .update({ is_latest: false })
+          .in('id', batch);
+
+        if (error) {
+          console.error(`Batch update hatası:`, error);
+          results.errors.push({ error: `Batch update: ${error.message}` });
+        } else {
+          console.log(`✅ ${batch.length} eski kayıt güncellendi (is_latest=false)`);
+        }
+      }
+    }
+
+    // 7. ADIM: Batch INSERT (yeni revizyonlar)
+    if (toUpdate.length > 0) {
+      const insertBatchSize = 500;
+      for (let i = 0; i < toUpdate.length; i += insertBatchSize) {
+        const batch = toUpdate.slice(i, i + insertBatchSize);
+
+        const { error } = await supabaseClient
+          .from('purchasing_orders')
+          .insert(batch);
+
+        if (error) {
+          console.error(`Revizyon insert hatası:`, error);
+          results.errors.push({ error: `Revizyon insert: ${error.message}` });
+        } else {
+          results.updated += batch.length;
+          console.log(`✅ ${batch.length} revizyon eklendi`);
+        }
+      }
+    }
+
+    const endTime = Date.now();
+    const duration = ((endTime - startTime) / 1000).toFixed(2);
+    console.log(`⚡ Batch işlem tamamlandı: ${duration} saniye`);
+
+  } catch (error) {
+    console.error('Batch işlem hatası:', error);
+    results.errors.push({ error: error.message });
   }
 
   return results;
+}
+
+// Yardımcı fonksiyon: Sipariş için benzersiz anahtar oluştur
+function buildOrderKey(order) {
+  return `${order.siparis_no || ''}-${order.siparis_kalemi || ''}-${order.stok_belge_no || ''}-${order.irsaliye_no || ''}-${order.fatura_no || ''}`;
 }
 
 // İki sipariş arasındaki farkları tespit et
 function detectChanges(oldOrder, newOrder) {
   const changes = {};
 
-  // Kontrol edilecek alanlar
-  const fieldsToCheck = [
-    'gelen_miktar', 'miktar', 'birim_fiyat', 'tutar_tl', 'net', 'brut',
-    'odeme_kosulu', 'vade_gun', 'vadeye_gore', 'teslim_tarihi',
-    'kdv_orani', 'kur', 'malzeme_tanimi', 'tedarikci_tanimi',
-    'depo', 'aciklama', 'teslimat', 'baslama', 'ozel_stok'
-  ];
+  // Metadata alanları (karşılaştırmayacağız)
+  const metadataFields = new Set([
+    'id', 'created_at', 'updated_at', 'is_latest', 'revision_number',
+    'revision_date', 'uploaded_by', 'created_by', 'updated_by', 'changes_from_previous'
+  ]);
 
-  for (const field of fieldsToCheck) {
+  // Sayısal alanlar (tolerans kontrolü için)
+  const numericFields = new Set([
+    'talep_miktari', 'miktar', 'gelen_miktar', 'toplam_gelen_miktar', 'toplam_fatura_miktar',
+    'kalan_miktar', 'stok_belge_miktari', 'fatura_miktar', 'birim_fiyat', 'kur_degeri',
+    'para_birimi_tutar', 'tutar_tl', 'fatura_tutar', 'net', 'brut', 'kdv_orani', 'kur', 'vade_gun',
+    'standart_termin_suresi', 'planlama_sapmasi', 'termin_farki'
+  ]);
+
+  // Tarih alanları (normalize için)
+  const dateFields = new Set([
+    'talep_olusturma_tarihi', 'ihtiyac_tarihi', 'siparis_tarihi', 'siparis_olusturma_tarihi',
+    'siparis_teslim_tarihi', 'siparis_teslim_odeme_vadesi', 'mal_kabul_tarihi', 'stok_giris_tarihi',
+    'fatura_tarihi', 'fatura_vade_tarihi', 'vadeye_gore', 'standart_termin_tarihi', 'teslim_tarihi'
+  ]);
+
+  // Tüm alanları kontrol et (metadata hariç)
+  const allFields = new Set([...Object.keys(oldOrder), ...Object.keys(newOrder)]);
+
+  for (const field of allFields) {
+    // Metadata alanlarını atla
+    if (metadataFields.has(field)) continue;
+
     let oldValue = oldOrder[field];
     let newValue = newOrder[field];
 
-    // Sayısal alanlar için null ve 0'ı eşit say
-    const numericFields = ['gelen_miktar', 'miktar', 'birim_fiyat', 'tutar_tl',
-                          'net', 'brut', 'kdv_orani', 'kur', 'vade_gun'];
-
-    if (numericFields.includes(field)) {
+    // Sayısal alanlar için özel kontrol
+    if (numericFields.has(field)) {
       // null, undefined, boş string veya 0 değerlerini normalize et
       const isOldEmpty = oldValue === null || oldValue === undefined || oldValue === '' || oldValue === 0;
       const isNewEmpty = newValue === null || newValue === undefined || newValue === '' || newValue === 0;
@@ -884,13 +959,46 @@ function detectChanges(oldOrder, newOrder) {
       if (Math.abs(oldValue - newValue) < 0.01) {
         continue;
       }
-    } else {
-      // String/metin alanlar için null, undefined ve boş string'i eşit say
+    }
+    // Tarih alanları için özel kontrol
+    else if (dateFields.has(field)) {
+      // Tarihleri normalize et (null, undefined, boş string eşit)
       const isOldEmpty = oldValue === null || oldValue === undefined || oldValue === '';
       const isNewEmpty = newValue === null || newValue === undefined || newValue === '';
 
       if (isOldEmpty && isNewEmpty) {
         continue;
+      }
+
+      // Tarihleri string'e çevir ve karşılaştır (YYYY-MM-DD formatında)
+      const oldDate = isOldEmpty ? null : String(oldValue).substring(0, 10);
+      const newDate = isNewEmpty ? null : String(newValue).substring(0, 10);
+
+      if (oldDate === newDate) {
+        continue;
+      }
+
+      oldValue = oldDate;
+      newValue = newDate;
+    }
+    // String/metin alanlar için özel kontrol
+    else {
+      // String alanlar için null, undefined ve boş string'i eşit say
+      const isOldEmpty = oldValue === null || oldValue === undefined || oldValue === '';
+      const isNewEmpty = newValue === null || newValue === undefined || newValue === '';
+
+      if (isOldEmpty && isNewEmpty) {
+        continue;
+      }
+
+      // String karşılaştırması (trim ve uppercase)
+      if (!isOldEmpty && !isNewEmpty) {
+        const oldStr = String(oldValue).trim().toUpperCase();
+        const newStr = String(newValue).trim().toUpperCase();
+
+        if (oldStr === newStr) {
+          continue;
+        }
       }
     }
 
