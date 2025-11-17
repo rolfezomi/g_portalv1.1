@@ -55,6 +55,7 @@ async function refreshPurchasingData() {
       const { data, error: pageError } = await supabaseClient
         .from('purchasing_orders')
         .select('*')
+        .eq('is_latest', true)
         .order('created_at', { ascending: false })
         .range(from, to);
 
