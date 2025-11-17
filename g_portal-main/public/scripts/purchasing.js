@@ -1417,12 +1417,18 @@ async function handleXLSXFile(file) {
 
   showToast('📤 Excel dosyası işleniyor...', 'info');
 
+  const startTime = Date.now();
+  let uploadStatus = 'completed';
+  let errorMessage = null;
+  let results = null;
+  let orders = [];
+
   try {
     // Dosyayı ArrayBuffer olarak oku
     const arrayBuffer = await file.arrayBuffer();
 
     // XLSX parse et
-    const orders = parseXLSX(arrayBuffer);
+    orders = parseXLSX(arrayBuffer);
 
     console.log(`📦 ${orders.length} sipariş parse edildi`);
 
@@ -1432,23 +1438,76 @@ async function handleXLSXFile(file) {
 
     if (!userEmail) {
       showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
+      uploadStatus = 'failed';
+      errorMessage = 'Kullanıcı bilgisi alınamadı';
       return;
     }
 
     // REVIZYON MANTIĞI: Her sipariş için kontrol et ve işle
-    const results = await processOrdersWithRevision(orders, userEmail);
+    results = await processOrdersWithRevision(orders, userEmail);
 
     console.log('✅ İşlem tamamlandı:', results);
+
+    // Upload başarılı olsa bile hata varsa status'u partial yap
+    if (results.errors && results.errors.length > 0) {
+      uploadStatus = 'partial';
+      errorMessage = `${results.errors.length} hata oluştu`;
+    }
+
     showToast(
       `✅ ${results.inserted} yeni, ${results.updated} güncellendi, ${results.unchanged} değişmedi`,
       'success'
     );
+
+    // Upload geçmişini kaydet
+    await logUploadHistory({
+      userEmail,
+      fileName: file.name,
+      fileSize: file.size,
+      totalRows: orders.length,
+      insertedRows: results.inserted,
+      updatedRows: results.updated,
+      unchangedRows: results.unchanged,
+      errorCount: results.errors?.length || 0,
+      processingTimeSeconds: ((Date.now() - startTime) / 1000).toFixed(2),
+      status: uploadStatus,
+      errorMessage: errorMessage
+    });
+
     await refreshPurchasingData();
 
   } catch (error) {
     console.error('XLSX işleme hatası:', error);
     console.error('Hata stack:', error.stack);
+
+    uploadStatus = 'failed';
+    errorMessage = error.message;
+
     showToast('❌ Excel dosyası işlenemedi: ' + error.message, 'error');
+
+    // Hata durumunda da kaydet
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      const userEmail = user?.email;
+
+      if (userEmail) {
+        await logUploadHistory({
+          userEmail,
+          fileName: file.name,
+          fileSize: file.size,
+          totalRows: orders.length,
+          insertedRows: results?.inserted || 0,
+          updatedRows: results?.updated || 0,
+          unchangedRows: results?.unchanged || 0,
+          errorCount: results?.errors?.length || 1,
+          processingTimeSeconds: ((Date.now() - startTime) / 1000).toFixed(2),
+          status: uploadStatus,
+          errorMessage: errorMessage
+        });
+      }
+    } catch (logError) {
+      console.error('Upload geçmişi kaydedilemedi:', logError);
+    }
   }
 }
 
@@ -1953,6 +2012,222 @@ async function exportPurchasingToExcel() {
     console.error('Hata detayı:', error.message);
     console.error('Stack trace:', error.stack);
     showToast(`❌ Excel indirme hatası: ${error.message}`, 'error');
+  }
+}
+
+// =====================================================
+// UPLOAD HISTORY FONKSİYONLARI
+// =====================================================
+
+/**
+ * Upload geçmişini veritabanına kaydet
+ */
+async function logUploadHistory(uploadData) {
+  try {
+    // Kullanıcının rolünü al
+    const { data: userRoleData } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('email', uploadData.userEmail)
+      .single();
+
+    const { error } = await supabaseClient
+      .from('upload_history')
+      .insert([{
+        user_email: uploadData.userEmail,
+        user_role: userRoleData?.role || 'unknown',
+        file_name: uploadData.fileName,
+        file_size: uploadData.fileSize,
+        total_rows: uploadData.totalRows,
+        inserted_rows: uploadData.insertedRows,
+        updated_rows: uploadData.updatedRows,
+        unchanged_rows: uploadData.unchangedRows,
+        error_count: uploadData.errorCount,
+        processing_time_seconds: parseFloat(uploadData.processingTimeSeconds),
+        status: uploadData.status,
+        error_message: uploadData.errorMessage
+      }]);
+
+    if (error) {
+      console.error('Upload history kayıt hatası:', error);
+    } else {
+      console.log('📊 Upload history kaydedildi');
+    }
+  } catch (error) {
+    console.error('Upload history kayıt hatası:', error);
+  }
+}
+
+/**
+ * Upload geçmişi modalını aç
+ */
+async function openUploadHistoryModal() {
+  try {
+    // Kullanıcı bilgilerini al
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const userEmail = user?.email;
+
+    if (!userEmail) {
+      showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
+      return;
+    }
+
+    // Kullanıcının rolünü al
+    const { data: userRoleData } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('email', userEmail)
+      .single();
+
+    const userRole = userRoleData?.role || 'unknown';
+    const isAdmin = userRole === 'admin';
+
+    // Bugünün istatistiklerini çek
+    const { data: todayStats, error: statsError } = await supabaseClient
+      .rpc('get_today_upload_stats', {
+        user_email_param: isAdmin ? null : userEmail
+      })
+      .single();
+
+    if (statsError) {
+      console.error('İstatistik hatası:', statsError);
+    }
+
+    // Son 10 upload'ı çek
+    const { data: recentUploads, error: uploadsError } = await supabaseClient
+      .rpc('get_recent_uploads', {
+        limit_count: 10,
+        user_email_param: isAdmin ? null : userEmail
+      });
+
+    if (uploadsError) {
+      console.error('Upload geçmişi hatası:', uploadsError);
+    }
+
+    // Modal HTML
+    const modalHTML = `
+      <div class="modal-overlay" id="upload-history-modal" onclick="if(event.target.id==='upload-history-modal') closeUploadHistoryModal()">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+              📊 Upload Geçmişi
+              ${isAdmin ? '<span style="font-size: 14px; background: #667eea; color: white; padding: 4px 12px; border-radius: 12px;">Admin</span>' : ''}
+            </h2>
+            <button class="modal-close" onclick="closeUploadHistoryModal()">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <!-- Bugünün İstatistikleri -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+              <h3 style="margin: 0 0 15px 0; font-size: 18px;">📅 Bugünün İstatistikleri</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                <div>
+                  <div style="font-size: 12px; opacity: 0.9;">Toplam Upload</div>
+                  <div style="font-size: 24px; font-weight: 700;">${todayStats?.total_uploads || 0}</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; opacity: 0.9;">İşlenen Satır</div>
+                  <div style="font-size: 24px; font-weight: 700;">${(todayStats?.total_rows_processed || 0).toLocaleString('tr-TR')}</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; opacity: 0.9;">Yeni Kayıt</div>
+                  <div style="font-size: 24px; font-weight: 700; color: #4caf50;">${todayStats?.total_inserted || 0}</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; opacity: 0.9;">Güncelleme</div>
+                  <div style="font-size: 24px; font-weight: 700; color: #ff9800;">${todayStats?.total_updated || 0}</div>
+                </div>
+              </div>
+              ${todayStats?.last_upload_time ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 13px;">
+                  <strong>Son Upload:</strong> ${new Date(todayStats.last_upload_time).toLocaleString('tr-TR')}
+                  (${todayStats.last_file_name})
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Son Upload'lar Tablosu -->
+            <h3 style="margin: 0 0 15px 0;">📋 Son Upload'lar</h3>
+            ${!recentUploads || recentUploads.length === 0 ? `
+              <div style="text-align: center; padding: 40px; color: #999;">
+                <div style="font-size: 48px; margin-bottom: 10px;">📭</div>
+                <div>Henüz upload yapılmamış</div>
+              </div>
+            ` : `
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                  <thead>
+                    <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+                      ${isAdmin ? '<th style="padding: 12px; text-align: left;">Kullanıcı</th>' : ''}
+                      <th style="padding: 12px; text-align: left;">Dosya Adı</th>
+                      <th style="padding: 12px; text-align: center;">Tarih/Saat</th>
+                      <th style="padding: 12px; text-align: center;">Satır</th>
+                      <th style="padding: 12px; text-align: center;">Yeni</th>
+                      <th style="padding: 12px; text-align: center;">Güncelleme</th>
+                      <th style="padding: 12px; text-align: center;">Değişmedi</th>
+                      <th style="padding: 12px; text-align: center;">Süre</th>
+                      <th style="padding: 12px; text-align: center;">Durum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${recentUploads.map(upload => {
+                      const statusBadge = upload.status === 'completed'
+                        ? '<span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">✓ Başarılı</span>'
+                        : upload.status === 'partial'
+                        ? '<span style="background: #ff9800; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">⚠ Kısmi</span>'
+                        : '<span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">✗ Hatalı</span>';
+
+                      return `
+                        <tr style="border-bottom: 1px solid #eee;">
+                          ${isAdmin ? `<td style="padding: 12px;">${upload.user_email}</td>` : ''}
+                          <td style="padding: 12px; font-weight: 500;">${upload.file_name}</td>
+                          <td style="padding: 12px; text-align: center; font-size: 13px;">
+                            ${new Date(upload.upload_date).toLocaleDateString('tr-TR')}<br>
+                            <span style="color: #999;">${new Date(upload.upload_date).toLocaleTimeString('tr-TR')}</span>
+                          </td>
+                          <td style="padding: 12px; text-align: center;">${upload.total_rows.toLocaleString('tr-TR')}</td>
+                          <td style="padding: 12px; text-align: center; color: #4caf50; font-weight: 600;">${upload.inserted_rows}</td>
+                          <td style="padding: 12px; text-align: center; color: #ff9800; font-weight: 600;">${upload.updated_rows}</td>
+                          <td style="padding: 12px; text-align: center; color: #999;">${upload.unchanged_rows}</td>
+                          <td style="padding: 12px; text-align: center;">${upload.processing_time_seconds}s</td>
+                          <td style="padding: 12px; text-align: center;">${statusBadge}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeUploadHistoryModal()">Kapat</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Modal'ı body'e ekle
+    const existingModal = document.getElementById('upload-history-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+  } catch (error) {
+    console.error('Upload history modal hatası:', error);
+    showToast('❌ Upload geçmişi açılamadı', 'error');
+  }
+}
+
+/**
+ * Upload geçmişi modalını kapat
+ */
+function closeUploadHistoryModal() {
+  const modal = document.getElementById('upload-history-modal');
+  if (modal) {
+    modal.remove();
   }
 }
 
