@@ -1533,10 +1533,9 @@ function mapSatinalma360ToDatabase(row) {
  * @param {Object} order - Sipariş nesnesi (referans olarak değiştirilir)
  */
 function calculatePurchasingFields(order) {
-  // Standart termin süresi (default: 60 gün, ileride ayarlanabilir)
-  if (!order.standart_termin_suresi) {
-    order.standart_termin_suresi = 60;
-  }
+  // Standart termin süresi (her zaman 60 gün olarak ayarla)
+  // Eski 30 gün değerlerini de 60 gün olarak güncelle
+  order.standart_termin_suresi = 60;
 
   // Standart termin tarihi hesapla
   if (order.talep_olusturma_tarihi && order.standart_termin_suresi) {
