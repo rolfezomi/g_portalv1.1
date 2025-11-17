@@ -525,12 +525,12 @@ function renderPaymentCalendarTab() {
 // Ödeme verilerini hazırla
 async function getPaymentData() {
   try {
+    // Teslimat durumu AÇIK veya KISMİ olanları getir
     const { data: orders, error } = await supabaseClient
       .from('purchasing_orders')
       .select('*')
-      .eq('is_latest', true)
-      .not('vadeye_gore', 'is', null)
-      .order('vadeye_gore', { ascending: true });
+      .in('teslimat_durumu', ['AÇIK', 'KISMİ'])
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
@@ -555,7 +555,18 @@ async function getPaymentData() {
     const supplierGroups = {};
 
     orders.forEach(order => {
-      const vadeDate = new Date(order.vadeye_gore);
+      // Vade tarihini hesapla: vadeye_gore varsa kullan, yoksa fatura_tarihi + 60 gün
+      let vadeDate;
+      if (order.vadeye_gore) {
+        vadeDate = new Date(order.vadeye_gore);
+      } else if (order.fatura_tarihi) {
+        vadeDate = new Date(order.fatura_tarihi);
+        vadeDate.setDate(vadeDate.getDate() + 60); // Standart termin 60 gün
+      } else {
+        // Vade tarihi hesaplanamıyorsa bu kaydı atla
+        return;
+      }
+
       vadeDate.setHours(0, 0, 0, 0);
       const tutar = parseFloat(order.tutar_tl) || 0;
       const supplier = order.tedarikci_tanimi || 'Bilinmeyen Tedarikçi';
