@@ -562,8 +562,12 @@ async function getPaymentData() {
       } else if (order.fatura_tarihi) {
         vadeDate = new Date(order.fatura_tarihi);
         vadeDate.setDate(vadeDate.getDate() + 60); // Standart termin 60 gün
+      } else if (order.siparis_teslim_odeme_vadesi) {
+        // Ödeme vadesi varsa onu kullan
+        vadeDate = new Date(order.siparis_teslim_odeme_vadesi);
       } else {
         // Vade tarihi hesaplanamıyorsa bu kaydı atla
+        console.warn('Vade tarihi hesaplanamadı:', order.siparis_no, order);
         return;
       }
 
@@ -593,22 +597,33 @@ async function getPaymentData() {
       }
 
       // Kategori grupları
+      let category;
       if (vadeDate < today) {
         groups.overdue.total += tutar;
         groups.overdue.count++;
         groups.overdue.orders.push(order);
+        category = 'Gecikmiş';
       } else if (vadeDate <= oneWeekLater) {
         groups.thisWeek.total += tutar;
         groups.thisWeek.count++;
         groups.thisWeek.orders.push(order);
+        category = 'Bu Hafta';
       } else if (vadeDate <= oneMonthLater) {
         groups.thisMonth.total += tutar;
         groups.thisMonth.count++;
         groups.thisMonth.orders.push(order);
+        category = 'Bu Ay';
       } else {
         groups.future.total += tutar;
         groups.future.count++;
         groups.future.orders.push(order);
+        category = 'Gelecek';
+      }
+
+      // Debug: 17-23 Kasım arası vadeleri logla
+      const vadeStr = vadeDate.toISOString().split('T')[0];
+      if (vadeStr >= '2025-11-17' && vadeStr <= '2025-11-23') {
+        console.log(`📅 Sipariş: ${order.siparis_no}, Vade: ${vadeStr}, Kategori: ${category}, Tutar: ${formatCurrency(tutar)}`);
       }
     });
 
