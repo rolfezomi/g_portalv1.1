@@ -217,8 +217,12 @@ function renderPurchasingStats() {
           </svg>
         </div>
         <div class="stat-content">
-          <div class="stat-label">Açık Siparişler</div>
-          <div class="stat-value">${openOrders.length}</div>
+          <div class="stat-label">Açık ve Kısmi Siparişler</div>
+          <div class="stat-value" style="display: flex; align-items: center; gap: 8px; font-size: 20px;">
+            <span style="color: #f57c00;">Açık: ${openOrders.length}</span>
+            <span style="color: #999;">|</span>
+            <span style="color: #ff9800;">Kısmi: ${partialOrders.length}</span>
+          </div>
         </div>
       </div>
 
