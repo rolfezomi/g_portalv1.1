@@ -38,12 +38,12 @@ async function refreshPurchasingData() {
   }
 
   try {
-    // Siparişleri yükle - SADECE EN GÜNCEL REVİZYONLAR (is_latest = true)
+    // Siparişleri yükle - TÜM KAYITLAR (is_latest filtresi YOK)
+    // NOT: Satın alma modülünde her teslimat satırı ayrı gösterilmeli, revizyon kavramı gereksiz
     // NOT: Supabase default limiti 1000'dir, tüm kayıtları çekmek için yüksek limit
     const { data: orders, error: ordersError } = await supabaseClient
       .from('purchasing_orders')
       .select('*')
-      .eq('is_latest', true)
       .order('created_at', { ascending: false })
       .limit(50000); // Maksimum 50.000 kayıt çek
 
