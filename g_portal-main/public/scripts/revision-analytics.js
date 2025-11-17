@@ -525,11 +525,11 @@ function renderPaymentCalendarTab() {
 // Ödeme verilerini hazırla
 async function getPaymentData() {
   try {
-    // Teslimat durumu AÇIK veya KISMİ olanları getir
+    // Teslimat durumu Açık veya Kısmi olanları getir
     const { data: orders, error } = await supabaseClient
       .from('purchasing_orders')
       .select('*')
-      .in('teslimat_durumu', ['AÇIK', 'KISMİ'])
+      .in('teslimat_durumu', ['Açık', 'Kısmi'])
       .order('created_at', { ascending: false });
 
     if (error) throw error;
