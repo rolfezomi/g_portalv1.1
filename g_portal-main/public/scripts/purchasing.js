@@ -39,40 +39,62 @@ async function refreshPurchasingData() {
   }
 
   try {
-    // Siparişleri yükle - TÜM KAYITLAR (is_latest filtresi YOK)
-    // NOT: Satın alma modülünde her teslimat satırı ayrı gösterilmeli, revizyon kavramı gereksiz
-    // NOT: Supabase default limiti 1000'dir, tüm kayıtları çekmek için yüksek limit
-    const { data: orders, error: ordersError } = await supabaseClient
-      .from('purchasing_orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50000); // Maksimum 50.000 kayıt çek
+    // Siparişleri yükle - TÜM KAYITLAR (Pagination ile)
+    // NOT: Supabase default limiti 1000, pagination ile TÜM kayıtları çekeceğiz
+    console.log('📦 Siparişler yükleniyor (pagination ile)...');
 
-    if (ordersError) {
-      console.error('Sipariş yükleme hatası:', ordersError);
+    let allOrders = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-      // Hata durumunda boş durum göster
-      if (contentEl) {
-        contentEl.innerHTML = `
-          <div style="text-align:center; padding:60px 20px;">
-            <div style="font-size:48px; margin-bottom:20px;">❌</div>
-            <h3 style="color:#f44336;">Veriler Yüklenemedi</h3>
-            <p style="color:#999;">${ordersError.message}</p>
-            <button class="btn btn-primary" onclick="refreshPurchasingData()" style="margin-top:20px;">
-              Tekrar Dene
-            </button>
-          </div>
-        `;
+    while (hasMore) {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error: pageError } = await supabaseClient
+        .from('purchasing_orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (pageError) {
+        console.error(`Sayfa ${page + 1} yükleme hatası:`, pageError);
+
+        if (contentEl) {
+          contentEl.innerHTML = `
+            <div style="text-align:center; padding:60px 20px;">
+              <div style="font-size:48px; margin-bottom:20px;">❌</div>
+              <h3 style="color:#f44336;">Veriler Yüklenemedi</h3>
+              <p style="color:#999;">${pageError.message}</p>
+              <button class="btn btn-primary" onclick="refreshPurchasingData()" style="margin-top:20px;">
+                Tekrar Dene
+              </button>
+            </div>
+          `;
+        }
+        showToast('❌ Siparişler yüklenemedi: ' + pageError.message, 'error');
+        return;
       }
-      showToast('❌ Siparişler yüklenemedi: ' + ordersError.message, 'error');
-      return;
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allOrders = [...allOrders, ...data];
+        console.log(`📄 Sayfa ${page + 1}: ${data.length} kayıt yüklendi (Toplam: ${allOrders.length})`);
+
+        // Eğer pageSize'dan az kayıt geldiyse, son sayfa demektir
+        if (data.length < pageSize) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
     }
 
-    purchasingOrders = orders || [];
-    console.log(`📦 ${purchasingOrders.length} güncel sipariş yüklendi`);
+    purchasingOrders = allOrders;
+    console.log(`✅ Toplam ${purchasingOrders.length} sipariş yüklendi (${page + 1} sayfa)`);
     filteredOrders = [...purchasingOrders];
-
-    console.log(`✅ ${purchasingOrders.length} sipariş yüklendi`);
 
     // Tedarikçileri yükle
     const { data: suppliers, error: suppliersError } = await supabaseClient
