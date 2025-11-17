@@ -1460,6 +1460,21 @@ function mapSatinalma360ToDatabase(row) {
   // Hesaplanan alanları ekle
   calculatePurchasingFields(mapped);
 
+  // NORMALIZASYON: Case-insensitive eşleşme için belge numaralarını UPPERCASE'e çevir
+  // Bu sayede "urt2024..." ve "URT2024..." aynı kabul edilir
+  if (mapped.irsaliye_no) {
+    mapped.irsaliye_no = mapped.irsaliye_no.toString().toUpperCase();
+  }
+  if (mapped.stok_belge_no) {
+    mapped.stok_belge_no = mapped.stok_belge_no.toString().toUpperCase();
+  }
+  if (mapped.fatura_no) {
+    mapped.fatura_no = mapped.fatura_no.toString().toUpperCase();
+  }
+  if (mapped.e_fatura_no) {
+    mapped.e_fatura_no = mapped.e_fatura_no.toString().toUpperCase();
+  }
+
   // Geçerlilik kontrolü - en az sipariş no veya malzeme olmalı
   const isValid = mapped.siparis_no || mapped.malzeme_tanimi || mapped.talep_no;
 
