@@ -149,33 +149,11 @@ function renderPurchasingStats() {
   // Toplam siparişler
   const totalOrders = purchasingOrders.length;
 
-  // Açık siparişler - kalan_miktar kontrolü ile (daha güvenilir)
-  const openOrders = purchasingOrders.filter(o => {
-    const siparisMiktar = parseFloat(o.miktar) || 0;
-    const gelenMiktar = parseFloat(o.toplam_gelen_miktar || o.gelen_miktar) || 0;
-    const kalanMiktar = parseFloat(o.kalan_miktar);
+  // Açık siparişler - teslimat_durumu = 'Açık' (hiç mal kabul yapılmamış)
+  const openOrders = purchasingOrders.filter(o => o.teslimat_durumu === 'Açık');
 
-    // Eğer kalan_miktar hesaplanmışsa onu kullan
-    if (kalanMiktar !== null && kalanMiktar !== undefined && !isNaN(kalanMiktar)) {
-      return kalanMiktar > 0 && gelenMiktar === 0; // Hiç gelmemiş
-    }
-
-    // Yoksa manuel hesapla
-    return siparisMiktar > 0 && gelenMiktar === 0;
-  });
-
-  // Kısmi teslimat
-  const partialOrders = purchasingOrders.filter(o => {
-    const siparisMiktar = parseFloat(o.miktar) || 0;
-    const gelenMiktar = parseFloat(o.toplam_gelen_miktar || o.gelen_miktar) || 0;
-    const kalanMiktar = parseFloat(o.kalan_miktar);
-
-    if (kalanMiktar !== null && kalanMiktar !== undefined && !isNaN(kalanMiktar)) {
-      return kalanMiktar > 0 && gelenMiktar > 0; // Kısmen gelmiş
-    }
-
-    return gelenMiktar > 0 && gelenMiktar < siparisMiktar;
-  });
+  // Kısmi siparişler - teslimat_durumu = 'Kısmi' (kısmen mal kabul yapılmış)
+  const partialOrders = purchasingOrders.filter(o => o.teslimat_durumu === 'Kısmi');
 
   // Toplam tutar (TL) - tüm siparişler
   const totalAmount = purchasingOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
