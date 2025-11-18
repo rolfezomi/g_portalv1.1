@@ -134,6 +134,50 @@ function renderRevisionDashboard() {
   const content = document.getElementById('revision-analytics-content');
   if (!content) return;
 
+  // Kullanıcı rolünü al (main.js'den)
+  const userRole = window.currentUserRole || 'full';
+  const isAdmin = userRole === 'admin' || userRole === 'full';
+
+  // Tab'ları role göre filtrele
+  let tabs = '';
+
+  // Admin'e özel tablar
+  if (isAdmin) {
+    tabs += `
+      <button class="revision-tab" onclick="switchRevisionTab('changes')">
+        📝 Değişiklik Raporu
+      </button>
+      <button class="revision-tab" onclick="switchRevisionTab('timeline')">
+        ⏰ Zaman Çizelgesi
+      </button>
+    `;
+  }
+
+  // Herkesin görebileceği tablar
+  tabs += `
+    <button class="revision-tab active" onclick="switchRevisionTab('price-trend')">
+      📈 Fiyat Trendi
+    </button>
+    <button class="revision-tab" onclick="switchRevisionTab('price-changes')">
+      🔥 Fiyat Değişimleri
+    </button>
+    <button class="revision-tab" onclick="switchRevisionTab('supplier-comparison')">
+      📊 Tedarikçi Karşılaştırma
+    </button>
+    <button class="revision-tab" onclick="switchRevisionTab('payment-calendar')">
+      💰 Ödeme Takvimi
+    </button>
+  `;
+
+  // Admin'e özel tab
+  if (isAdmin) {
+    tabs += `
+      <button class="revision-tab" onclick="switchRevisionTab('top-revised')">
+        🔄 En Çok Revize Edilenler
+      </button>
+    `;
+  }
+
   content.innerHTML = `
     <!-- KPI Kartları -->
     <div class="revision-kpi-grid">
@@ -142,34 +186,19 @@ function renderRevisionDashboard() {
 
     <!-- Tab Navigasyon -->
     <div class="revision-tabs">
-      <button class="revision-tab" onclick="switchRevisionTab('changes')">
-        📝 Değişiklik Raporu
-      </button>
-      <button class="revision-tab" onclick="switchRevisionTab('timeline')">
-        ⏰ Zaman Çizelgesi
-      </button>
-      <button class="revision-tab" onclick="switchRevisionTab('price-trend')">
-        📈 Fiyat Trendi
-      </button>
-      <button class="revision-tab" onclick="switchRevisionTab('price-changes')">
-        🔥 Fiyat Değişimleri
-      </button>
-      <button class="revision-tab" onclick="switchRevisionTab('supplier-comparison')">
-        📊 Tedarikçi Karşılaştırma
-      </button>
-      <button class="revision-tab active" onclick="switchRevisionTab('payment-calendar')">
-        💰 Ödeme Takvimi
-      </button>
-      <button class="revision-tab" onclick="switchRevisionTab('top-revised')">
-        🔄 En Çok Revize Edilenler
-      </button>
+      ${tabs}
     </div>
 
     <!-- Tab İçerikleri -->
     <div id="revision-tab-content">
-      ${renderPaymentCalendarTab()}
+      ${renderPriceTrendTab()}
     </div>
   `;
+
+  // İlk tab'ı otomatik aç
+  setTimeout(() => {
+    initPriceTrendChart();
+  }, 100);
 }
 
 // KPI Kartları
@@ -1372,13 +1401,13 @@ function clearPaymentFilters() {
 function renderPriceTrendTab() {
   console.log('📈 Fiyat trend tab render ediliyor...');
 
-  // Tüm siparişleri tarihe göre sırala
+  // Tüm siparişleri sipariş tarihine göre sırala
   const ordersWithPrice = allPurchasingOrders
-    .filter(o => o.tutar_tl && o.miktar && parseFloat(o.tutar_tl) > 0 && parseFloat(o.miktar) > 0)
+    .filter(o => o.birim_fiyat && o.siparis_tarihi && parseFloat(o.birim_fiyat) > 0)
     .map(o => ({
       ...o,
-      birim_fiyat: parseFloat(o.tutar_tl) / parseFloat(o.miktar),
-      tarih: new Date(o.revision_date || o.created_at)
+      birim_fiyat: parseFloat(o.birim_fiyat),
+      tarih: new Date(o.siparis_tarihi)
     }))
     .sort((a, b) => a.tarih - b.tarih);
 
@@ -1466,31 +1495,39 @@ function updatePriceTrendChart() {
   const avgPrice = data.reduce((a, b) => a + b, 0) / data.length;
   const priceChange = ((data[data.length - 1] - data[0]) / data[0]) * 100;
 
+  // En düşük ve en yüksek fiyat bilgilerini bul (tedarikçi ve tarih ile)
+  const minPriceEntry = sortedPrices.find(p => p.fiyat === minPrice);
+  const maxPriceEntry = sortedPrices.find(p => p.fiyat === maxPrice);
+  const firstEntry = sortedPrices[0];
+  const lastEntry = sortedPrices[sortedPrices.length - 1];
+
   // İstatistikleri göster
   document.getElementById('price-stats').innerHTML = `
     <h3 style="margin: 0 0 15px 0; font-size: 16px;">📊 ${materialName} - İstatistikler</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-      <div>
-        <div style="font-size: 12px; color: #666;">En Düşük Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #4caf50;">₺${minPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+      <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">En Düşük Fiyat</div>
+        <div style="font-size: 20px; font-weight: 700; color: #4caf50; margin-bottom: 5px;">₺${minPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 11px; color: #999;">🏢 ${minPriceEntry.tedarikci || 'Bilinmiyor'}</div>
+        <div style="font-size: 11px; color: #999;">📅 ${minPriceEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
-      <div>
-        <div style="font-size: 12px; color: #666;">En Yüksek Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #f44336;">₺${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">En Yüksek Fiyat</div>
+        <div style="font-size: 20px; font-weight: 700; color: #f44336; margin-bottom: 5px;">₺${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 11px; color: #999;">🏢 ${maxPriceEntry.tedarikci || 'Bilinmiyor'}</div>
+        <div style="font-size: 11px; color: #999;">📅 ${maxPriceEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
-      <div>
-        <div style="font-size: 12px; color: #666;">Ortalama Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #2196f3;">₺${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Ortalama Fiyat</div>
+        <div style="font-size: 20px; font-weight: 700; color: #2196f3; margin-bottom: 5px;">₺${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 11px; color: #999;">📊 ${sortedPrices.length} sipariş ortalaması</div>
       </div>
-      <div>
-        <div style="font-size: 12px; color: #666;">Fiyat Değişimi</div>
-        <div style="font-size: 20px; font-weight: 700; color: ${priceChange >= 0 ? '#f44336' : '#4caf50'};">
+      <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid ${priceChange >= 0 ? '#f44336' : '#4caf50'};">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Fiyat Değişimi</div>
+        <div style="font-size: 20px; font-weight: 700; color: ${priceChange >= 0 ? '#f44336' : '#4caf50'}; margin-bottom: 5px;">
           ${priceChange >= 0 ? '↑' : '↓'} %${Math.abs(priceChange).toFixed(1)}
         </div>
-      </div>
-      <div>
-        <div style="font-size: 12px; color: #666;">Revizyon Sayısı</div>
-        <div style="font-size: 20px; font-weight: 700; color: #ff9800;">${data.length}</div>
+        <div style="font-size: 11px; color: #999;">📅 ${firstEntry.tarih.toLocaleDateString('tr-TR')} → ${lastEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
     </div>
   `;
@@ -1563,11 +1600,15 @@ function renderPriceChangesTab() {
   const priceChanges = [];
   const materialGroups = {};
   allPurchasingOrders.forEach(order => {
-    if (!order.tutar_tl || !order.miktar || parseFloat(order.tutar_tl) <= 0) return;
+    if (!order.birim_fiyat || !order.siparis_tarihi || parseFloat(order.birim_fiyat) <= 0) return;
     const material = order.malzeme_tanimi || 'Bilinmeyen';
-    const birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+    const birimFiyat = parseFloat(order.birim_fiyat);
     if (!materialGroups[material]) materialGroups[material] = [];
-    materialGroups[material].push({ fiyat: birimFiyat, tarih: new Date(order.revision_date || order.created_at) });
+    materialGroups[material].push({
+      fiyat: birimFiyat,
+      tarih: new Date(order.siparis_tarihi),
+      tedarikci: order.tedarikci_tanimi || 'Bilinmiyor'
+    });
   });
   Object.entries(materialGroups).forEach(([material, records]) => {
     if (records.length < 2) return;
@@ -1576,6 +1617,10 @@ function renderPriceChangesTab() {
       material,
       ilkFiyat: sorted[0].fiyat,
       sonFiyat: sorted[sorted.length-1].fiyat,
+      ilkTarih: sorted[0].tarih,
+      sonTarih: sorted[sorted.length-1].tarih,
+      ilkTedarikci: sorted[0].tedarikci,
+      sonTedarikci: sorted[sorted.length-1].tedarikci,
       degisim: ((sorted[sorted.length-1].fiyat - sorted[0].fiyat) / sorted[0].fiyat) * 100,
       fark: sorted[sorted.length-1].fiyat - sorted[0].fiyat,
       revizyonSayisi: records.length
@@ -1591,7 +1636,14 @@ function renderPriceChangesTab() {
     const icon = item.degisim > 0 ? '↑' : '↓';
     const badge = Math.abs(item.degisim) > 50 ? '#f44336' : Math.abs(item.degisim) > 20 ? '#ff9800' : '#4caf50';
     const badgeText = Math.abs(item.degisim) > 50 ? '⚠️ Kritik' : Math.abs(item.degisim) > 20 ? '⚡ Yüksek' : '✓ Normal';
-    return '<tr style="background:'+bg+'"><td style="padding:15px">'+item.material+'</td><td style="padding:15px">₺'+item.ilkFiyat.toFixed(2)+'</td><td style="padding:15px">₺'+item.sonFiyat.toFixed(2)+'</td><td style="padding:15px;color:'+color+';font-weight:600">'+(item.fark>=0?'+':'')+'₺'+item.fark.toFixed(2)+'</td><td style="padding:15px;text-align:center;color:'+color+';font-weight:700;font-size:18px">'+icon+' %'+Math.abs(item.degisim).toFixed(1)+'</td><td style="padding:15px"><span style="background:'+badge+';color:white;padding:4px 12px;border-radius:12px;font-size:12px">'+badgeText+'</span></td></tr>';
+    return '<tr style="background:'+bg+'">'+
+      '<td style="padding:15px"><strong>'+item.material+'</strong></td>'+
+      '<td style="padding:15px">₺'+item.ilkFiyat.toFixed(2)+'<br><span style="font-size:11px;color:#999">📅 '+item.ilkTarih.toLocaleDateString('tr-TR')+'</span><br><span style="font-size:11px;color:#666">🏢 '+item.ilkTedarikci+'</span></td>'+
+      '<td style="padding:15px">₺'+item.sonFiyat.toFixed(2)+'<br><span style="font-size:11px;color:#999">📅 '+item.sonTarih.toLocaleDateString('tr-TR')+'</span><br><span style="font-size:11px;color:#666">🏢 '+item.sonTedarikci+'</span></td>'+
+      '<td style="padding:15px;color:'+color+';font-weight:600">'+(item.fark>=0?'+':'')+'₺'+item.fark.toFixed(2)+'</td>'+
+      '<td style="padding:15px;text-align:center;color:'+color+';font-weight:700;font-size:18px">'+icon+' %'+Math.abs(item.degisim).toFixed(1)+'</td>'+
+      '<td style="padding:15px"><span style="background:'+badge+';color:white;padding:4px 12px;border-radius:12px;font-size:12px">'+badgeText+'</span></td>'+
+      '</tr>';
   }).join('');
   return '<div style="padding:20px"><table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)"><thead><tr style="background:linear-gradient(135deg,#667eea,#764ba2);color:white"><th style="padding:15px">Malzeme</th><th style="padding:15px">İlk Fiyat</th><th style="padding:15px">Son Fiyat</th><th style="padding:15px">Fark</th><th style="padding:15px">Değişim %</th><th style="padding:15px">Durum</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -1599,23 +1651,30 @@ function renderPriceChangesTab() {
 function renderSupplierComparisonTab() {
   const materialSuppliers = {};
   allPurchasingOrders.forEach(order => {
-    if (!order.tutar_tl || !order.miktar || !order.tedarikci_tanimi || !order.malzeme_tanimi) return;
-    if (parseFloat(order.tutar_tl) <= 0) return;
+    if (!order.birim_fiyat || !order.tedarikci_tanimi || !order.malzeme_tanimi || !order.siparis_tarihi) return;
+    if (parseFloat(order.birim_fiyat) <= 0) return;
     const material = order.malzeme_tanimi;
     const supplier = order.tedarikci_tanimi;
-    const birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+    const birimFiyat = parseFloat(order.birim_fiyat);
+    const tarih = new Date(order.siparis_tarihi);
     if (!materialSuppliers[material]) materialSuppliers[material] = {};
     if (!materialSuppliers[material][supplier]) materialSuppliers[material][supplier] = [];
-    materialSuppliers[material][supplier].push(birimFiyat);
+    materialSuppliers[material][supplier].push({ fiyat: birimFiyat, tarih: tarih });
   });
   const items = Object.entries(materialSuppliers)
     .filter(([_, suppliers]) => Object.keys(suppliers).length > 1)
     .map(([material, suppliers]) => {
-      const supplierAvgs = Object.entries(suppliers).map(([supplier, prices]) => ({
-        supplier,
-        avgPrice: prices.reduce((a,b) => a+b) / prices.length,
-        count: prices.length
-      })).sort((a,b) => a.avgPrice - b.avgPrice);
+      const supplierAvgs = Object.entries(suppliers).map(([supplier, records]) => {
+        const prices = records.map(r => r.fiyat);
+        const avgPrice = prices.reduce((a,b) => a+b) / prices.length;
+        const lastDate = records.sort((a,b) => b.tarih - a.tarih)[0].tarih;
+        return {
+          supplier,
+          avgPrice,
+          count: prices.length,
+          lastDate
+        };
+      }).sort((a,b) => a.avgPrice - b.avgPrice);
       return {
         material,
         suppliers: supplierAvgs,
@@ -1635,7 +1694,10 @@ function renderSupplierComparisonTab() {
       const border = isLowest ? '#4caf50' : isHighest ? '#f44336' : '#ddd';
       const color = isLowest ? '#4caf50' : isHighest ? '#f44336' : '#333';
       const badge = isLowest ? '<span style="background:#4caf50;color:white;padding:2px 8px;border-radius:12px;font-size:11px">EN UYGUN</span>' : isHighest ? '<span style="background:#f44336;color:white;padding:2px 8px;border-radius:12px;font-size:11px">EN YÜKSEK</span>' : '';
-      return '<div style="padding:12px;background:'+bg+';border-left:4px solid '+border+';border-radius:8px;display:flex;justify-content:space-between"><div><strong>'+s.supplier+'</strong> <span style="font-size:13px;color:#666">('+s.count+' sipariş)</span> '+badge+'</div><div style="font-size:18px;font-weight:700;color:'+color+'">₺'+s.avgPrice.toFixed(2)+'</div></div>';
+      return '<div style="padding:12px;background:'+bg+';border-left:4px solid '+border+';border-radius:8px;display:flex;justify-content:space-between;align-items:center">'+
+        '<div><strong>'+s.supplier+'</strong><br><span style="font-size:11px;color:#666">📦 '+s.count+' sipariş</span> <span style="font-size:11px;color:#999">📅 Son: '+s.lastDate.toLocaleDateString('tr-TR')+'</span><br>'+badge+'</div>'+
+        '<div style="font-size:18px;font-weight:700;color:'+color+'">₺'+s.avgPrice.toFixed(2)+'</div>'+
+        '</div>';
     }).join('');
     return '<div style="background:white;border:1px solid #ddd;border-radius:12px;padding:20px;margin-bottom:20px"><h3 style="margin:0 0 15px 0">'+item.material+' <span style="float:right;color:'+(item.priceDiff>50?'#f44336':'#ff9800')+'">Fark: %'+item.priceDiff.toFixed(1)+'</span></h3><div style="display:grid;gap:10px">'+suppliers+'</div></div>';
   }).join('')+'</div>';
