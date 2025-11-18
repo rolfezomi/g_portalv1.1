@@ -36,7 +36,7 @@ Glohe Portal, üretim tesisindeki su kalitesi kontrolü için geliştirilmiş ka
 - **Version Control:** Git / GitHub
 
 ### 1.3 Canlı URL
-- **Production:** https://glohemeslek-main-su-poralimiz.netlify.app
+- **Production:** 
 - **Supabase Project ID:** mignlffeyougoefuyayr
 - **GitHub Repository:** rolfezomi/g_portalv1.1
 
@@ -1682,7 +1682,7 @@ supabase db reset
 **Email:** ugur.onar@glohe.com
 **GitHub:** rolfezomi/g_portalv1.1
 **Supabase Project:** mignlffeyougoefuyayr
-**Netlify Site:** glohemeslek-main-su-poralimiz.netlify.app
+**Netlify Site:** glohe.netlify.app
 
 ---
 

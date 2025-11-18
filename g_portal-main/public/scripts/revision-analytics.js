@@ -148,6 +148,15 @@ function renderRevisionDashboard() {
       <button class="revision-tab" onclick="switchRevisionTab('timeline')">
         ⏰ Zaman Çizelgesi
       </button>
+      <button class="revision-tab" onclick="switchRevisionTab('price-trend')">
+        📈 Fiyat Trendi
+      </button>
+      <button class="revision-tab" onclick="switchRevisionTab('price-changes')">
+        🔥 Fiyat Değişimleri
+      </button>
+      <button class="revision-tab" onclick="switchRevisionTab('supplier-comparison')">
+        📊 Tedarikçi Karşılaştırma
+      </button>
       <button class="revision-tab active" onclick="switchRevisionTab('payment-calendar')">
         💰 Ödeme Takvimi
       </button>
@@ -269,6 +278,16 @@ function switchRevisionTab(tabName) {
       break;
     case 'timeline':
       content.innerHTML = renderTimelineTab();
+      break;
+    case 'price-trend':
+      content.innerHTML = renderPriceTrendTab();
+      initPriceTrendChart();
+      break;
+    case 'price-changes':
+      content.innerHTML = renderPriceChangesTab();
+      break;
+    case 'supplier-comparison':
+      content.innerHTML = renderSupplierComparisonTab();
       break;
     case 'payment-calendar':
       content.innerHTML = renderPaymentCalendarTab();
@@ -1344,117 +1363,95 @@ function clearPaymentFilters() {
 }
 
 // =====================================================
-// FİYAT TAKİP SİSTEMİ - MODALLAR
+// FİYAT TAKİP SİSTEMİ - TAB İÇERİKLERİ
 // =====================================================
 
 /**
- * Fiyat Trend Analiz Modalı
- * Malzeme bazlı fiyat değişimlerini zaman grafiğinde gösterir
+ * Fiyat Trend Tab
  */
-async function openPriceTrendModal() {
-  console.log('📈 Fiyat trend analizi açılıyor...');
+function renderPriceTrendTab() {
+  console.log('📈 Fiyat trend tab render ediliyor...');
 
-  try {
-    // Tüm siparişleri tarihe göre sırala
-    const ordersWithPrice = allPurchasingOrders
-      .filter(o => o.tutar_tl && o.miktar && parseFloat(o.tutar_tl) > 0 && parseFloat(o.miktar) > 0)
-      .map(o => ({
-        ...o,
-        birim_fiyat: parseFloat(o.tutar_tl) / parseFloat(o.miktar),
-        tarih: new Date(o.revision_date || o.created_at)
-      }))
-      .sort((a, b) => a.tarih - b.tarih);
+  // Tüm siparişleri tarihe göre sırala
+  const ordersWithPrice = allPurchasingOrders
+    .filter(o => o.tutar_tl && o.miktar && parseFloat(o.tutar_tl) > 0 && parseFloat(o.miktar) > 0)
+    .map(o => ({
+      ...o,
+      birim_fiyat: parseFloat(o.tutar_tl) / parseFloat(o.miktar),
+      tarih: new Date(o.revision_date || o.created_at)
+    }))
+    .sort((a, b) => a.tarih - b.tarih);
 
-    // Malzeme bazında gruplama
-    const materialPrices = {};
-    ordersWithPrice.forEach(order => {
-      const material = order.malzeme_tanimi || 'Bilinmeyen';
-      if (!materialPrices[material]) {
-        materialPrices[material] = [];
-      }
-      materialPrices[material].push({
-        tarih: order.tarih,
-        fiyat: order.birim_fiyat,
-        siparis_no: order.siparis_no,
-        tedarikci: order.tedarikci_tanimi
-      });
-    });
-
-    // En fazla revizyon olan ilk 10 malzemeyi al
-    const topMaterials = Object.entries(materialPrices)
-      .filter(([_, prices]) => prices.length > 1) // En az 2 kayıt olmalı
-      .sort((a, b) => b[1].length - a[1].length)
-      .slice(0, 10);
-
-    if (topMaterials.length === 0) {
-      showToast('ℹ️ Fiyat değişimi olan malzeme bulunamadı', 'info');
-      return;
+  // Malzeme bazında gruplama
+  const materialPrices = {};
+  ordersWithPrice.forEach(order => {
+    const material = order.malzeme_tanimi || 'Bilinmeyen';
+    if (!materialPrices[material]) {
+      materialPrices[material] = [];
     }
+    materialPrices[material].push({
+      tarih: order.tarih,
+      fiyat: order.birim_fiyat,
+      siparis_no: order.siparis_no,
+      tedarikci: order.tedarikci_tanimi
+    });
+  });
 
-    // Modal HTML
-    const modalHTML = `
-      <div class="modal-overlay" id="price-trend-modal" onclick="if(event.target.id==='price-trend-modal') closePriceTrendModal()">
-        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
-          <div class="modal-header">
-            <h2 style="margin: 0;">📈 Fiyat Trend Analizi</h2>
-            <button class="modal-close" onclick="closePriceTrendModal()">&times;</button>
-          </div>
+  // En fazla revizyon olan ilk 10 malzemeyi al
+  const topMaterials = Object.entries(materialPrices)
+    .filter(([_, prices]) => prices.length > 1)
+    .sort((a, b) => b[1].length - a[1].length)
+    .slice(0, 10);
 
-          <div class="modal-body">
-            <div style="margin-bottom: 20px;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 600;">Malzeme Seç:</label>
-              <select id="material-selector" onchange="updatePriceTrendChart()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
-                ${topMaterials.map(([material, _], idx) =>
-                  `<option value="${idx}">${material}</option>`
-                ).join('')}
-              </select>
-            </div>
-
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <canvas id="price-trend-chart" style="max-height: 400px;"></canvas>
-            </div>
-
-            <div id="price-stats" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
-              <!-- İstatistikler buraya gelecek -->
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closePriceTrendModal()">Kapat</button>
-          </div>
-        </div>
+  if (topMaterials.length === 0) {
+    return `
+      <div style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+        <h3 style="color: #666;">Fiyat değişimi olan malzeme bulunamadı</h3>
+        <p style="color: #999;">En az 2 farklı fiyat kaydı olan malzeme bulunmuyor.</p>
       </div>
     `;
-
-    // Modal'ı ekle
-    const existingModal = document.getElementById('price-trend-modal');
-    if (existingModal) existingModal.remove();
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-    // Global değişken olarak sakla
-    window.topMaterialsData = topMaterials;
-    window.materialPricesData = materialPrices;
-
-    // İlk grafiği çiz
-    updatePriceTrendChart();
-
-  } catch (error) {
-    console.error('❌ Fiyat trend modal hatası:', error);
-    showToast('❌ Fiyat trend analizi açılamadı', 'error');
   }
+
+  // Global değişken olarak sakla
+  window.topMaterialsData = topMaterials;
+  window.materialPricesData = materialPrices;
+
+  return `
+    <div style="padding: 20px;">
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 16px;">Malzeme Seç:</label>
+        <select id="material-selector" onchange="updatePriceTrendChart()" style="width: 100%; max-width: 600px; padding: 12px; border: 2px solid #2196f3; border-radius: 8px; font-size: 14px; background: white;">
+          ${topMaterials.map(([material, _], idx) =>
+            `<option value="${idx}">${material}</option>`
+          ).join('')}
+        </select>
+      </div>
+
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <canvas id="price-trend-chart" style="max-height: 400px;"></canvas>
+      </div>
+
+      <div id="price-stats" style="padding: 20px; background: #f8f9fa; border-radius: 12px;">
+        <!-- İstatistikler buraya gelecek -->
+      </div>
+    </div>
+  `;
 }
 
-function closePriceTrendModal() {
-  const modal = document.getElementById('price-trend-modal');
-  if (modal) modal.remove();
-  if (window.priceTrendChart) {
-    window.priceTrendChart.destroy();
-    window.priceTrendChart = null;
-  }
+function initPriceTrendChart() {
+  // Tab render edildikten sonra grafiği çiz
+  setTimeout(() => {
+    if (window.topMaterialsData && window.topMaterialsData.length > 0) {
+      updatePriceTrendChart();
+    }
+  }, 100);
 }
 
 function updatePriceTrendChart() {
   const selector = document.getElementById('material-selector');
+  if (!selector) return;
+
   const selectedIdx = parseInt(selector.value);
   const [materialName, prices] = window.topMaterialsData[selectedIdx];
 
@@ -1560,273 +1557,88 @@ function updatePriceTrendChart() {
 }
 
 /**
- * En Çok Değişen Fiyatlar Raporu
+ * Fiyat Değişimleri Tab
  */
-async function openPriceChangeReportModal() {
-  console.log('🔥 Fiyat değişim raporu açılıyor...');
-
-  try {
-    // Malzeme bazında fiyat değişimlerini hesapla
-    const priceChanges = [];
-    const materialGroups = {};
-
-    // Malzemeleri grupla
-    allPurchasingOrders.forEach(order => {
-      if (!order.tutar_tl || !order.miktar || parseFloat(order.tutar_tl) <= 0) return;
-
-      const material = order.malzeme_tanimi || 'Bilinmeyen';
-      const birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
-      const tarih = new Date(order.revision_date || order.created_at);
-
-      if (!materialGroups[material]) {
-        materialGroups[material] = [];
-      }
-
-      materialGroups[material].push({
-        fiyat: birimFiyat,
-        tarih: tarih,
-        siparis_no: order.siparis_no,
-        tedarikci: order.tedarikci_tanimi
-      });
+function renderPriceChangesTab() {
+  const priceChanges = [];
+  const materialGroups = {};
+  allPurchasingOrders.forEach(order => {
+    if (!order.tutar_tl || !order.miktar || parseFloat(order.tutar_tl) <= 0) return;
+    const material = order.malzeme_tanimi || 'Bilinmeyen';
+    const birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+    if (!materialGroups[material]) materialGroups[material] = [];
+    materialGroups[material].push({ fiyat: birimFiyat, tarih: new Date(order.revision_date || order.created_at) });
+  });
+  Object.entries(materialGroups).forEach(([material, records]) => {
+    if (records.length < 2) return;
+    const sorted = records.sort((a, b) => a.tarih - b.tarih);
+    priceChanges.push({
+      material,
+      ilkFiyat: sorted[0].fiyat,
+      sonFiyat: sorted[sorted.length-1].fiyat,
+      degisim: ((sorted[sorted.length-1].fiyat - sorted[0].fiyat) / sorted[0].fiyat) * 100,
+      fark: sorted[sorted.length-1].fiyat - sorted[0].fiyat,
+      revizyonSayisi: records.length
     });
+  });
+  priceChanges.sort((a, b) => Math.abs(b.degisim) - Math.abs(a.degisim));
+  if (priceChanges.length === 0) {
+    return '<div style="text-align:center;padding:60px"><h3>Fiyat değişimi bulunamadı</h3></div>';
+  }
+  const rows = priceChanges.slice(0,50).map((item,idx) => {
+    const bg = idx % 2 ? '#f9f9f9' : 'white';
+    const color = item.degisim > 0 ? '#f44336' : '#4caf50';
+    const icon = item.degisim > 0 ? '↑' : '↓';
+    const badge = Math.abs(item.degisim) > 50 ? '#f44336' : Math.abs(item.degisim) > 20 ? '#ff9800' : '#4caf50';
+    const badgeText = Math.abs(item.degisim) > 50 ? '⚠️ Kritik' : Math.abs(item.degisim) > 20 ? '⚡ Yüksek' : '✓ Normal';
+    return '<tr style="background:'+bg+'"><td style="padding:15px">'+item.material+'</td><td style="padding:15px">₺'+item.ilkFiyat.toFixed(2)+'</td><td style="padding:15px">₺'+item.sonFiyat.toFixed(2)+'</td><td style="padding:15px;color:'+color+';font-weight:600">'+(item.fark>=0?'+':'')+'₺'+item.fark.toFixed(2)+'</td><td style="padding:15px;text-align:center;color:'+color+';font-weight:700;font-size:18px">'+icon+' %'+Math.abs(item.degisim).toFixed(1)+'</td><td style="padding:15px"><span style="background:'+badge+';color:white;padding:4px 12px;border-radius:12px;font-size:12px">'+badgeText+'</span></td></tr>';
+  }).join('');
+  return '<div style="padding:20px"><table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)"><thead><tr style="background:linear-gradient(135deg,#667eea,#764ba2);color:white"><th style="padding:15px">Malzeme</th><th style="padding:15px">İlk Fiyat</th><th style="padding:15px">Son Fiyat</th><th style="padding:15px">Fark</th><th style="padding:15px">Değişim %</th><th style="padding:15px">Durum</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
 
-    // Her malzeme için fiyat değişimini hesapla
-    Object.entries(materialGroups).forEach(([material, records]) => {
-      if (records.length < 2) return; // En az 2 kayıt olmalı
-
-      // Tarihe göre sırala
-      const sorted = records.sort((a, b) => a.tarih - b.tarih);
-      const ilkFiyat = sorted[0].fiyat;
-      const sonFiyat = sorted[sorted.length - 1].fiyat;
-      const degisim = ((sonFiyat - ilkFiyat) / ilkFiyat) * 100;
-      const fark = sonFiyat - ilkFiyat;
-
-      priceChanges.push({
+function renderSupplierComparisonTab() {
+  const materialSuppliers = {};
+  allPurchasingOrders.forEach(order => {
+    if (!order.tutar_tl || !order.miktar || !order.tedarikci_tanimi || !order.malzeme_tanimi) return;
+    if (parseFloat(order.tutar_tl) <= 0) return;
+    const material = order.malzeme_tanimi;
+    const supplier = order.tedarikci_tanimi;
+    const birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+    if (!materialSuppliers[material]) materialSuppliers[material] = {};
+    if (!materialSuppliers[material][supplier]) materialSuppliers[material][supplier] = [];
+    materialSuppliers[material][supplier].push(birimFiyat);
+  });
+  const items = Object.entries(materialSuppliers)
+    .filter(([_, suppliers]) => Object.keys(suppliers).length > 1)
+    .map(([material, suppliers]) => {
+      const supplierAvgs = Object.entries(suppliers).map(([supplier, prices]) => ({
+        supplier,
+        avgPrice: prices.reduce((a,b) => a+b) / prices.length,
+        count: prices.length
+      })).sort((a,b) => a.avgPrice - b.avgPrice);
+      return {
         material,
-        ilkFiyat,
-        sonFiyat,
-        degisim,
-        fark,
-        revizyonSayisi: records.length,
-        ilkTarih: sorted[0].tarih,
-        sonTarih: sorted[sorted.length - 1].tarih
-      });
-    });
-
-    // Değişime göre sırala (mutlak değer)
-    priceChanges.sort((a, b) => Math.abs(b.degisim) - Math.abs(a.degisim));
-
-    const modalHTML = `
-      <div class="modal-overlay" id="price-change-modal" onclick="if(event.target.id==='price-change-modal') closePriceChangeModal()">
-        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
-          <div class="modal-header">
-            <h2 style="margin: 0;">🔥 En Çok Değişen Fiyatlar</h2>
-            <button class="modal-close" onclick="closePriceChangeModal()">&times;</button>
-          </div>
-
-          <div class="modal-body">
-            <div style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <thead>
-                  <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
-                    <th style="padding: 12px; text-align: left;">Malzeme</th>
-                    <th style="padding: 12px; text-align: right;">İlk Fiyat</th>
-                    <th style="padding: 12px; text-align: right;">Son Fiyat</th>
-                    <th style="padding: 12px; text-align: right;">Fark</th>
-                    <th style="padding: 12px; text-align: center;">Değişim %</th>
-                    <th style="padding: 12px; text-align: center;">Revizyon</th>
-                    <th style="padding: 12px; text-align: center;">Durum</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${priceChanges.slice(0, 50).map(item => {
-                    const changeColor = item.degisim > 0 ? '#f44336' : '#4caf50';
-                    const changeIcon = item.degisim > 0 ? '↑' : '↓';
-                    const statusBadge = Math.abs(item.degisim) > 50
-                      ? '<span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">⚠️ Kritik</span>'
-                      : Math.abs(item.degisim) > 20
-                      ? '<span style="background: #ff9800; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">⚡ Yüksek</span>'
-                      : '<span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">✓ Normal</span>';
-
-                    return `
-                      <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 12px; font-weight: 500;">${item.material}</td>
-                        <td style="padding: 12px; text-align: right;">₺${item.ilkFiyat.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
-                        <td style="padding: 12px; text-align: right;">₺${item.sonFiyat.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
-                        <td style="padding: 12px; text-align: right; color: ${changeColor}; font-weight: 600;">
-                          ${item.fark >= 0 ? '+' : ''}₺${item.fark.toLocaleString('tr-TR', {minimumFractionDigits: 2})}
-                        </td>
-                        <td style="padding: 12px; text-align: center; color: ${changeColor}; font-weight: 700; font-size: 16px;">
-                          ${changeIcon} %${Math.abs(item.degisim).toFixed(1)}
-                        </td>
-                        <td style="padding: 12px; text-align: center;">${item.revizyonSayisi}</td>
-                        <td style="padding: 12px; text-align: center;">${statusBadge}</td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-
-            ${priceChanges.length > 50 ? `
-              <div style="margin-top: 15px; text-align: center; color: #666; font-size: 13px;">
-                Toplam ${priceChanges.length} malzeme - İlk 50 gösteriliyor
-              </div>
-            ` : ''}
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closePriceChangeModal()">Kapat</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const existingModal = document.getElementById('price-change-modal');
-    if (existingModal) existingModal.remove();
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-  } catch (error) {
-    console.error('❌ Fiyat değişim raporu hatası:', error);
-    showToast('❌ Fiyat değişim raporu açılamadı', 'error');
+        suppliers: supplierAvgs,
+        priceDiff: ((supplierAvgs[supplierAvgs.length-1].avgPrice - supplierAvgs[0].avgPrice) / supplierAvgs[0].avgPrice) * 100
+      };
+    })
+    .sort((a,b) => b.priceDiff - a.priceDiff)
+    .slice(0, 20);
+  if (items.length === 0) {
+    return '<div style="text-align:center;padding:60px"><h3>Karşılaştırılabilir malzeme yok</h3></div>';
   }
+  return '<div style="padding:20px">'+items.map(item => {
+    const suppliers = item.suppliers.map((s,i) => {
+      const isLowest = i === 0;
+      const isHighest = i === item.suppliers.length - 1;
+      const bg = isLowest ? '#e8f5e9' : isHighest ? '#ffebee' : '#f5f5f5';
+      const border = isLowest ? '#4caf50' : isHighest ? '#f44336' : '#ddd';
+      const color = isLowest ? '#4caf50' : isHighest ? '#f44336' : '#333';
+      const badge = isLowest ? '<span style="background:#4caf50;color:white;padding:2px 8px;border-radius:12px;font-size:11px">EN UYGUN</span>' : isHighest ? '<span style="background:#f44336;color:white;padding:2px 8px;border-radius:12px;font-size:11px">EN YÜKSEK</span>' : '';
+      return '<div style="padding:12px;background:'+bg+';border-left:4px solid '+border+';border-radius:8px;display:flex;justify-content:space-between"><div><strong>'+s.supplier+'</strong> <span style="font-size:13px;color:#666">('+s.count+' sipariş)</span> '+badge+'</div><div style="font-size:18px;font-weight:700;color:'+color+'">₺'+s.avgPrice.toFixed(2)+'</div></div>';
+    }).join('');
+    return '<div style="background:white;border:1px solid #ddd;border-radius:12px;padding:20px;margin-bottom:20px"><h3 style="margin:0 0 15px 0">'+item.material+' <span style="float:right;color:'+(item.priceDiff>50?'#f44336':'#ff9800')+'">Fark: %'+item.priceDiff.toFixed(1)+'</span></h3><div style="display:grid;gap:10px">'+suppliers+'</div></div>';
+  }).join('')+'</div>';
 }
 
-function closePriceChangeModal() {
-  const modal = document.getElementById('price-change-modal');
-  if (modal) modal.remove();
-}
-
-/**
- * Tedarikçi Fiyat Karşılaştırma
- */
-async function openSupplierPriceComparisonModal() {
-  console.log('📊 Tedarikçi fiyat karşılaştırması açılıyor...');
-
-  try {
-    // Malzeme bazında tedarikçi fiyatlarını grupla
-    const materialSuppliers = {};
-
-    allPurchasingOrders.forEach(order => {
-      if (!order.tutar_tl || !order.miktar || parseFloat(order.tutar_tl) <= 0) return;
-      if (!order.tedarikci_tanimi || !order.malzeme_tanimi) return;
-
-      const material = order.malzeme_tanimi;
-      const supplier = order.tedarikci_tanimi;
-      const birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
-
-      if (!materialSuppliers[material]) {
-        materialSuppliers[material] = {};
-      }
-
-      if (!materialSuppliers[material][supplier]) {
-        materialSuppliers[material][supplier] = [];
-      }
-
-      materialSuppliers[material][supplier].push(birimFiyat);
-    });
-
-    // Birden fazla tedarikçisi olan malzemeleri filtrele
-    const comparableItems = Object.entries(materialSuppliers)
-      .filter(([_, suppliers]) => Object.keys(suppliers).length > 1)
-      .map(([material, suppliers]) => {
-        const supplierAvgs = Object.entries(suppliers).map(([supplier, prices]) => ({
-          supplier,
-          avgPrice: prices.reduce((a, b) => a + b, 0) / prices.length,
-          count: prices.length
-        })).sort((a, b) => a.avgPrice - b.avgPrice);
-
-        return {
-          material,
-          suppliers: supplierAvgs,
-          minPrice: supplierAvgs[0].avgPrice,
-          maxPrice: supplierAvgs[supplierAvgs.length - 1].avgPrice,
-          priceDiff: ((supplierAvgs[supplierAvgs.length - 1].avgPrice - supplierAvgs[0].avgPrice) / supplierAvgs[0].avgPrice) * 100
-        };
-      })
-      .sort((a, b) => b.priceDiff - a.priceDiff)
-      .slice(0, 20);
-
-    if (comparableItems.length === 0) {
-      showToast('ℹ️ Karşılaştırılabilir malzeme bulunamadı', 'info');
-      return;
-    }
-
-    const modalHTML = `
-      <div class="modal-overlay" id="supplier-comparison-modal" onclick="if(event.target.id==='supplier-comparison-modal') closeSupplierComparisonModal()">
-        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
-          <div class="modal-header">
-            <h2 style="margin: 0;">📊 Tedarikçi Fiyat Karşılaştırması</h2>
-            <button class="modal-close" onclick="closeSupplierComparisonModal()">&times;</button>
-          </div>
-
-          <div class="modal-body">
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-              <div style="font-size: 14px; color: #1976d2;">
-                💡 <strong>İpucu:</strong> Aynı malzeme için farklı tedarikçilerin ortalama fiyatları karşılaştırılmaktadır.
-              </div>
-            </div>
-
-            ${comparableItems.map(item => `
-              <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #333;">
-                  ${item.material}
-                  <span style="float: right; font-size: 14px; color: ${item.priceDiff > 50 ? '#f44336' : '#ff9800'};">
-                    Fark: %${item.priceDiff.toFixed(1)}
-                  </span>
-                </h3>
-
-                <div style="display: grid; gap: 10px;">
-                  ${item.suppliers.map((sup, idx) => {
-                    const isLowest = idx === 0;
-                    const isHighest = idx === item.suppliers.length - 1;
-                    const bgColor = isLowest ? '#e8f5e9' : isHighest ? '#ffebee' : '#f5f5f5';
-                    const borderColor = isLowest ? '#4caf50' : isHighest ? '#f44336' : '#ddd';
-
-                    return `
-                      <div style="padding: 12px; background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                          <strong>${sup.supplier}</strong>
-                          <span style="margin-left: 10px; font-size: 13px; color: #666;">(${sup.count} sipariş)</span>
-                          ${isLowest ? '<span style="margin-left: 10px; background: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">EN UYGUN</span>' : ''}
-                          ${isHighest ? '<span style="margin-left: 10px; background: #f44336; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">EN YÜKSEK</span>' : ''}
-                        </div>
-                        <div style="font-size: 18px; font-weight: 700; color: ${isLowest ? '#4caf50' : isHighest ? '#f44336' : '#333'};">
-                          ₺${sup.avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}
-                        </div>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeSupplierComparisonModal()">Kapat</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const existingModal = document.getElementById('supplier-comparison-modal');
-    if (existingModal) existingModal.remove();
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-  } catch (error) {
-    console.error('❌ Tedarikçi karşılaştırma hatası:', error);
-    showToast('❌ Tedarikçi karşılaştırması açılamadı', 'error');
-  }
-}
-
-function closeSupplierComparisonModal() {
-  const modal = document.getElementById('supplier-comparison-modal');
-  if (modal) modal.remove();
-}
-
-// Global scope'a ekle
-window.openPriceTrendModal = openPriceTrendModal;
-window.openPriceChangeReportModal = openPriceChangeReportModal;
-window.openSupplierPriceComparisonModal = openSupplierPriceComparisonModal;
-
-console.log('✅ Revizyon Analytics modülü yüklendi (Fiyat Takip Sistemi aktif)');
+console.log('✅ Revizyon Analytics modülü yüklendi (Fiyat Takip - Tab Bazlı)');

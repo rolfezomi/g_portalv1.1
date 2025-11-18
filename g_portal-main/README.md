@@ -31,7 +31,7 @@ Glohe Portal, üretim tesisindeki **73 kontrol noktasında** su kalitesi ölçü
 
 ### Canlı URL
 
-**Production:** https://glohemeslek-main-su-poralimiz.netlify.app
+**Production:** https://glohe.netlify.app
 
 ---
 
@@ -332,7 +332,7 @@ MAJOR: Büyük değişiklik
 **GitHub:** [rolfezomi/g_portalv1.1](https://github.com/rolfezomi/g_portalv1.1)
 
 **Supabase Project ID:** mignlffeyougoefuyayr
-**Netlify Site:** glohemeslek-main-su-poralimiz
+**Netlify Site:** glohe
 
 ---
 
