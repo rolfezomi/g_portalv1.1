@@ -2312,12 +2312,28 @@ async function clearPurchasingDatabase() {
 async function updatePurchasingAdminButtons() {
   const clearDbBtn = document.getElementById('clear-purchasing-db-btn');
 
+  console.log('🔐 Admin buton kontrolü:', {
+    buttonExists: !!clearDbBtn,
+    currentUserRole: window.currentUserRole || currentUserRole,
+    isAdminResult: typeof isAdmin === 'function' ? isAdmin() : 'isAdmin fonksiyonu bulunamadı'
+  });
+
   if (clearDbBtn) {
-    if (isAdmin()) {
+    // Kesin admin kontrolü
+    const userRole = window.currentUserRole || currentUserRole;
+    const isUserAdmin = userRole === 'admin';
+
+    console.log('👤 Kullanıcı admin mi?', isUserAdmin, '(Role:', userRole, ')');
+
+    if (isUserAdmin) {
       clearDbBtn.style.display = 'inline-flex';
+      console.log('✅ Veritabanı temizle butonu GÖSTERİLDİ (Admin)');
     } else {
       clearDbBtn.style.display = 'none';
+      console.log('🚫 Veritabanı temizle butonu GİZLENDİ (Purchasing/diğer)');
     }
+  } else {
+    console.warn('⚠️ clear-purchasing-db-btn butonu DOM\'da bulunamadı!');
   }
 }
 
