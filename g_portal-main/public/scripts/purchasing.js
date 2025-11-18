@@ -2325,15 +2325,16 @@ async function updatePurchasingAdminButtons() {
   });
 
   if (clearDbBtn) {
-    // CSS cache sorununu bypass etmek için DOĞRUDAN inline style kullan
     if (isUserAdmin) {
+      // Admin: Butonu göster
       clearDbBtn.style.setProperty('display', 'inline-flex', 'important');
       clearDbBtn.removeAttribute('hidden');
-      console.log('✅ Veritabanı temizle butonu GÖSTERİLDİ (Admin - inline style !important)');
+      clearDbBtn.disabled = false;
+      console.log('✅ Veritabanı temizle butonu GÖSTERİLDİ (Admin)');
     } else {
-      clearDbBtn.style.setProperty('display', 'none', 'important');
-      clearDbBtn.setAttribute('hidden', 'true');
-      console.log('🚫 Veritabanı temizle butonu GİZLENDİ (Purchasing - inline style !important + hidden attr)');
+      // Purchasing/Diğer: Butonu DOM'dan TAMAMEN SİL
+      clearDbBtn.remove();
+      console.log('🗑️ Veritabanı temizle butonu DOM\'DAN SİLİNDİ (Purchasing - buton artık yok)');
     }
   } else {
     console.warn('⚠️ clear-purchasing-db-btn butonu DOM\'da bulunamadı!');
