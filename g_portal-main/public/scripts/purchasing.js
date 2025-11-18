@@ -122,6 +122,9 @@ async function refreshPurchasingData() {
       showToast('✅ Veriler yüklendi', 'success');
     }
 
+    // Admin butonlarını güncelle
+    await updatePurchasingAdminButtons();
+
   } catch (error) {
     console.error('Beklenmeyen hata:', error);
 
@@ -2228,6 +2231,93 @@ function closeUploadHistoryModal() {
   const modal = document.getElementById('upload-history-modal');
   if (modal) {
     modal.remove();
+  }
+}
+
+// =====================================================
+// VERİTABANI TEMİZLEME (SADECE ADMİN)
+// =====================================================
+
+/**
+ * Satın alma veritabanını temizle (SADECE ADMIN)
+ * Tüm purchasing_orders ve upload_history kayıtlarını siler
+ */
+async function clearPurchasingDatabase() {
+  // Admin kontrolü
+  if (!isAdmin()) {
+    showToast('❌ Bu işlem için yetkiniz yok!', 'error');
+    return;
+  }
+
+  // Onay dialogu
+  const confirmed = confirm(
+    '⚠️ UYARI: TÜM SATIN ALMA VERİLERİ SİLİNECEK!\n\n' +
+    'Bu işlem:\n' +
+    '• Tüm satın alma siparişlerini\n' +
+    '• Tüm upload geçmişini\n' +
+    'kalıcı olarak silecektir.\n\n' +
+    'Bu işlem GERİ ALINAMAZ!\n\n' +
+    'Devam etmek istediğinize emin misiniz?'
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  // İkinci onay
+  const doubleConfirmed = confirm(
+    '⚠️ SON UYARI!\n\n' +
+    'Tüm verileri silmek üzeresiniz.\n' +
+    'Bu işlem GERİ ALINAMAZ!\n\n' +
+    'EVET butonuna basarak onaylıyorum.'
+  );
+
+  if (!doubleConfirmed) {
+    return;
+  }
+
+  try {
+    showToast('🗑️ Veritabanı temizleniyor...', 'info');
+
+    // Purchasing orders tablosunu temizle
+    const { error: ordersError } = await supabaseClient
+      .from('purchasing_orders')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Tüm kayıtları sil
+
+    if (ordersError) throw ordersError;
+
+    // Upload history tablosunu temizle
+    const { error: historyError } = await supabaseClient
+      .from('upload_history')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Tüm kayıtları sil
+
+    if (historyError) throw historyError;
+
+    showToast('✅ Veritabanı başarıyla temizlendi!', 'success');
+
+    // Sayfayı yenile
+    await refreshPurchasingData();
+
+  } catch (error) {
+    console.error('Veritabanı temizleme hatası:', error);
+    showToast('❌ Veritabanı temizlenirken hata oluştu: ' + error.message, 'error');
+  }
+}
+
+/**
+ * Admin kontrolüne göre veritabanı temizleme butonunu göster/gizle
+ */
+async function updatePurchasingAdminButtons() {
+  const clearDbBtn = document.getElementById('clear-purchasing-db-btn');
+
+  if (clearDbBtn) {
+    if (isAdmin()) {
+      clearDbBtn.style.display = 'inline-flex';
+    } else {
+      clearDbBtn.style.display = 'none';
+    }
   }
 }
 

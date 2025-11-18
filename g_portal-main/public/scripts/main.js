@@ -877,6 +877,87 @@ async function loadUserRole(email) {
   }
 }
 
+// ====== ROL KONTROL FONKSİYONLARI ======
+function isAdmin() {
+  return currentUserRole === 'admin';
+}
+
+function isPurchasing() {
+  return currentUserRole === 'purchasing' || currentUserRole === 'admin';
+}
+
+function isMaintenance() {
+  return currentUserRole === 'maintenance' || currentUserRole === 'admin';
+}
+
+function hasRole(role) {
+  if (currentUserRole === 'admin') return true; // Admin her zaman true
+  return currentUserRole === role;
+}
+
+// ====== MOBİL CİHAZ TESPİTİ VE OPTİMİZASYON ======
+/**
+ * Mobil cihaz kontrolü
+ */
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+}
+
+/**
+ * Purchasing role için mobil menü optimizasyonu
+ * Purchasing kullanıcıları mobilde sadece kendi modüllerini görsün
+ */
+function optimizeMobileMenuForRole() {
+  const isMobile = isMobileDevice();
+  const isPurchasingUser = currentUserRole === 'purchasing';
+
+  if (!isMobile || !isPurchasingUser) {
+    // Mobil değilse veya purchasing kullanıcısı değilse, normal davran
+    return;
+  }
+
+  console.log('📱 Mobil purchasing kullanıcısı tespit edildi, menü optimize ediliyor...');
+
+  // Purchasing kullanıcısı için gereksiz menü öğelerini gizle
+  const menuItems = document.querySelectorAll('.menu ul > li');
+
+  menuItems.forEach(item => {
+    const link = item.querySelector('a');
+    if (!link) return;
+
+    const sectionLink = link.getAttribute('data-section-link');
+
+    // Purchasing kullanıcıları için sadece şunları göster:
+    const allowedSections = ['home', 'purchasing', 'revision-analytics'];
+
+    if (sectionLink && !allowedSections.includes(sectionLink)) {
+      // Ölçüm modüllerini ve diğer gereksiz menüleri gizle
+      item.style.display = 'none';
+    }
+  });
+
+  // Mobil için purchasing section'a otomatik yönlendir
+  setTimeout(() => {
+    if (currentSection === 'home' || !currentSection) {
+      showSection('purchasing');
+    }
+  }, 500);
+
+  // Body'e mobil purchasing class'ı ekle
+  document.body.classList.add('mobile-purchasing-view');
+
+  console.log('✅ Mobil purchasing menüsü optimize edildi');
+}
+
+/**
+ * Pencere boyutu değiştiğinde mobil optimizasyonu yeniden kontrol et
+ */
+window.addEventListener('resize', () => {
+  if (currentUserRole === 'purchasing') {
+    optimizeMobileMenuForRole();
+  }
+});
+
 // ====== LOG SİSTEMİ ======
 async function logActivity(action, category, details = {}) {
   try {
@@ -1097,6 +1178,9 @@ function refreshMenusBasedOnRole() {
   }
 
   console.log('✅ Menüler güncellendi');
+
+  // Mobil cihazlar için purchasing kullanıcıları için özel optimizasyon
+  optimizeMobileMenuForRole();
 }
 
 // ====== NAVİGASYON ======
