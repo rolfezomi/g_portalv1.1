@@ -2307,53 +2307,62 @@ async function clearPurchasingDatabase() {
 }
 
 /**
- * Admin kontrolüne göre veritabanı temizleme butonunu göster/gizle
- * NOT: Artık CSS ile kontrol ediliyor (body.admin-user sınıfı)
+ * Admin kontrolüne göre veritabanı temizleme butonunu dinamik olarak ekle/kaldır
+ * NOT: Buton HTML'de YOK - sadece admin kullanıcılar için JavaScript ile eklenir
  */
 async function updatePurchasingAdminButtons() {
   const userRole = window.currentUserRole || currentUserRole;
-  const hasAdminClass = document.body.classList.contains('admin-user');
   const isUserAdmin = userRole === 'admin';
 
-  // TÜM clear-purchasing-db-btn ID'li elementleri bul (birden fazla olabilir)
-  const allClearButtons = document.querySelectorAll('#clear-purchasing-db-btn, [id="clear-purchasing-db-btn"]');
-
   console.log('🔐 Admin buton kontrolü:', {
-    buttonCount: allClearButtons.length,
     currentUserRole: userRole,
-    bodyHasAdminClass: hasAdminClass,
-    isUserAdmin: isUserAdmin,
-    isAdminResult: typeof isAdmin === 'function' ? isAdmin() : 'isAdmin fonksiyonu bulunamadı'
+    isUserAdmin: isUserAdmin
   });
 
-  if (allClearButtons.length > 0) {
-    if (isUserAdmin) {
-      // Admin: Tüm butonları göster
-      allClearButtons.forEach(btn => {
-        btn.style.setProperty('display', 'inline-flex', 'important');
-        btn.removeAttribute('hidden');
-        btn.disabled = false;
-      });
-      console.log(`✅ ${allClearButtons.length} adet veritabanı temizle butonu GÖSTERİLDİ (Admin)`);
-    } else {
-      // Purchasing/Diğer: TÜM butonları DOM'dan TAMAMEN SİL
-      allClearButtons.forEach(btn => {
-        console.log('🗑️ Buton siliniyor:', btn);
-        btn.remove();
-      });
-      console.log(`🗑️ ${allClearButtons.length} adet veritabanı temizle butonu DOM'DAN SİLİNDİ (Purchasing)`);
+  // Önce mevcut butonları temizle
+  const existingButtons = document.querySelectorAll('#clear-purchasing-db-btn, [id="clear-purchasing-db-btn"]');
+  existingButtons.forEach(btn => {
+    console.log('🗑️ Mevcut buton siliniyor');
+    btn.remove();
+  });
 
-      // Ekstra kontrol: 100ms sonra tekrar kontrol et ve varsa sil
-      setTimeout(() => {
-        const remainingButtons = document.querySelectorAll('#clear-purchasing-db-btn, [id="clear-purchasing-db-btn"]');
-        if (remainingButtons.length > 0) {
-          console.warn('⚠️ Hala buton var! Tekrar siliniyor:', remainingButtons.length);
-          remainingButtons.forEach(btn => btn.remove());
-        }
-      }, 100);
+  if (isUserAdmin) {
+    // Admin kullanıcı: Butonu DİNAMİK OLARAK OLUŞTUR ve ekle
+    const toolbar = document.querySelector('#purchasing-content .toolbar .right');
+    if (toolbar) {
+      // Upload History butonunu bul
+      const uploadHistoryBtn = document.querySelector('#purchasing-content .toolbar button[onclick*="showUploadHistory"]');
+
+      // Yeni butonu oluştur
+      const clearBtn = document.createElement('button');
+      clearBtn.id = 'clear-purchasing-db-btn';
+      clearBtn.className = 'btn btn-danger';
+      clearBtn.onclick = clearPurchasingDatabase;
+      clearBtn.title = 'TÜM satın alma verilerini sil (GERİ ALINAMAZ!)';
+      clearBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        <span>Veritabanını Temizle</span>
+      `;
+
+      // Upload History butonundan sonra ekle
+      if (uploadHistoryBtn && uploadHistoryBtn.nextElementSibling) {
+        toolbar.insertBefore(clearBtn, uploadHistoryBtn.nextElementSibling);
+      } else {
+        toolbar.appendChild(clearBtn);
+      }
+
+      console.log('✅ Veritabanı temizle butonu DİNAMİK OLARAK OLUŞTURULDU ve eklendi (Admin)');
+    } else {
+      console.warn('⚠️ Toolbar bulunamadı, buton eklenemedi');
     }
   } else {
-    console.warn('⚠️ clear-purchasing-db-btn butonu DOM\'da bulunamadı!');
+    // Purchasing/Diğer: Hiçbir şey yapma (buton zaten HTML'de yok)
+    console.log('ℹ️ Purchasing kullanıcısı - Veritabanı temizle butonu EKLENMEDİ');
   }
 }
 
