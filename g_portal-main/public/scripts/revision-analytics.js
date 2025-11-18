@@ -161,8 +161,8 @@ function renderRevisionDashboard() {
     <button class="revision-tab" onclick="switchRevisionTab('price-changes')">
       🔥 Fiyat Değişimleri
     </button>
-    <button class="revision-tab" onclick="switchRevisionTab('supplier-comparison')">
-      📊 Tedarikçi Karşılaştırma
+    <button class="revision-tab" onclick="switchRevisionTab('supplier-balance')">
+      💼 Tedarikçi Genel Bakiye
     </button>
     <button class="revision-tab" onclick="switchRevisionTab('payment-calendar')">
       💰 Ödeme Takvimi
@@ -315,8 +315,8 @@ function switchRevisionTab(tabName) {
     case 'price-changes':
       content.innerHTML = renderPriceChangesTab();
       break;
-    case 'supplier-comparison':
-      content.innerHTML = renderSupplierComparisonTab();
+    case 'supplier-balance':
+      content.innerHTML = renderSupplierBalanceTab();
       break;
     case 'payment-calendar':
       content.innerHTML = renderPaymentCalendarTab();
@@ -1448,7 +1448,9 @@ function renderPriceTrendTab() {
       tarih: order.tarih,
       fiyat: order.birim_fiyat,
       siparis_no: order.siparis_no,
-      tedarikci: order.tedarikci_tanimi
+      tedarikci: order.tedarikci_tanimi,
+      odeme_kosulu: order.odeme_kosulu || 'Belirtilmemiş',
+      para_birimi: order.para_birimi || 'TRY'
     });
   });
 
@@ -1484,8 +1486,19 @@ function renderPriceTrendTab() {
   return `
     <div style="padding: 20px;">
       <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 16px;">Malzeme Seç:</label>
-        <select id="material-selector" onchange="updatePriceTrendChart()" style="width: 100%; max-width: 600px; padding: 12px; border: 2px solid #2196f3; border-radius: 8px; font-size: 14px; background: white;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 16px;">🔍 Malzeme Ara (İsim veya Kod):</label>
+        <input
+          type="text"
+          id="material-search-input"
+          placeholder="Malzeme adı veya kodu yazın..."
+          oninput="filterMaterialList()"
+          style="width: 100%; max-width: 600px; padding: 12px; border: 2px solid #2196f3; border-radius: 8px; font-size: 14px; margin-bottom: 10px;"
+        />
+        <select
+          id="material-selector"
+          onchange="updatePriceTrendChart()"
+          size="8"
+          style="width: 100%; max-width: 600px; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 13px; background: white; cursor: pointer;">
           ${topMaterials.map(([material, _], idx) =>
             `<option value="${idx}">${material}</option>`
           ).join('')}
@@ -1605,10 +1618,13 @@ function updatePriceTrendChart() {
             label: function(context) {
               const price = context.parsed.y;
               const pointData = sortedPrices[context.dataIndex];
+              const currencySymbol = pointData.para_birimi === 'USD' ? '$' :
+                                     pointData.para_birimi === 'EUR' ? '€' : '₺';
               return [
-                `Fiyat: ₺${price.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`,
+                `Fiyat: ${currencySymbol}${price.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (${pointData.para_birimi})`,
                 `Sipariş: ${pointData.siparis_no}`,
-                `Tedarikçi: ${pointData.tedarikci || 'Bilinmiyor'}`
+                `Tedarikçi: ${pointData.tedarikci || 'Bilinmiyor'}`,
+                `Ödeme: ${pointData.odeme_kosulu}`
               ];
             }
           }
@@ -1763,3 +1779,215 @@ function renderSupplierComparisonTab() {
 }
 
 console.log('✅ Revizyon Analytics modülü yüklendi (Fiyat Takip - Tab Bazlı)');
+
+// =====================================================
+// MALZEME FİLTRELEME FONKSİYONU
+// =====================================================
+
+function filterMaterialList() {
+  const searchInput = document.getElementById('material-search-input');
+  const selector = document.getElementById('material-selector');
+  
+  if (!searchInput || !selector) return;
+  
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const options = selector.options;
+  
+  for (let i = 0; i < options.length; i++) {
+    const materialName = options[i].text.toLowerCase();
+    
+    if (searchTerm === '' || materialName.includes(searchTerm)) {
+      options[i].style.display = '';
+    } else {
+      options[i].style.display = 'none';
+    }
+  }
+  
+  // İlk görünen seçeneği seç
+  for (let i = 0; i < options.length; i++) {
+    if (options[i].style.display !== 'none') {
+      selector.selectedIndex = i;
+      updatePriceTrendChart();
+      break;
+    }
+  }
+}
+
+// =====================================================
+// TEDARİKÇİ GENEL BAKİYE TAB
+// =====================================================
+
+function renderSupplierBalanceTab() {
+  console.log('💼 Tedarikçi genel bakiye tab render ediliyor...');
+
+  // Tedarikçi bazında sipariş toplamları
+  const supplierBalances = {};
+
+  allPurchasingOrders.forEach(order => {
+    if (!order.tedarikci_tanimi) return;
+
+    const supplier = order.tedarikci_tanimi;
+    const tutar = parseFloat(order.tutar_tl) || 0;
+    const miktar = parseFloat(order.miktar) || 0;
+    const gelenMiktar = parseFloat(order.gelen_miktar) || 0;
+    const paraBirimi = order.para_birimi || 'TRY';
+
+    if (!supplierBalances[supplier]) {
+      supplierBalances[supplier] = {
+        totalOrders: 0,
+        closedOrders: 0,
+        openOrders: 0,
+        totalAmount: 0,
+        closedAmount: 0,
+        openAmount: 0,
+        currencies: {}
+      };
+    }
+
+    supplierBalances[supplier].totalOrders++;
+    supplierBalances[supplier].totalAmount += tutar;
+
+    // Para birimi bazında topla
+    if (!supplierBalances[supplier].currencies[paraBirimi]) {
+      supplierBalances[supplier].currencies[paraBirimi] = {
+        total: 0,
+        closed: 0,
+        open: 0
+      };
+    }
+    supplierBalances[supplier].currencies[paraBirimi].total += tutar;
+
+    // Kapanan vs Açık sipariş kontrolü
+    if (miktar > 0 && gelenMiktar >= miktar) {
+      // Kapanan sipariş
+      supplierBalances[supplier].closedOrders++;
+      supplierBalances[supplier].closedAmount += tutar;
+      supplierBalances[supplier].currencies[paraBirimi].closed += tutar;
+    } else {
+      // Açık sipariş
+      supplierBalances[supplier].openOrders++;
+      supplierBalances[supplier].openAmount += tutar;
+      supplierBalances[supplier].currencies[paraBirimi].open += tutar;
+    }
+  });
+
+  // Array'e çevir ve toplam tutara göre sırala
+  const sortedSuppliers = Object.entries(supplierBalances)
+    .sort((a, b) => b[1].totalAmount - a[1].totalAmount);
+
+  console.log('📊 Toplam tedarikçi sayısı:', sortedSuppliers.length);
+
+  if (sortedSuppliers.length === 0) {
+    return '<div style="text-align:center;padding:60px"><h3>Tedarikçi bulunamadı</h3></div>';
+  }
+
+  // Global olarak sakla (arama için)
+  window.allSupplierBalances = sortedSuppliers;
+  window.filteredSupplierBalances = sortedSuppliers;
+
+  return `
+    <div style="padding: 20px;">
+      <!-- Arama ve Filtre -->
+      <div style="margin-bottom: 20px;">
+        <input
+          type="text"
+          id="supplier-search-input"
+          placeholder="🔍 Tedarikçi ara..."
+          oninput="filterSupplierBalances()"
+          style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #2196f3; border-radius: 8px; font-size: 14px;"
+        />
+      </div>
+
+      <!-- Tedarikçi Listesi -->
+      <div id="supplier-balance-list">
+        ${renderSupplierBalanceCards(sortedSuppliers)}
+      </div>
+    </div>
+  `;
+}
+
+function renderSupplierBalanceCards(suppliers) {
+  return suppliers.map(([supplier, data]) => {
+    const openPercentage = data.totalOrders > 0 
+      ? ((data.openOrders / data.totalOrders) * 100).toFixed(1) 
+      : 0;
+
+    // Para birimlerini göster
+    const currencyDisplay = Object.entries(data.currencies)
+      .map(([currency, amounts]) => {
+        const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '₺';
+        return `
+          <div style="display: flex; justify-content: space-between; padding: 8px; background: #f9f9f9; border-radius: 6px; margin-bottom: 5px;">
+            <span style="font-weight: 600;">${currency}</span>
+            <div style="text-align: right;">
+              <div style="font-size: 16px; font-weight: 700;">${symbol}${amounts.total.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+              <div style="font-size: 11px; color: #666;">
+                Kapanan: ${symbol}${amounts.closed.toLocaleString('tr-TR', {minimumFractionDigits: 2})} | 
+                Açık: ${symbol}${amounts.open.toLocaleString('tr-TR', {minimumFractionDigits: 2})}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    return `
+      <div class="supplier-balance-card" style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #333;">
+          🏢 ${supplier}
+        </h3>
+
+        <!-- Sipariş İstatistikleri -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+          <div style="text-align: center; padding: 10px; background: #e3f2fd; border-radius: 8px;">
+            <div style="font-size: 12px; color: #666;">Toplam Sipariş</div>
+            <div style="font-size: 20px; font-weight: 700; color: #2196f3;">${data.totalOrders}</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #e8f5e9; border-radius: 8px;">
+            <div style="font-size: 12px; color: #666;">Kapanan</div>
+            <div style="font-size: 20px; font-weight: 700; color: #4caf50;">${data.closedOrders}</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #fff3e0; border-radius: 8px;">
+            <div style="font-size: 12px; color: #666;">Açık</div>
+            <div style="font-size: 20px; font-weight: 700; color: #ff9800;">${data.openOrders}</div>
+          </div>
+        </div>
+
+        <!-- Para Birimi Bazında Tutarlar -->
+        <div style="margin-top: 15px;">
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #666;">💰 Para Birimi Bazında Bakiye:</div>
+          ${currencyDisplay}
+        </div>
+
+        <!-- İlerleme Çubuğu -->
+        <div style="margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+            <span>Sipariş Durumu</span>
+            <span>${openPercentage}% Açık</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+            <div style="width: ${100 - openPercentage}%; height: 100%; background: #4caf50; float: left;"></div>
+            <div style="width: ${openPercentage}%; height: 100%; background: #ff9800;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterSupplierBalances() {
+  const searchInput = document.getElementById('supplier-search-input');
+  const listContainer = document.getElementById('supplier-balance-list');
+  
+  if (!searchInput || !listContainer) return;
+  
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  
+  const filtered = window.allSupplierBalances.filter(([supplier, _]) => 
+    supplier.toLowerCase().includes(searchTerm)
+  );
+  
+  window.filteredSupplierBalances = filtered;
+  listContainer.innerHTML = renderSupplierBalanceCards(filtered);
+  
+  console.log(`🔍 "${searchTerm}" araması: ${filtered.length} sonuç`);
+}
