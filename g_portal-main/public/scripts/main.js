@@ -866,9 +866,11 @@ async function loadUserRole(email) {
     if (error || !data) {
       // Varsayılan olarak 'full' yetkisi ver
       currentUserRole = 'full';
+      window.currentUserRole = 'full'; // Global olarak da ayarla
       console.warn('⚠️ Kullanıcı rolü bulunamadı, varsayılan: full', error);
     } else {
       currentUserRole = data.role;
+      window.currentUserRole = data.role; // Global olarak da ayarla
       console.log('✅ Kullanıcı rolü yüklendi:', currentUserRole);
     }
 
@@ -882,6 +884,7 @@ async function loadUserRole(email) {
 
   } catch (err) {
     currentUserRole = 'full';
+    window.currentUserRole = 'full'; // Global olarak da ayarla
     document.body.classList.remove('admin-user');
     console.error('❌ Rol yükleme hatası:', err);
   }

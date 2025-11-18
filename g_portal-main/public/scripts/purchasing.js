@@ -253,6 +253,13 @@ function renderPurchasingStats() {
 // =====================================================
 
 function renderPurchasingFilters() {
+  // Rol bilgisini kontrol et
+  console.log('🔍 renderPurchasingFilters - Rol kontrol:', {
+    windowCurrentUserRole: window.currentUserRole,
+    isAdmin: window.currentUserRole === 'admin',
+    buttonWillShow: window.currentUserRole === 'admin'
+  });
+
   // Benzersiz sipariş numaraları
   const uniqueOrderNumbers = [...new Set(purchasingOrders.map(o => o.siparis_no).filter(Boolean))].sort();
 
@@ -351,7 +358,7 @@ function renderPurchasingFilters() {
           </button>
         </div>
 
-        ${(window.currentUserRole === 'admin' || currentUserRole === 'admin') ? `
+        ${window.currentUserRole === 'admin' ? `
         <div class="filter-group">
           <button class="btn" onclick="clearAllPurchasingData()" style="margin-top: 24px; background: #f44336; color: white;">
             🗑️ Veritabanını Temizle
@@ -2067,12 +2074,16 @@ async function logUploadHistory(uploadData) {
  * Upload geçmişi modalını aç
  */
 async function openUploadHistoryModal() {
+  console.log('🔔 Upload History Modal açılıyor...');
   try {
     // Kullanıcı bilgilerini al
+    console.log('👤 Kullanıcı bilgisi alınıyor...');
     const { data: { user } } = await supabaseClient.auth.getUser();
     const userEmail = user?.email;
+    console.log('📧 User email:', userEmail);
 
     if (!userEmail) {
+      console.error('❌ Email bulunamadı');
       showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
       return;
     }
@@ -2221,10 +2232,14 @@ async function openUploadHistoryModal() {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
   } catch (error) {
-    console.error('Upload history modal hatası:', error);
-    showToast('❌ Upload geçmişi açılamadı', 'error');
+    console.error('❌ Upload history modal hatası:', error);
+    console.error('Error details:', error.message, error.stack);
+    showToast('❌ Upload geçmişi açılamadı: ' + error.message, 'error');
   }
 }
+
+// Global scope'a ekle
+window.openUploadHistoryModal = openUploadHistoryModal;
 
 /**
  * Upload geçmişi modalını kapat
@@ -2376,3 +2391,4 @@ async function updatePurchasingAdminButtons() {
 // main.js'deki showSection fonksiyonuna hook eklemek gerekebilir
 
 console.log('✅ Purchasing modülü yüklendi (XLSX desteği aktif)');
+console.log('🔍 openUploadHistoryModal fonksiyonu:', typeof window.openUploadHistoryModal);
