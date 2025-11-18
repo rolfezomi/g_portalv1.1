@@ -351,11 +351,7 @@ function renderPurchasingFilters() {
           </button>
         </div>
 
-        <div class="filter-group">
-          <button class="btn" onclick="clearAllPurchasingData()" style="margin-top: 24px; background: #f44336; color: white;">
-            🗑️ Veritabanını Temizle
-          </button>
-        </div>
+        <!-- Veritabanı Temizle butonu KALDIRILDI - toolbar'da sadece admin için ekleniyor -->
       </div>
     </div>
   `;
