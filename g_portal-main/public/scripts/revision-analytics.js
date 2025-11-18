@@ -1437,14 +1437,21 @@ function renderPriceTrendTab() {
 
   console.log('✅ Fiyatlı sipariş sayısı:', ordersWithPrice.length);
 
-  // Malzeme bazında gruplama
-  const materialPrices = {};
+  // Malzeme bazında gruplama (kod + tanım ile)
+  const materialInfo = {};
   ordersWithPrice.forEach(order => {
-    const material = order.malzeme_tanimi || 'Bilinmeyen';
-    if (!materialPrices[material]) {
-      materialPrices[material] = [];
+    const materialTanim = order.malzeme_tanimi || 'Bilinmeyen';
+    const materialKod = order.malzeme || '';
+
+    if (!materialInfo[materialTanim]) {
+      materialInfo[materialTanim] = {
+        kod: materialKod,
+        tanim: materialTanim,
+        prices: []
+      };
     }
-    materialPrices[material].push({
+
+    materialInfo[materialTanim].prices.push({
       tarih: order.tarih,
       fiyat: order.birim_fiyat,
       siparis_no: order.siparis_no,
@@ -1455,16 +1462,15 @@ function renderPriceTrendTab() {
   });
 
   // Tüm malzemeleri al (limit kaldırıldı)
-  const allMaterialsWithPrices = Object.entries(materialPrices);
-  const materialsWithMultiplePrices = allMaterialsWithPrices.filter(([_, prices]) => prices.length > 1);
+  const allMaterialsWithPrices = Object.entries(materialInfo);
+  const materialsWithMultiplePrices = allMaterialsWithPrices.filter(([_, info]) => info.prices.length > 1);
 
   console.log('📦 Toplam farklı malzeme sayısı:', allMaterialsWithPrices.length);
   console.log('🔄 Birden fazla fiyat kaydı olan malzeme:', materialsWithMultiplePrices.length);
 
-  // En çok fiyat kaydı olandan aza sırala ve ilk 50'yi al
+  // En çok fiyat kaydı olandan aza sırala (TÜM malzemeler)
   const topMaterials = materialsWithMultiplePrices
-    .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, 50);
+    .sort((a, b) => b[1].prices.length - a[1].prices.length);
 
   console.log('✅ Dropdown\'da gösterilen malzeme sayısı:', topMaterials.length);
 
@@ -1481,7 +1487,7 @@ function renderPriceTrendTab() {
 
   // Global değişken olarak sakla
   window.topMaterialsData = topMaterials;
-  window.materialPricesData = materialPrices;
+  window.materialInfoData = materialInfo;
 
   return `
     <div style="padding: 20px;">
@@ -1499,8 +1505,8 @@ function renderPriceTrendTab() {
           onchange="updatePriceTrendChart()"
           size="8"
           style="width: 100%; max-width: 600px; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 13px; background: white; cursor: pointer;">
-          ${topMaterials.map(([material, _], idx) =>
-            `<option value="${idx}">${material}</option>`
+          ${topMaterials.map(([_, info], idx) =>
+            `<option value="${idx}">${info.kod ? info.kod + ' - ' : ''}${info.tanim}</option>`
           ).join('')}
         </select>
       </div>
@@ -1530,7 +1536,16 @@ function updatePriceTrendChart() {
   if (!selector) return;
 
   const selectedIdx = parseInt(selector.value);
-  const [materialName, prices] = window.topMaterialsData[selectedIdx];
+
+  // Guard: Eğer index geçersizse veya data yoksa çık
+  if (!window.topMaterialsData || !window.topMaterialsData[selectedIdx]) {
+    console.warn('⚠️ Seçilen malzeme verisi bulunamadı:', selectedIdx);
+    return;
+  }
+
+  const [_, materialInfo] = window.topMaterialsData[selectedIdx];
+  const materialName = materialInfo.kod ? `${materialInfo.kod} - ${materialInfo.tanim}` : materialInfo.tanim;
+  const prices = materialInfo.prices;
 
   // Veriyi hazırla
   const sortedPrices = prices.sort((a, b) => a.tarih - b.tarih);
