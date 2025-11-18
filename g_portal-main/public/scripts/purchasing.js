@@ -2311,30 +2311,46 @@ async function clearPurchasingDatabase() {
  * NOT: Artık CSS ile kontrol ediliyor (body.admin-user sınıfı)
  */
 async function updatePurchasingAdminButtons() {
-  const clearDbBtn = document.getElementById('clear-purchasing-db-btn');
   const userRole = window.currentUserRole || currentUserRole;
   const hasAdminClass = document.body.classList.contains('admin-user');
   const isUserAdmin = userRole === 'admin';
 
+  // TÜM clear-purchasing-db-btn ID'li elementleri bul (birden fazla olabilir)
+  const allClearButtons = document.querySelectorAll('#clear-purchasing-db-btn, [id="clear-purchasing-db-btn"]');
+
   console.log('🔐 Admin buton kontrolü:', {
-    buttonExists: !!clearDbBtn,
+    buttonCount: allClearButtons.length,
     currentUserRole: userRole,
     bodyHasAdminClass: hasAdminClass,
     isUserAdmin: isUserAdmin,
     isAdminResult: typeof isAdmin === 'function' ? isAdmin() : 'isAdmin fonksiyonu bulunamadı'
   });
 
-  if (clearDbBtn) {
+  if (allClearButtons.length > 0) {
     if (isUserAdmin) {
-      // Admin: Butonu göster
-      clearDbBtn.style.setProperty('display', 'inline-flex', 'important');
-      clearDbBtn.removeAttribute('hidden');
-      clearDbBtn.disabled = false;
-      console.log('✅ Veritabanı temizle butonu GÖSTERİLDİ (Admin)');
+      // Admin: Tüm butonları göster
+      allClearButtons.forEach(btn => {
+        btn.style.setProperty('display', 'inline-flex', 'important');
+        btn.removeAttribute('hidden');
+        btn.disabled = false;
+      });
+      console.log(`✅ ${allClearButtons.length} adet veritabanı temizle butonu GÖSTERİLDİ (Admin)`);
     } else {
-      // Purchasing/Diğer: Butonu DOM'dan TAMAMEN SİL
-      clearDbBtn.remove();
-      console.log('🗑️ Veritabanı temizle butonu DOM\'DAN SİLİNDİ (Purchasing - buton artık yok)');
+      // Purchasing/Diğer: TÜM butonları DOM'dan TAMAMEN SİL
+      allClearButtons.forEach(btn => {
+        console.log('🗑️ Buton siliniyor:', btn);
+        btn.remove();
+      });
+      console.log(`🗑️ ${allClearButtons.length} adet veritabanı temizle butonu DOM'DAN SİLİNDİ (Purchasing)`);
+
+      // Ekstra kontrol: 100ms sonra tekrar kontrol et ve varsa sil
+      setTimeout(() => {
+        const remainingButtons = document.querySelectorAll('#clear-purchasing-db-btn, [id="clear-purchasing-db-btn"]');
+        if (remainingButtons.length > 0) {
+          console.warn('⚠️ Hala buton var! Tekrar siliniyor:', remainingButtons.length);
+          remainingButtons.forEach(btn => btn.remove());
+        }
+      }, 100);
     }
   } else {
     console.warn('⚠️ clear-purchasing-db-btn butonu DOM\'da bulunamadı!');
