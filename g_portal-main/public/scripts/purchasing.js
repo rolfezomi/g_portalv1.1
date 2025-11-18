@@ -351,7 +351,13 @@ function renderPurchasingFilters() {
           </button>
         </div>
 
-        <!-- Veritabanı Temizle butonu KALDIRILDI - toolbar'da sadece admin için ekleniyor -->
+        ${(window.currentUserRole === 'admin' || currentUserRole === 'admin') ? `
+        <div class="filter-group">
+          <button class="btn" onclick="clearAllPurchasingData()" style="margin-top: 24px; background: #f44336; color: white;">
+            🗑️ Veritabanını Temizle
+          </button>
+        </div>
+        ` : ''}
       </div>
     </div>
   `;
