@@ -1076,6 +1076,27 @@
         <div class="toolbar">
           <h2>📊 Revizyon Analiz Dashboard</h2>
           <div class="right">
+            <button class="btn btn-info" onclick="openPriceTrendModal()" title="Malzeme fiyat değişimlerini zaman grafiğinde görüntüle">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <span>Fiyat Trendi</span>
+            </button>
+            <button class="btn btn-warning" onclick="openPriceChangeReportModal()" title="En çok fiyat değişimi olan malzemeler">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>Fiyat Değişimi</span>
+            </button>
+            <button class="btn btn-success" onclick="openSupplierPriceComparisonModal()" title="Aynı malzeme için tedarikçi fiyatlarını karşılaştır">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              <span>Tedarikçi Karş.</span>
+            </button>
             <button class="btn btn-secondary" onclick="refreshRevisionAnalytics()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
