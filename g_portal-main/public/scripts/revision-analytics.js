@@ -1427,9 +1427,35 @@ function renderPriceTrendTab() {
         birimFiyat = parseFloat(o.tutar_tl) / parseFloat(o.miktar);
       }
 
+      // Para birimi normalizasyonu - USD'ye çevir
+      const paraBirimi = o.para_birimi || 'TRY';
+      const kurDegeri = parseFloat(o.kur_degeri) || 1;
+      let normalizedFiyat = birimFiyat;
+      let displayCurrency = paraBirimi;
+
+      if (paraBirimi === 'USD') {
+        // Zaten USD
+        normalizedFiyat = birimFiyat;
+        displayCurrency = 'USD';
+      } else if (paraBirimi === 'TRY' && kurDegeri > 1) {
+        // TRY → USD (kur ile)
+        normalizedFiyat = birimFiyat / kurDegeri;
+        displayCurrency = 'USD';
+      } else if (paraBirimi === 'EUR' && kurDegeri > 1) {
+        // EUR → USD (EUR/USD ~ 1.1 yaklaşık)
+        normalizedFiyat = (birimFiyat / kurDegeri) * 1.1;
+        displayCurrency = 'USD';
+      } else {
+        // Kur yok, TRY olarak bırak
+        normalizedFiyat = birimFiyat;
+        displayCurrency = 'TRY';
+      }
+
       return {
         ...o,
         birim_fiyat: birimFiyat,
+        normalized_fiyat: normalizedFiyat,
+        display_currency: displayCurrency,
         tarih: new Date(o.siparis_tarihi || o.created_at)
       };
     })
@@ -1447,18 +1473,38 @@ function renderPriceTrendTab() {
       materialInfo[materialTanim] = {
         kod: materialKod,
         tanim: materialTanim,
-        prices: []
+        prices: [],
+        currencies: new Set() // Para birimlerini takip et
       };
     }
 
+    // Para birimini takip et
+    materialInfo[materialTanim].currencies.add(order.display_currency);
+
     materialInfo[materialTanim].prices.push({
       tarih: order.tarih,
-      fiyat: order.birim_fiyat,
+      fiyat: order.normalized_fiyat, // Normalized fiyat kullan
+      original_fiyat: order.birim_fiyat,
       siparis_no: order.siparis_no,
       tedarikci: order.tedarikci_tanimi,
       odeme_kosulu: order.odeme_kosulu || 'Belirtilmemiş',
-      para_birimi: order.para_birimi || 'TRY'
+      para_birimi: order.display_currency // Display currency
     });
+  });
+
+  // Her malzeme için dominant para birimini belirle
+  Object.values(materialInfo).forEach(info => {
+    const currenciesArray = Array.from(info.currencies);
+
+    // Eğer farklı para birimleri varsa veya USD varsa → USD kullan
+    if (currenciesArray.length > 1 || currenciesArray.includes('USD')) {
+      info.display_currency = 'USD';
+    } else {
+      info.display_currency = currenciesArray[0] || 'TRY';
+    }
+
+    // Set'i kaldır (artık gerek yok)
+    delete info.currencies;
   });
 
   // Tüm malzemeleri al (limit kaldırıldı)
@@ -1546,6 +1592,10 @@ function updatePriceTrendChart() {
   const [_, materialInfo] = window.topMaterialsData[selectedIdx];
   const materialName = materialInfo.kod ? `${materialInfo.kod} - ${materialInfo.tanim}` : materialInfo.tanim;
   const prices = materialInfo.prices;
+  const displayCurrency = materialInfo.display_currency || 'TRY';
+  const currencySymbol = displayCurrency === 'USD' ? '$' : displayCurrency === 'EUR' ? '€' : '₺';
+
+  console.log(`📊 ${materialName} - Para Birimi: ${displayCurrency}`);
 
   // Veriyi hazırla
   const sortedPrices = prices.sort((a, b) => a.tarih - b.tarih);
@@ -1566,23 +1616,23 @@ function updatePriceTrendChart() {
 
   // İstatistikleri göster
   document.getElementById('price-stats').innerHTML = `
-    <h3 style="margin: 0 0 15px 0; font-size: 16px;">📊 ${materialName} - İstatistikler</h3>
+    <h3 style="margin: 0 0 15px 0; font-size: 16px;">📊 ${materialName} - İstatistikler (${displayCurrency})</h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">En Düşük Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #4caf50; margin-bottom: 5px;">₺${minPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 20px; font-weight: 700; color: #4caf50; margin-bottom: 5px;">${currencySymbol}${minPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         <div style="font-size: 11px; color: #999;">🏢 ${minPriceEntry.tedarikci || 'Bilinmiyor'}</div>
         <div style="font-size: 11px; color: #999;">📅 ${minPriceEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">En Yüksek Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #f44336; margin-bottom: 5px;">₺${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 20px; font-weight: 700; color: #f44336; margin-bottom: 5px;">${currencySymbol}${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         <div style="font-size: 11px; color: #999;">🏢 ${maxPriceEntry.tedarikci || 'Bilinmiyor'}</div>
         <div style="font-size: 11px; color: #999;">📅 ${maxPriceEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Ortalama Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #2196f3; margin-bottom: 5px;">₺${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 20px; font-weight: 700; color: #2196f3; margin-bottom: 5px;">${currencySymbol}${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         <div style="font-size: 11px; color: #999;">📊 ${sortedPrices.length} sipariş ortalaması</div>
       </div>
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid ${priceChange >= 0 ? '#f44336' : '#4caf50'};">
@@ -1606,7 +1656,7 @@ function updatePriceTrendChart() {
     data: {
       labels: labels,
       datasets: [{
-        label: 'Birim Fiyat (₺)',
+        label: `Birim Fiyat (${displayCurrency})`,
         data: data,
         borderColor: '#2196f3',
         backgroundColor: 'rgba(33, 150, 243, 0.1)',
@@ -1649,8 +1699,8 @@ function updatePriceTrendChart() {
         y: {
           beginAtZero: false,
           ticks: {
-            callback: function(value) {
-              return '₺' + value.toLocaleString('tr-TR');
+            callback: (value) => {
+              return currencySymbol + value.toLocaleString('tr-TR');
             }
           }
         }
