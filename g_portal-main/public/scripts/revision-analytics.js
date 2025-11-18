@@ -1400,16 +1400,42 @@ function clearPaymentFilters() {
  */
 function renderPriceTrendTab() {
   console.log('📈 Fiyat trend tab render ediliyor...');
+  console.log('📊 Toplam sipariş sayısı:', allPurchasingOrders.length);
 
-  // Tüm siparişleri sipariş tarihine göre sırala
+  // Debug: Kaç kayıtta birim_fiyat ve siparis_tarihi var?
+  const withBirimFiyat = allPurchasingOrders.filter(o => o.birim_fiyat && parseFloat(o.birim_fiyat) > 0);
+  const withSiparisTarihi = allPurchasingOrders.filter(o => o.siparis_tarihi);
+  const withBoth = allPurchasingOrders.filter(o => o.birim_fiyat && o.siparis_tarihi && parseFloat(o.birim_fiyat) > 0);
+
+  console.log('🔍 birim_fiyat > 0 olan:', withBirimFiyat.length);
+  console.log('🔍 siparis_tarihi olan:', withSiparisTarihi.length);
+  console.log('🔍 Her ikisi de olan:', withBoth.length);
+
+  // Fallback: Eğer birim_fiyat yoksa hesapla (tutar_tl / miktar)
   const ordersWithPrice = allPurchasingOrders
-    .filter(o => o.birim_fiyat && o.siparis_tarihi && parseFloat(o.birim_fiyat) > 0)
-    .map(o => ({
-      ...o,
-      birim_fiyat: parseFloat(o.birim_fiyat),
-      tarih: new Date(o.siparis_tarihi)
-    }))
+    .filter(o => {
+      const hasBirimFiyat = o.birim_fiyat && parseFloat(o.birim_fiyat) > 0;
+      const canCalculate = o.tutar_tl && o.miktar && parseFloat(o.tutar_tl) > 0 && parseFloat(o.miktar) > 0;
+      const hasTarih = o.siparis_tarihi || o.created_at;
+      return (hasBirimFiyat || canCalculate) && hasTarih;
+    })
+    .map(o => {
+      let birimFiyat;
+      if (o.birim_fiyat && parseFloat(o.birim_fiyat) > 0) {
+        birimFiyat = parseFloat(o.birim_fiyat);
+      } else {
+        birimFiyat = parseFloat(o.tutar_tl) / parseFloat(o.miktar);
+      }
+
+      return {
+        ...o,
+        birim_fiyat: birimFiyat,
+        tarih: new Date(o.siparis_tarihi || o.created_at)
+      };
+    })
     .sort((a, b) => a.tarih - b.tarih);
+
+  console.log('✅ Fiyatlı sipariş sayısı:', ordersWithPrice.length);
 
   // Malzeme bazında gruplama
   const materialPrices = {};
@@ -1426,18 +1452,27 @@ function renderPriceTrendTab() {
     });
   });
 
-  // En fazla revizyon olan ilk 10 malzemeyi al
-  const topMaterials = Object.entries(materialPrices)
-    .filter(([_, prices]) => prices.length > 1)
+  // Tüm malzemeleri al (limit kaldırıldı)
+  const allMaterialsWithPrices = Object.entries(materialPrices);
+  const materialsWithMultiplePrices = allMaterialsWithPrices.filter(([_, prices]) => prices.length > 1);
+
+  console.log('📦 Toplam farklı malzeme sayısı:', allMaterialsWithPrices.length);
+  console.log('🔄 Birden fazla fiyat kaydı olan malzeme:', materialsWithMultiplePrices.length);
+
+  // En çok fiyat kaydı olandan aza sırala ve ilk 50'yi al
+  const topMaterials = materialsWithMultiplePrices
     .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, 10);
+    .slice(0, 50);
+
+  console.log('✅ Dropdown\'da gösterilen malzeme sayısı:', topMaterials.length);
 
   if (topMaterials.length === 0) {
     return `
       <div style="text-align: center; padding: 60px 20px;">
         <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
         <h3 style="color: #666;">Fiyat değişimi olan malzeme bulunamadı</h3>
-        <p style="color: #999;">En az 2 farklı fiyat kaydı olan malzeme bulunmuyor.</p>
+        <p style="color: #999;">Toplam ${allMaterialsWithPrices.length} farklı malzeme var ancak hiçbirinde birden fazla fiyat kaydı yok.</p>
+        <p style="color: #999; margin-top: 10px;">Debug: ${allPurchasingOrders.length} toplam sipariş, ${ordersWithPrice.length} fiyatlı sipariş</p>
       </div>
     `;
   }
@@ -1600,13 +1635,24 @@ function renderPriceChangesTab() {
   const priceChanges = [];
   const materialGroups = {};
   allPurchasingOrders.forEach(order => {
-    if (!order.birim_fiyat || !order.siparis_tarihi || parseFloat(order.birim_fiyat) <= 0) return;
+    // Fallback: birim_fiyat yoksa hesapla
+    let birimFiyat;
+    if (order.birim_fiyat && parseFloat(order.birim_fiyat) > 0) {
+      birimFiyat = parseFloat(order.birim_fiyat);
+    } else if (order.tutar_tl && order.miktar && parseFloat(order.tutar_tl) > 0 && parseFloat(order.miktar) > 0) {
+      birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+    } else {
+      return; // Fiyat hesaplanamıyor
+    }
+
+    const tarih = order.siparis_tarihi || order.created_at;
+    if (!tarih) return;
+
     const material = order.malzeme_tanimi || 'Bilinmeyen';
-    const birimFiyat = parseFloat(order.birim_fiyat);
     if (!materialGroups[material]) materialGroups[material] = [];
     materialGroups[material].push({
       fiyat: birimFiyat,
-      tarih: new Date(order.siparis_tarihi),
+      tarih: new Date(tarih),
       tedarikci: order.tedarikci_tanimi || 'Bilinmiyor'
     });
   });
@@ -1651,12 +1697,25 @@ function renderPriceChangesTab() {
 function renderSupplierComparisonTab() {
   const materialSuppliers = {};
   allPurchasingOrders.forEach(order => {
-    if (!order.birim_fiyat || !order.tedarikci_tanimi || !order.malzeme_tanimi || !order.siparis_tarihi) return;
-    if (parseFloat(order.birim_fiyat) <= 0) return;
+    if (!order.tedarikci_tanimi || !order.malzeme_tanimi) return;
+
+    // Fallback: birim_fiyat yoksa hesapla
+    let birimFiyat;
+    if (order.birim_fiyat && parseFloat(order.birim_fiyat) > 0) {
+      birimFiyat = parseFloat(order.birim_fiyat);
+    } else if (order.tutar_tl && order.miktar && parseFloat(order.tutar_tl) > 0 && parseFloat(order.miktar) > 0) {
+      birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+    } else {
+      return; // Fiyat hesaplanamıyor
+    }
+
+    const tarihValue = order.siparis_tarihi || order.created_at;
+    if (!tarihValue) return;
+
     const material = order.malzeme_tanimi;
     const supplier = order.tedarikci_tanimi;
-    const birimFiyat = parseFloat(order.birim_fiyat);
-    const tarih = new Date(order.siparis_tarihi);
+    const tarih = new Date(tarihValue);
+
     if (!materialSuppliers[material]) materialSuppliers[material] = {};
     if (!materialSuppliers[material][supplier]) materialSuppliers[material][supplier] = [];
     materialSuppliers[material][supplier].push({ fiyat: birimFiyat, tarih: tarih });
