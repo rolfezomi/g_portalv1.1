@@ -2308,29 +2308,25 @@ async function clearPurchasingDatabase() {
 
 /**
  * Admin kontrolüne göre veritabanı temizleme butonunu göster/gizle
+ * NOT: Artık CSS ile kontrol ediliyor (body.admin-user sınıfı)
  */
 async function updatePurchasingAdminButtons() {
   const clearDbBtn = document.getElementById('clear-purchasing-db-btn');
+  const userRole = window.currentUserRole || currentUserRole;
+  const hasAdminClass = document.body.classList.contains('admin-user');
 
   console.log('🔐 Admin buton kontrolü:', {
     buttonExists: !!clearDbBtn,
-    currentUserRole: window.currentUserRole || currentUserRole,
+    currentUserRole: userRole,
+    bodyHasAdminClass: hasAdminClass,
     isAdminResult: typeof isAdmin === 'function' ? isAdmin() : 'isAdmin fonksiyonu bulunamadı'
   });
 
   if (clearDbBtn) {
-    // Kesin admin kontrolü
-    const userRole = window.currentUserRole || currentUserRole;
-    const isUserAdmin = userRole === 'admin';
-
-    console.log('👤 Kullanıcı admin mi?', isUserAdmin, '(Role:', userRole, ')');
-
-    if (isUserAdmin) {
-      clearDbBtn.style.display = 'inline-flex';
-      console.log('✅ Veritabanı temizle butonu GÖSTERİLDİ (Admin)');
+    if (hasAdminClass) {
+      console.log('✅ Veritabanı temizle butonu GÖRÜNEBİLİR (Admin - CSS tarafından kontrol ediliyor)');
     } else {
-      clearDbBtn.style.display = 'none';
-      console.log('🚫 Veritabanı temizle butonu GİZLENDİ (Purchasing/diğer)');
+      console.log('🚫 Veritabanı temizle butonu GİZLİ (Purchasing/diğer - CSS tarafından kontrol ediliyor)');
     }
   } else {
     console.warn('⚠️ clear-purchasing-db-btn butonu DOM\'da bulunamadı!');

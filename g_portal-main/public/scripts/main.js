@@ -871,8 +871,18 @@ async function loadUserRole(email) {
       currentUserRole = data.role;
       console.log('✅ Kullanıcı rolü yüklendi:', currentUserRole);
     }
+
+    // Admin kullanıcılar için body'e class ekle
+    if (currentUserRole === 'admin') {
+      document.body.classList.add('admin-user');
+      console.log('👑 Admin class eklendi body\'e');
+    } else {
+      document.body.classList.remove('admin-user');
+    }
+
   } catch (err) {
     currentUserRole = 'full';
+    document.body.classList.remove('admin-user');
     console.error('❌ Rol yükleme hatası:', err);
   }
 }

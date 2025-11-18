@@ -841,3 +841,17 @@
     display: none;
   }
 }
+
+/* =====================================================
+   ADMİN-ONLY BUTONLAR - VERİTABANI TEMİZLE
+   ===================================================== */
+
+/* Veritabanı temizle butonu varsayılan olarak GİZLİ */
+#clear-purchasing-db-btn {
+  display: none !important;
+}
+
+/* SADECE body'de admin-user class varsa görünsün */
+body.admin-user #clear-purchasing-db-btn {
+  display: inline-flex !important;
+}
