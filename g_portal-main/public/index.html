@@ -61,6 +61,20 @@
   </div>
 
   <div id="portal-screen" style="display:none;">
+    <!-- Mobil Üst Tab Bar (Purchasing ve Admin için) -->
+    <div class="mobile-top-tabs" id="mobile-top-tabs-static" style="display: none;">
+      <div class="mobile-tab-list">
+        <button class="mobile-tab-item active" data-section="purchasing" onclick="showMobileTabContent('purchasing')">
+          <span class="mobile-tab-icon">📦</span>
+          <span class="mobile-tab-label">SATIN ALMA</span>
+        </button>
+        <button class="mobile-tab-item" data-section="revision-analytics" onclick="showMobileTabContent('revision-analytics')">
+          <span class="mobile-tab-icon">📊</span>
+          <span class="mobile-tab-label">REVİZYON ANALİZ</span>
+        </button>
+      </div>
+    </div>
+
     <aside class="menu" aria-label="Ana menü">
       <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menüyü aç/kapat">☰</button>
       <ul>
