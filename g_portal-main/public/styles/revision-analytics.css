@@ -676,28 +676,135 @@
   color: #666;
 }
 
-/* Responsive */
+/* Responsive - Mobil Optimizasyonu */
 @media (max-width: 768px) {
-  .revision-kpi-grid {
-    grid-template-columns: 1fr;
+  /* Mobil tabs aktifken padding ayarı */
+  body.mobile-tabs-active #revision-analytics-content {
+    padding: 10px !important;
+    margin-top: 56px; /* Üst tab bar için boşluk */
   }
 
+  body.mobile-tabs-active .toolbar {
+    margin-top: 56px; /* Üst tab bar için boşluk */
+    padding: 12px 10px;
+  }
+
+  body.mobile-tabs-active .toolbar h2 {
+    font-size: 18px;
+  }
+
+  /* KPI Kartları - Mobil */
+  .revision-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card {
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.12);
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+  }
+
+  .kpi-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+  }
+
+  /* Tab Navigasyon - Mobil */
   .revision-tabs {
     overflow-x: auto;
     flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 0 0 8px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .revision-tabs::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .revision-tabs::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 2px;
+  }
+
+  .revision-tabs::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 2px;
   }
 
   .revision-tab {
     white-space: nowrap;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+    background: #f5f5f5;
   }
 
+  .revision-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom-color: transparent;
+  }
+
+  /* Tab İçerik */
+  #revision-tab-content {
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  /* TABLO YERİNE CARD LAYOUT - MOBİL */
+  .changes-table-wrapper {
+    overflow: visible;
+  }
+
+  .changes-table {
+    display: none; /* Mobilde tablo gizle */
+  }
+
+  /* Card-based layout için container */
+  .changes-table-wrapper::after {
+    content: attr(data-empty);
+    display: none;
+  }
+
+  /* Timeline - Mobil */
   .timeline-day {
     flex-direction: column;
+    margin-bottom: 20px;
   }
 
   .timeline-date {
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .date-bubble {
+    padding: 6px 12px;
+    font-size: 12px;
+    display: inline-block;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
   }
 
   .timeline-events {
@@ -705,32 +812,160 @@
     padding-left: 0;
   }
 
+  .timeline-event {
+    margin-bottom: 16px;
+    padding: 14px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 4px solid #667eea;
+  }
+
   .timeline-event::before {
     display: none;
   }
 
+  .timeline-event.new {
+    border-left-color: #4caf50;
+  }
+
+  .event-content {
+    background: transparent;
+    padding: 0;
+  }
+
+  .event-title {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .event-description {
+    font-size: 12px;
+  }
+
+  .event-time {
+    font-size: 11px;
+  }
+
+  /* Time Travel - Mobil */
   .time-travel-selector {
     flex-direction: column;
     align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .time-travel-selector label {
+    font-size: 13px;
   }
 
   .time-travel-selector input[type="date"] {
     width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
   }
 
+  .time-travel-selector input[type="date"]:focus {
+    border-color: #667eea;
+    outline: none;
+  }
+
+  /* Modal - Mobil */
   .revision-modal {
     max-width: 100%;
     max-height: 100vh;
     border-radius: 0;
+    margin: 0;
   }
 
-  .changes-table {
+  .revision-modal-overlay {
+    padding: 0;
+  }
+
+  .revision-modal-header {
+    padding: 16px;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+  }
+
+  .revision-modal-header h3 {
+    font-size: 16px;
+  }
+
+  .revision-modal-body {
+    padding: 16px;
+  }
+
+  /* History Items - Mobil */
+  .history-item {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .history-marker {
+    width: 24px;
+  }
+
+  .marker-dot {
+    width: 12px;
+    height: 12px;
+    border: 2px solid white;
+  }
+
+  .history-content {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .history-date {
     font-size: 12px;
   }
 
-  .changes-table th,
-  .changes-table td {
-    padding: 8px;
+  .revision-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+  }
+
+  .detail-label {
+    font-size: 12px;
+    color: #999;
+  }
+
+  .detail-value {
+    font-size: 14px;
+  }
+
+  .change-detail {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .change-field {
+    min-width: auto;
+    font-size: 12px;
+  }
+
+  .change-from,
+  .change-to {
+    font-size: 12px;
+    padding: 3px 8px;
   }
 }
 
@@ -1330,37 +1565,160 @@
   font-size: 18px;
 }
 
-/* Responsive */
+/* Responsive - Ödeme Takvimi Mobil */
 @media (max-width: 768px) {
+  /* Genel Container */
+  body.mobile-tabs-active .payment-calendar-container,
+  body.mobile-tabs-active .supplier-balances-container {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  .payment-calendar-container h3,
+  .supplier-balances-container h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .payment-calendar-description {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* Özet Kartları - Mobil Grid */
   .payment-summary-cards {
     grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
   }
 
+  .payment-summary-card {
+    padding: 14px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left-width: 4px;
+    transition: all 0.3s ease;
+  }
+
+  .payment-summary-card:active {
+    transform: scale(0.98);
+  }
+
+  .payment-summary-card .summary-icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .payment-summary-card .summary-label {
+    font-size: 12px;
+  }
+
+  .payment-summary-card .summary-amount {
+    font-size: 20px;
+  }
+
+  .payment-summary-card .summary-count {
+    font-size: 11px;
+  }
+
+  /* Hızlı Arama - Mobil */
+  .payment-quick-search {
+    margin-bottom: 20px;
+  }
+
+  .payment-quick-search .search-input {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  /* Filtreler - Mobil */
+  .payment-filters {
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+  }
+
+  .payment-filters h4 {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .payment-filters .filter-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .payment-filters select,
+  .payment-filters input {
+    padding: 12px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+  }
+
+  .payment-filters select:focus,
+  .payment-filters input:focus {
+    border-color: #667eea;
+  }
+
+  /* Tedarikçi Bakiye Listesi - Mobil */
   .supplier-balances-container {
-    padding: 15px;
+    padding: 12px;
   }
 
+  .supplier-balances-list {
+    gap: 14px;
+  }
+
+  /* Tedarikçi Bakiye Item - Card Layout */
   .supplier-balance-item {
     flex-direction: column;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
   }
 
+  .supplier-balance-item:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  /* Rank Badge - Üstte */
   .supplier-rank-badge {
     width: 100%;
     height: 50px;
     border-radius: 12px 12px 0 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
 
   .supplier-rank-badge::after {
     display: none;
   }
 
-  .supplier-main-content {
-    padding: 16px;
+  .rank-number {
+    font-size: 22px;
+    color: white;
   }
 
+  .rank-gold,
+  .rank-silver,
+  .rank-bronze {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  /* Main Content */
+  .supplier-main-content {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* Header */
   .supplier-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .supplier-title-section {
@@ -1372,44 +1730,155 @@
     width: 44px;
     height: 44px;
     font-size: 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
   }
 
   .supplier-name {
     font-size: 16px;
+    font-weight: 700;
   }
 
+  .supplier-meta {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .meta-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  /* Total Amount */
   .supplier-total-amount {
     width: 100%;
     text-align: left;
-    padding: 10px 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e8eaed 100%);
+    border: 2px solid #dfe1e5;
+  }
+
+  .amount-label {
+    font-size: 10px;
+    margin-bottom: 3px;
   }
 
   .amount-value {
     font-size: 20px;
   }
 
+  /* Balance Visual */
+  .supplier-balance-visual {
+    gap: 12px;
+  }
+
+  /* Stats Row */
   .balance-stats-row {
     flex-direction: column;
+    gap: 10px;
   }
 
   .stat-item {
     min-width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 2px solid #e8eaed;
+  }
+
+  .stat-item:hover {
+    transform: translateX(0);
+    transform: translateY(-2px);
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .stat-percent {
+    font-size: 10px;
+  }
+
+  /* Balance Bar */
+  .balance-bar-section {
+    gap: 10px;
   }
 
   .balance-bar-container {
     height: 28px;
+    border-radius: 10px;
+  }
+
+  .balance-bar {
+    font-size: 10px;
+    border-radius: 10px;
   }
 
   .progress-percentage {
     font-size: 12px;
     min-width: 40px;
+    padding: 3px 6px;
+    border-radius: 6px;
   }
 
-  .payment-summary-card {
-    padding: 15px;
+  /* Detay Listesi */
+  .payment-details-list {
+    margin-top: 20px;
   }
 
-  .payment-summary-card .summary-amount {
-    font-size: 20px;
+  .payment-details-list h4 {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+
+  /* Mobilde tablo yerine card layout */
+  .purchasing-table {
+    display: none;
+  }
+
+  /* Genel Mobil Touch İyileştirmeleri */
+  body.mobile-tabs-active .revision-analytics-content button,
+  body.mobile-tabs-active .payment-calendar-container button {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    touch-action: manipulation;
+  }
+
+  /* Renk Uyumu - Gradient Buttons */
+  body.mobile-tabs-active .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+
+  body.mobile-tabs-active .btn-primary:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  }
+
+  body.mobile-tabs-active .btn-secondary {
+    background: white;
+    border: 2px solid #e0e0e0;
+    color: #666;
+  }
+
+  body.mobile-tabs-active .btn-secondary:active {
+    background: #f5f5f5;
+    transform: scale(0.96);
   }
 }

@@ -4982,4 +4982,17 @@ body.mobile-tabs-active .toolbar {
   body.mobile-tabs-active main {
     padding-top: 48px;
   }
+
+  /* Mobilde tüm dosya yükleme butonlarını gizle */
+  body.mobile-tabs-active button[onclick*="upload"],
+  body.mobile-tabs-active button[onclick*="Upload"],
+  body.mobile-tabs-active button[onclick*="UPLOAD"],
+  body.mobile-tabs-active .upload-btn,
+  body.mobile-tabs-active .btn-upload,
+  body.mobile-tabs-active #upload-btn,
+  body.mobile-tabs-active input[type="file"],
+  body.mobile-tabs-active label[for*="upload"],
+  body.mobile-tabs-active .file-upload {
+    display: none !important;
+  }
 }

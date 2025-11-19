@@ -1612,7 +1612,8 @@ function refreshMenusBasedOnRole() {
   if (isMobileDevice() && (currentUserRole === 'purchasing' || currentUserRole === 'admin')) {
     initMobilePurchasingTabs();
     initPullToRefresh();
-    initSwipeGestures();
+    // Swipe özelliği kullanıcı talebi ile devre dışı
+    // initSwipeGestures();
     console.log('✅ Mobil üst tab bar sistemi aktif');
   }
 }
