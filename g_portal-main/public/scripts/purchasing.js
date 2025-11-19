@@ -681,6 +681,9 @@ function renderPurchasingTable() {
       }
     }
   }
+
+  // Profesyonel tablo özelliklerini aktive et
+  initProfessionalTableFeatures();
 }
 
 // =====================================================
@@ -2249,6 +2252,401 @@ async function updatePurchasingAdminButtons() {
     // Purchasing/Diğer: Hiçbir şey yapma (buton zaten HTML'de yok)
     console.log('ℹ️ Purchasing kullanıcısı - Veritabanı temizle butonu EKLENMEDİ');
   }
+}
+
+// =====================================================
+// PROFESYONEL TABLO ÖZELLİKLERİ
+// =====================================================
+
+/**
+ * Üst scrollbar oluştur ve senkronize et
+ */
+function initTopScrollbar() {
+  const tableWrapper = document.querySelector('.table-wrapper');
+  if (!tableWrapper) return;
+
+  // Üst scrollbar zaten varsa kaldır
+  const existing = document.querySelector('.top-scrollbar-container');
+  if (existing) existing.remove();
+
+  // Yeni üst scrollbar oluştur
+  const topScrollbar = document.createElement('div');
+  topScrollbar.className = 'top-scrollbar-container';
+
+  const topScrollContent = document.createElement('div');
+  topScrollContent.className = 'top-scrollbar-content';
+  topScrollContent.style.width = tableWrapper.scrollWidth + 'px';
+
+  topScrollbar.appendChild(topScrollContent);
+  tableWrapper.parentNode.insertBefore(topScrollbar, tableWrapper);
+
+  // Scroll senkronizasyonu
+  topScrollbar.addEventListener('scroll', () => {
+    tableWrapper.scrollLeft = topScrollbar.scrollLeft;
+  });
+
+  tableWrapper.addEventListener('scroll', () => {
+    topScrollbar.scrollLeft = tableWrapper.scrollLeft;
+  });
+
+  // Resize observer - tablo boyutu değiştiğinde güncelle
+  const resizeObserver = new ResizeObserver(() => {
+    topScrollContent.style.width = tableWrapper.scrollWidth + 'px';
+  });
+  resizeObserver.observe(tableWrapper);
+}
+
+/**
+ * Kolon boyutlandırma özellikleri
+ */
+function initColumnResizing() {
+  const table = document.querySelector('.purchasing-table');
+  if (!table) return;
+
+  const headers = table.querySelectorAll('th');
+  let resizingColumn = null;
+  let startX = 0;
+  let startWidth = 0;
+
+  // Tooltip elementi
+  let tooltip = document.querySelector('.resize-tooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.className = 'resize-tooltip';
+    document.body.appendChild(tooltip);
+  }
+
+  headers.forEach((header, index) => {
+    // Resize handle ekle
+    const resizer = document.createElement('div');
+    resizer.className = 'column-resizer';
+    header.appendChild(resizer);
+
+    resizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      resizingColumn = header;
+      startX = e.pageX;
+      startWidth = header.offsetWidth;
+
+      resizer.classList.add('resizing');
+      tooltip.classList.add('active');
+      tooltip.textContent = startWidth + 'px';
+      tooltip.style.left = e.pageX + 10 + 'px';
+      tooltip.style.top = e.pageY - 30 + 'px';
+
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!resizingColumn) return;
+
+    const diff = e.pageX - startX;
+    const newWidth = Math.max(50, startWidth + diff); // Min 50px
+
+    resizingColumn.style.minWidth = newWidth + 'px';
+    resizingColumn.style.maxWidth = newWidth + 'px';
+    resizingColumn.style.width = newWidth + 'px';
+
+    // Tooltip güncelle
+    tooltip.textContent = newWidth + 'px';
+    tooltip.style.left = e.pageX + 10 + 'px';
+    tooltip.style.top = e.pageY - 30 + 'px';
+
+    // Aynı index'teki tüm td'leri de güncelle
+    const columnIndex = Array.from(resizingColumn.parentNode.children).indexOf(resizingColumn);
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const cell = row.children[columnIndex];
+      if (cell) {
+        cell.style.minWidth = newWidth + 'px';
+        cell.style.maxWidth = newWidth + 'px';
+        cell.style.width = newWidth + 'px';
+      }
+    });
+
+    // Top scrollbar'ı güncelle
+    initTopScrollbar();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (resizingColumn) {
+      const resizer = resizingColumn.querySelector('.column-resizer');
+      if (resizer) resizer.classList.remove('resizing');
+
+      // Boyutları localStorage'a kaydet
+      saveColumnWidths();
+
+      resizingColumn = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      tooltip.classList.remove('active');
+    }
+  });
+}
+
+/**
+ * Kolon görünürlük paneli
+ */
+function initColumnToggle() {
+  const container = document.querySelector('.purchasing-table-container');
+  if (!container) return;
+
+  // Kontrol panelini oluştur
+  const controlsDiv = container.querySelector('.table-controls');
+  if (controlsDiv) return; // Zaten varsa çıkartık
+
+  const controls = document.createElement('div');
+  controls.className = 'table-controls';
+  controls.innerHTML = `
+    <div class="table-controls-left">
+      <h3 style="margin: 0;">Satın Alma Raporu
+        <span style="font-size: 14px; color: #666; font-weight: normal;">
+          (<span id="visible-rows">0</span> / <span id="total-rows">0</span> gösteriliyor)
+        </span>
+      </h3>
+    </div>
+    <div class="table-controls-right">
+      <button class="column-toggle-btn" onclick="toggleColumnPanel()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 2 0 012-2h2a2 2 0 012 2m0 0a2 2 0 012 2v6a2 2 0 01-2 2M9 7h6"></path>
+        </svg>
+        Kolonlar
+      </button>
+      <button class="btn btn-primary" onclick="exportPurchasingToExcel()" style="display: flex; align-items: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Excel İndir
+      </button>
+      <div class="column-toggle-panel" id="column-toggle-panel">
+        <h4>📋 Gösterilecek Kolonlar</h4>
+        <div class="column-toggle-list" id="column-toggle-list"></div>
+        <div class="column-toggle-actions">
+          <button onclick="selectAllColumns()">Hepsini Seç</button>
+          <button onclick="deselectAllColumns()">Hiçbirini Seçme</button>
+          <button class="primary" onclick="resetColumnSettings()">Sıfırla</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Backdrop ekle
+  let backdrop = document.querySelector('.column-toggle-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'column-toggle-backdrop';
+    backdrop.onclick = () => toggleColumnPanel(false);
+    document.body.appendChild(backdrop);
+  }
+
+  // Mevcut h3 ve button'ı değiştir
+  const existingHeader = container.querySelector('h3');
+  const existingButton = container.querySelector('button[onclick="exportPurchasingToExcel()"]');
+  const headerParent = existingHeader?.parentElement;
+
+  if (headerParent) {
+    headerParent.replaceWith(controls);
+  } else {
+    const tableWrapper = container.querySelector('.table-wrapper');
+    container.insertBefore(controls, tableWrapper);
+  }
+
+  // Kolonları doldur
+  updateColumnToggleList();
+}
+
+/**
+ * Kolon listesini güncelle
+ */
+function updateColumnToggleList() {
+  const list = document.getElementById('column-toggle-list');
+  if (!list) return;
+
+  const table = document.querySelector('.purchasing-table');
+  if (!table) return;
+
+  const headers = table.querySelectorAll('thead th');
+  const savedVisibility = JSON.parse(localStorage.getItem('purchasingColumnVisibility') || '{}');
+
+  list.innerHTML = '';
+  headers.forEach((header, index) => {
+    const title = header.getAttribute('title') || header.textContent.trim().replace(/[↑↓]/g, '').trim();
+    const columnClass = Array.from(header.classList).find(cls => cls.startsWith('col-')) || `col-${index}`;
+
+    const isVisible = savedVisibility[columnClass] !== false;
+
+    const item = document.createElement('div');
+    item.className = 'column-toggle-item';
+    item.innerHTML = `
+      <input type="checkbox" id="col-toggle-${index}" ${isVisible ? 'checked' : ''}
+             onchange="toggleColumn('${columnClass}', this.checked)">
+      <label for="col-toggle-${index}">${title}</label>
+    `;
+
+    list.appendChild(item);
+
+    // İlk yüklemede görünürlüğü uygula
+    if (!isVisible) {
+      toggleColumn(columnClass, false);
+    }
+  });
+}
+
+/**
+ * Kolon panelini aç/kapa
+ */
+window.toggleColumnPanel = function(show) {
+  const panel = document.getElementById('column-toggle-panel');
+  const backdrop = document.querySelector('.column-toggle-backdrop');
+
+  if (!panel) return;
+
+  const shouldShow = show !== undefined ? show : !panel.classList.contains('active');
+
+  if (shouldShow) {
+    panel.classList.add('active');
+    backdrop?.classList.add('active');
+  } else {
+    panel.classList.remove('active');
+    backdrop?.classList.remove('active');
+  }
+};
+
+/**
+ * Kolonu gizle/göster
+ */
+window.toggleColumn = function(columnClass, show) {
+  const table = document.querySelector('.purchasing-table');
+  if (!table) return;
+
+  const headers = table.querySelectorAll(`th.${columnClass}`);
+  const cells = table.querySelectorAll(`td.${columnClass}`);
+
+  [...headers, ...cells].forEach(el => {
+    if (show) {
+      el.classList.remove('hidden-column');
+    } else {
+      el.classList.add('hidden-column');
+    }
+  });
+
+  // Kaydet
+  const saved = JSON.parse(localStorage.getItem('purchasingColumnVisibility') || '{}');
+  saved[columnClass] = show;
+  localStorage.setItem('purchasingColumnVisibility', JSON.stringify(saved));
+
+  // Top scrollbar'ı güncelle
+  initTopScrollbar();
+};
+
+/**
+ * Tüm kolonları seç
+ */
+window.selectAllColumns = function() {
+  const checkboxes = document.querySelectorAll('#column-toggle-list input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    if (!cb.checked) {
+      cb.checked = true;
+      cb.onchange();
+    }
+  });
+};
+
+/**
+ * Hiçbir kolonu seçme
+ */
+window.deselectAllColumns = function() {
+  const checkboxes = document.querySelectorAll('#column-toggle-list input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      cb.checked = false;
+      cb.onchange();
+    }
+  });
+};
+
+/**
+ * Kolon ayarlarını sıfırla
+ */
+window.resetColumnSettings = function() {
+  if (!confirm('Tüm kolon ayarlarını sıfırlamak istediğinize emin misiniz?')) return;
+
+  localStorage.removeItem('purchasingColumnVisibility');
+  localStorage.removeItem('purchasingColumnWidths');
+
+  // Sayfayı yenile
+  renderPurchasingTable();
+
+  showToast('✅ Kolon ayarları sıfırlandı', 'success');
+};
+
+/**
+ * Kolon genişliklerini kaydet
+ */
+function saveColumnWidths() {
+  const table = document.querySelector('.purchasing-table');
+  if (!table) return;
+
+  const widths = {};
+  const headers = table.querySelectorAll('thead th');
+
+  headers.forEach(header => {
+    const columnClass = Array.from(header.classList).find(cls => cls.startsWith('col-'));
+    if (columnClass) {
+      widths[columnClass] = header.offsetWidth;
+    }
+  });
+
+  localStorage.setItem('purchasingColumnWidths', JSON.stringify(widths));
+}
+
+/**
+ * Kaydedilmiş kolon genişliklerini yükle
+ */
+function loadColumnWidths() {
+  const widths = JSON.parse(localStorage.getItem('purchasingColumnWidths') || '{}');
+  if (Object.keys(widths).length === 0) return;
+
+  const table = document.querySelector('.purchasing-table');
+  if (!table) return;
+
+  const headers = table.querySelectorAll('thead th');
+  headers.forEach(header => {
+    const columnClass = Array.from(header.classList).find(cls => cls.startsWith('col-'));
+    if (columnClass && widths[columnClass]) {
+      const width = widths[columnClass];
+      header.style.minWidth = width + 'px';
+      header.style.maxWidth = width + 'px';
+      header.style.width = width + 'px';
+
+      // Aynı sınıftaki td'leri de güncelle
+      const cells = table.querySelectorAll(`td.${columnClass}`);
+      cells.forEach(cell => {
+        cell.style.minWidth = width + 'px';
+        cell.style.maxWidth = width + 'px';
+        cell.style.width = width + 'px';
+      });
+    }
+  });
+}
+
+/**
+ * Tablo render edildikten sonra özellikleri başlat
+ */
+function initProfessionalTableFeatures() {
+  // Küçük gecikme ile özellikleri başlat (DOM'un hazır olması için)
+  setTimeout(() => {
+    initTopScrollbar();
+    initColumnResizing();
+    initColumnToggle();
+    loadColumnWidths();
+  }, 100);
 }
 
 // =====================================================
