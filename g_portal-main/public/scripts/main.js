@@ -969,7 +969,420 @@ window.addEventListener('resize', () => {
   if (currentUserRole === 'purchasing') {
     optimizeMobileMenuForRole();
   }
+  // Mobil tab bar'ı yeniden kontrol et
+  if (isMobileDevice() && (currentUserRole === 'purchasing' || currentUserRole === 'admin')) {
+    initMobilePurchasingTabs();
+  }
 });
+
+// ====== MOBİL ÜST TAB BAR SİSTEMİ ======
+/**
+ * Mobil cihazlar için üst tab bar oluşturur
+ * Purchasing kullanıcıları için 2 tab, Admin için genişletilmiş tab bar
+ */
+function initMobilePurchasingTabs() {
+  const isMobile = isMobileDevice();
+
+  if (!isMobile) {
+    // Mobil değilse tab bar'ı kaldır
+    const existingTabBar = document.querySelector('.mobile-top-tabs');
+    if (existingTabBar) {
+      existingTabBar.remove();
+      document.body.classList.remove('mobile-tabs-active');
+    }
+    return;
+  }
+
+  const isPurchasingUser = currentUserRole === 'purchasing';
+  const isAdminUser = currentUserRole === 'admin';
+
+  // Sadece purchasing veya admin kullanıcıları için tab bar göster
+  if (!isPurchasingUser && !isAdminUser) {
+    return;
+  }
+
+  console.log('📱 Mobil üst tab bar oluşturuluyor, rol:', currentUserRole);
+
+  // Mevcut tab bar'ı kaldır (varsa)
+  const existingTabBar = document.querySelector('.mobile-top-tabs');
+  if (existingTabBar) {
+    existingTabBar.remove();
+  }
+
+  // Tab bar container oluştur
+  const tabBar = document.createElement('div');
+  tabBar.className = 'mobile-top-tabs';
+
+  // Tab listesi oluştur
+  const tabList = document.createElement('div');
+  tabList.className = 'mobile-tab-list';
+
+  // Purchasing kullanıcısı için sadece 2 tab
+  if (isPurchasingUser) {
+    const tabs = [
+      {
+        id: 'purchasing',
+        icon: '📦',
+        label: 'Satın Alma',
+        section: 'purchasing'
+      },
+      {
+        id: 'revision-analytics',
+        icon: '📊',
+        label: 'Revizyon Analiz',
+        section: 'revision-analytics'
+      }
+    ];
+
+    tabs.forEach(tab => {
+      const tabItem = document.createElement('button');
+      tabItem.className = 'mobile-tab-item';
+      tabItem.setAttribute('data-tab', tab.id);
+      tabItem.setAttribute('data-section', tab.section);
+      tabItem.innerHTML = `
+        <span class="mobile-tab-icon">${tab.icon}</span>
+        <span class="mobile-tab-label">${tab.label}</span>
+      `;
+
+      tabItem.addEventListener('click', () => {
+        showMobileTabContent(tab.section);
+      });
+
+      tabList.appendChild(tabItem);
+    });
+  }
+  // Admin kullanıcısı için genişletilmiş tab bar (tüm modüller)
+  else if (isAdminUser) {
+    const tabs = [
+      {
+        id: 'home',
+        icon: '🏠',
+        label: 'Ana Sayfa',
+        section: 'home'
+      },
+      {
+        id: 'purchasing',
+        icon: '📦',
+        label: 'Satın Alma',
+        section: 'purchasing'
+      },
+      {
+        id: 'revision-analytics',
+        icon: '📊',
+        label: 'Revizyon Analiz',
+        section: 'revision-analytics'
+      },
+      {
+        id: 'maintenance',
+        icon: '🔧',
+        label: 'Bakım',
+        section: 'maintenance'
+      },
+      {
+        id: 'trend-analysis',
+        icon: '📈',
+        label: 'Trend',
+        section: 'trend-analysis'
+      },
+      {
+        id: 'executive-dashboard',
+        icon: '💼',
+        label: 'Dashboard',
+        section: 'executive-dashboard'
+      },
+      {
+        id: 'admin-panel',
+        icon: '⚙️',
+        label: 'Admin',
+        section: 'admin-panel'
+      }
+    ];
+
+    tabs.forEach(tab => {
+      const tabItem = document.createElement('button');
+      tabItem.className = 'mobile-tab-item';
+      tabItem.setAttribute('data-tab', tab.id);
+      tabItem.setAttribute('data-section', tab.section);
+      tabItem.innerHTML = `
+        <span class="mobile-tab-icon">${tab.icon}</span>
+        <span class="mobile-tab-label">${tab.label}</span>
+      `;
+
+      tabItem.addEventListener('click', () => {
+        showMobileTabContent(tab.section);
+      });
+
+      tabList.appendChild(tabItem);
+    });
+  }
+
+  tabBar.appendChild(tabList);
+
+  // Pull-to-refresh indicator ekle
+  const refreshIndicator = document.createElement('div');
+  refreshIndicator.className = 'pull-refresh-indicator';
+  refreshIndicator.innerHTML = `
+    <svg class="refresh-spinner" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+      <path d="M12 2 A10 10 0 0 1 22 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+  `;
+
+  // Sayfanın başına ekle
+  document.body.insertBefore(tabBar, document.body.firstChild);
+  document.body.insertBefore(refreshIndicator, document.body.firstChild);
+
+  // Body'e mobil tabs aktif class'ı ekle
+  document.body.classList.add('mobile-tabs-active');
+
+  // İlk tab'ı aktif yap
+  const firstTab = tabList.querySelector('.mobile-tab-item');
+  if (firstTab) {
+    const firstSection = firstTab.getAttribute('data-section');
+    showMobileTabContent(firstSection);
+  }
+
+  // Dosya yükleme butonunu gizle
+  const uploadButtons = document.querySelectorAll('#upload-btn, button[onclick*="openFileUpload"], .btn-upload');
+  uploadButtons.forEach(btn => {
+    btn.style.display = 'none';
+  });
+
+  console.log('✅ Mobil üst tab bar oluşturuldu');
+}
+
+/**
+ * Mobil tab içeriğini gösterir ve aktif tab'ı işaretler
+ */
+function showMobileTabContent(sectionName) {
+  console.log('🔄 Mobil tab geçişi:', sectionName);
+
+  // Tüm tab'lardan active class'ını kaldır
+  const allTabs = document.querySelectorAll('.mobile-tab-item');
+  allTabs.forEach(tab => tab.classList.remove('active'));
+
+  // Tıklanan tab'a active class ekle
+  const activeTab = document.querySelector(`.mobile-tab-item[data-section="${sectionName}"]`);
+  if (activeTab) {
+    activeTab.classList.add('active');
+  }
+
+  // İlgili section'ı göster
+  showSection(sectionName);
+
+  // Log activity
+  logActivity('mobile_tab_switch', 'navigation', { section: sectionName });
+}
+
+/**
+ * Pull-to-refresh fonksiyonalitesi
+ */
+let pullStartY = 0;
+let pullMoveY = 0;
+let isPulling = false;
+let isRefreshing = false;
+
+function initPullToRefresh() {
+  const isMobile = isMobileDevice();
+  if (!isMobile) return;
+
+  const container = document.querySelector('main') || document.body;
+  const indicator = document.querySelector('.pull-refresh-indicator');
+
+  if (!indicator) return;
+
+  // Touch start
+  container.addEventListener('touchstart', (e) => {
+    // Sadece sayfanın en üstündeyken çalışsın
+    if (container.scrollTop === 0) {
+      pullStartY = e.touches[0].clientY;
+      isPulling = true;
+    }
+  }, { passive: true });
+
+  // Touch move
+  container.addEventListener('touchmove', (e) => {
+    if (!isPulling || isRefreshing) return;
+
+    pullMoveY = e.touches[0].clientY - pullStartY;
+
+    // Aşağı çekme mesafesi
+    if (pullMoveY > 0) {
+      const pullDistance = Math.min(pullMoveY, 120);
+      const pullProgress = pullDistance / 120;
+
+      // Indicator'ı göster
+      indicator.style.transform = `translateX(-50%) translateY(${pullDistance - 100}px)`;
+      indicator.style.opacity = pullProgress;
+
+      // Rotation animasyonu
+      const spinner = indicator.querySelector('.refresh-spinner');
+      if (spinner) {
+        spinner.style.transform = `rotate(${pullDistance * 3}deg)`;
+      }
+
+      // Eşik değeri aşıldı mı?
+      if (pullDistance >= 100) {
+        indicator.classList.add('ready');
+      } else {
+        indicator.classList.remove('ready');
+      }
+    }
+  }, { passive: true });
+
+  // Touch end
+  container.addEventListener('touchend', () => {
+    if (!isPulling) return;
+
+    isPulling = false;
+
+    // Eşik değeri aşıldıysa refresh yap
+    if (pullMoveY >= 100 && !isRefreshing) {
+      isRefreshing = true;
+      indicator.classList.add('refreshing');
+
+      // Refresh animasyonu
+      indicator.style.transform = 'translateX(-50%) translateY(20px)';
+
+      // Sayfayı yenile
+      refreshCurrentSection();
+
+      // 1.5 saniye sonra gizle
+      setTimeout(() => {
+        indicator.style.transform = 'translateX(-50%) translateY(-100px)';
+        indicator.style.opacity = '0';
+        indicator.classList.remove('refreshing', 'ready');
+        isRefreshing = false;
+        pullMoveY = 0;
+      }, 1500);
+    } else {
+      // Eşik aşılmadıysa geri çek
+      indicator.style.transform = 'translateX(-50%) translateY(-100px)';
+      indicator.style.opacity = '0';
+      indicator.classList.remove('ready');
+      pullMoveY = 0;
+    }
+  }, { passive: true });
+}
+
+/**
+ * Aktif section'ı yeniler
+ */
+function refreshCurrentSection() {
+  console.log('🔄 Sayfa yenileniyor...');
+
+  // Mevcut section'a göre refresh işlemi
+  if (currentSection === 'purchasing') {
+    // Satın alma verilerini yenile
+    if (typeof loadPurchasingOrders === 'function') {
+      loadPurchasingOrders();
+    }
+  } else if (currentSection === 'revision-analytics') {
+    // Revizyon analiz verilerini yenile
+    if (typeof loadRevisionAnalytics === 'function') {
+      loadRevisionAnalytics();
+    }
+  } else if (currentSection === 'maintenance') {
+    // Bakım verilerini yenile
+    if (typeof loadMaintenanceData === 'function') {
+      loadMaintenanceData();
+    }
+  }
+
+  // Toast bildirim göster
+  showToast('✅ Sayfa yenilendi', 'success');
+}
+
+/**
+ * Swipe gesture desteği (sağa/sola kaydırma ile tab geçişi)
+ */
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swipeEndX = 0;
+let swipeEndY = 0;
+
+function initSwipeGestures() {
+  const isMobile = isMobileDevice();
+  if (!isMobile) return;
+
+  const container = document.querySelector('main') || document.body;
+
+  container.addEventListener('touchstart', (e) => {
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    swipeEndX = e.touches[0].clientX;
+    swipeEndY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    handleSwipe();
+  }, { passive: true });
+}
+
+/**
+ * Swipe işlemini kontrol eder ve tab geçişi yapar
+ */
+function handleSwipe() {
+  const diffX = swipeStartX - swipeEndX;
+  const diffY = swipeStartY - swipeEndY;
+
+  // Minimum swipe mesafesi
+  const minSwipeDistance = 50;
+
+  // Yatay swipe mi dikey swipe mi?
+  if (Math.abs(diffX) > Math.abs(diffY)) {
+    // Yatay swipe
+    if (Math.abs(diffX) > minSwipeDistance) {
+      const allTabs = Array.from(document.querySelectorAll('.mobile-tab-item'));
+      const activeTab = document.querySelector('.mobile-tab-item.active');
+
+      if (!activeTab || allTabs.length === 0) return;
+
+      const currentIndex = allTabs.indexOf(activeTab);
+
+      if (diffX > 0) {
+        // Sola kaydırma - sonraki tab
+        if (currentIndex < allTabs.length - 1) {
+          const nextTab = allTabs[currentIndex + 1];
+          const nextSection = nextTab.getAttribute('data-section');
+          showMobileTabContent(nextSection);
+
+          // Swipe feedback göster
+          showSwipeFeedback('left');
+        }
+      } else {
+        // Sağa kaydırma - önceki tab
+        if (currentIndex > 0) {
+          const prevTab = allTabs[currentIndex - 1];
+          const prevSection = prevTab.getAttribute('data-section');
+          showMobileTabContent(prevSection);
+
+          // Swipe feedback göster
+          showSwipeFeedback('right');
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Swipe feedback animasyonu gösterir
+ */
+function showSwipeFeedback(direction) {
+  const feedback = document.createElement('div');
+  feedback.className = `swipe-feedback swipe-${direction}`;
+  feedback.innerHTML = direction === 'left' ? '←' : '→';
+
+  document.body.appendChild(feedback);
+
+  // Animasyon bitince kaldır
+  setTimeout(() => {
+    feedback.remove();
+  }, 300);
+}
 
 // ====== LOG SİSTEMİ ======
 async function logActivity(action, category, details = {}) {
@@ -1194,6 +1607,14 @@ function refreshMenusBasedOnRole() {
 
   // Mobil cihazlar için purchasing kullanıcıları için özel optimizasyon
   optimizeMobileMenuForRole();
+
+  // Mobil üst tab bar sistemini başlat (purchasing ve admin için)
+  if (isMobileDevice() && (currentUserRole === 'purchasing' || currentUserRole === 'admin')) {
+    initMobilePurchasingTabs();
+    initPullToRefresh();
+    initSwipeGestures();
+    console.log('✅ Mobil üst tab bar sistemi aktif');
+  }
 }
 
 // ====== NAVİGASYON ======

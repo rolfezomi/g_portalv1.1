@@ -4674,3 +4674,312 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     font-size: 18px !important;
   }
 }
+
+/* =====================================================
+   MOBİL ÜST TAB BAR SİSTEMİ (PURCHASING & ADMIN)
+   ===================================================== */
+
+/* Mobil Tab Bar Container */
+.mobile-top-tabs {
+  display: none; /* Varsayılan olarak gizli, mobilde görünür */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Tab Container - Scroll edilebilir */
+.mobile-tabs-scroll {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.mobile-tabs-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* Individual Tab Item */
+.mobile-tab-item {
+  flex: 0 0 auto;
+  min-width: 120px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tab Icon */
+.mobile-tab-icon {
+  font-size: 22px;
+  transition: transform 0.3s ease;
+}
+
+/* Tab Label */
+.mobile-tab-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+/* Active Tab State */
+.mobile-tab-item.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.mobile-tab-item.active .mobile-tab-icon {
+  transform: scale(1.1);
+}
+
+.mobile-tab-item.active .mobile-tab-label {
+  font-weight: 700;
+}
+
+/* Active Indicator (alt çizgi) */
+.mobile-tab-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 60%;
+  height: 3px;
+  background: #ffffff;
+  border-radius: 3px 3px 0 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-tab-item.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* Hover Effect (touch cihazlarda çalışmaz ama desktop'ta güzel) */
+.mobile-tab-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Content Area - Tab bar için padding */
+body.mobile-tabs-active main {
+  padding-top: 56px;
+}
+
+body.mobile-tabs-active .toolbar {
+  margin-top: 56px;
+}
+
+/* Pull to Refresh Indicator */
+.pull-refresh-indicator {
+  position: fixed;
+  top: 56px; /* Tab bar altında */
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.pull-refresh-indicator.pulling {
+  transform: translateX(-50%) translateY(10px);
+}
+
+.pull-refresh-indicator.refreshing {
+  transform: translateX(-50%) translateY(10px);
+}
+
+.pull-refresh-indicator svg {
+  width: 24px;
+  height: 24px;
+  color: #1976d2;
+  animation: spin 1s linear infinite;
+}
+
+.pull-refresh-indicator.pulling svg {
+  animation: none;
+  transform: rotate(var(--pull-rotation, 0deg));
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Swipe Feedback Animation */
+.swipe-feedback {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+  opacity: 0;
+}
+
+.swipe-feedback.active {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+/* Admin Extended Tabs - More tabs için scroll indicator */
+.mobile-tabs-scroll-indicator {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.8) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.mobile-tabs-scroll:not(.at-end) ~ .mobile-tabs-scroll-indicator {
+  opacity: 1;
+}
+
+/* Mobilde menüyü gizle */
+@media (max-width: 768px) {
+  body.mobile-tabs-active .menu {
+    display: none !important;
+  }
+
+  body.mobile-tabs-active .menu-toggle {
+    display: none !important;
+  }
+
+  .mobile-top-tabs {
+    display: block;
+  }
+
+  /* Alt mobile tabs'ı gizle (üstte tab bar var) */
+  body.mobile-tabs-active .mobile-tabs {
+    display: none !important;
+  }
+
+  /* Main content full width */
+  body.mobile-tabs-active main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* Toolbar optimizasyonu */
+  body.mobile-tabs-active .toolbar {
+    padding: 12px 15px;
+  }
+
+  body.mobile-tabs-active .toolbar h2 {
+    font-size: 18px;
+  }
+
+  /* Dosya yükleme butonunu gizle */
+  body.mobile-tabs-active #upload-btn,
+  body.mobile-tabs-active button[onclick*="openFileUpload"],
+  body.mobile-tabs-active .btn-upload {
+    display: none !important;
+  }
+
+  /* Tablolar için horizontal scroll optimizasyonu */
+  body.mobile-tabs-active .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Pull to refresh için üst boşluk */
+  body.mobile-tabs-active main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Extra small mobil cihazlar */
+@media (max-width: 400px) {
+  .mobile-tab-item {
+    min-width: 100px;
+    padding: 8px 12px;
+  }
+
+  .mobile-tab-icon {
+    font-size: 20px;
+  }
+
+  .mobile-tab-label {
+    font-size: 10px;
+  }
+
+  .mobile-top-tabs {
+    height: 52px;
+  }
+
+  body.mobile-tabs-active main {
+    padding-top: 52px;
+  }
+}
+
+/* Landscape orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-top-tabs {
+    height: 48px;
+  }
+
+  .mobile-tab-item {
+    flex-direction: row;
+    gap: 8px;
+    padding: 4px 12px;
+  }
+
+  .mobile-tab-icon {
+    font-size: 18px;
+  }
+
+  .mobile-tab-label {
+    font-size: 12px;
+  }
+
+  body.mobile-tabs-active main {
+    padding-top: 48px;
+  }
+}
