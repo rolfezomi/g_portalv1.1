@@ -676,296 +676,69 @@
   color: #666;
 }
 
-/* Responsive - Mobil Optimizasyonu */
+/* Responsive - Mobil Optimizasyonu - BASİT GÖRÜNÜM */
 @media (max-width: 768px) {
-  /* Mobil tabs aktifken padding ayarı */
+  /* Mobil content */
   body.mobile-tabs-active #revision-analytics-content {
     padding: 10px !important;
-    margin-top: 56px; /* Üst tab bar için boşluk */
+    padding-top: 70px !important; /* Üst tab bar için */
   }
 
-  body.mobile-tabs-active .toolbar {
-    margin-top: 56px; /* Üst tab bar için boşluk */
-    padding: 12px 10px;
+  /* KPI Kartları - SADECE BUNLAR GÖSTER */
+  body.mobile-tabs-active .revision-kpi-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-bottom: 15px !important;
   }
 
-  body.mobile-tabs-active .toolbar h2 {
-    font-size: 18px;
+  body.mobile-tabs-active .kpi-card {
+    padding: 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+    background: white !important;
+    border-left: 4px solid #667eea !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
   }
 
-  /* KPI Kartları - Mobil */
-  .revision-kpi-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
+  body.mobile-tabs-active .kpi-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 20px !important;
+    flex-shrink: 0 !important;
   }
 
-  .kpi-card {
-    padding: 16px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.12);
-    border: 2px solid transparent;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  body.mobile-tabs-active .kpi-content {
+    flex: 1 !important;
   }
 
-  .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-    border-color: #667eea;
+  body.mobile-tabs-active .kpi-label {
+    font-size: 11px !important;
+    color: #666 !important;
+    margin-bottom: 4px !important;
   }
 
-  .kpi-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 22px;
+  body.mobile-tabs-active .kpi-value {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #333 !important;
   }
 
-  .kpi-value {
-    font-size: 24px;
-  }
-
-  .kpi-label {
-    font-size: 12px;
-  }
-
-  /* Tab Navigasyon - Mobil */
-  .revision-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    gap: 6px;
-    margin-bottom: 16px;
-    padding: 0 0 8px 0;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  .revision-tabs::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .revision-tabs::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 2px;
-  }
-
-  .revision-tabs::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 2px;
-  }
-
-  .revision-tab {
-    white-space: nowrap;
-    padding: 10px 16px;
-    font-size: 13px;
-    border-radius: 8px;
-    background: #f5f5f5;
-  }
-
-  .revision-tab.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-bottom-color: transparent;
-  }
-
-  /* Tab İçerik */
-  #revision-tab-content {
-    padding: 16px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-
-  /* TABLO YERİNE CARD LAYOUT - MOBİL */
-  .changes-table-wrapper {
-    overflow: visible;
-  }
-
-  .changes-table {
-    display: none; /* Mobilde tablo gizle */
-  }
-
-  /* Card-based layout için container */
-  .changes-table-wrapper::after {
-    content: attr(data-empty);
-    display: none;
-  }
-
-  /* Timeline - Mobil */
-  .timeline-day {
-    flex-direction: column;
-    margin-bottom: 20px;
-  }
-
-  .timeline-date {
-    width: 100%;
-    margin-bottom: 12px;
-  }
-
-  .date-bubble {
-    padding: 6px 12px;
-    font-size: 12px;
-    display: inline-block;
-    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
-  }
-
-  .timeline-events {
-    border-left: none;
-    padding-left: 0;
-  }
-
-  .timeline-event {
-    margin-bottom: 16px;
-    padding: 14px;
+  /* SADECE BİLGİ MESAJI */
+  body.mobile-tabs-active #revision-analytics-content::after {
+    content: 'Detaylı revizyon analizlerini görüntülemek için masaüstü sürümünü kullanın.';
+    display: block;
+    padding: 20px;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 8px;
     border-left: 4px solid #667eea;
-  }
-
-  .timeline-event::before {
-    display: none;
-  }
-
-  .timeline-event.new {
-    border-left-color: #4caf50;
-  }
-
-  .event-content {
-    background: transparent;
-    padding: 0;
-  }
-
-  .event-title {
+    color: #666;
+    text-align: center;
     font-size: 14px;
-    margin-bottom: 8px;
-  }
-
-  .event-description {
-    font-size: 12px;
-  }
-
-  .event-time {
-    font-size: 11px;
-  }
-
-  /* Time Travel - Mobil */
-  .time-travel-selector {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 16px;
-    gap: 12px;
-  }
-
-  .time-travel-selector label {
-    font-size: 13px;
-  }
-
-  .time-travel-selector input[type="date"] {
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
-    border-radius: 8px;
-    border: 2px solid #e0e0e0;
-  }
-
-  .time-travel-selector input[type="date"]:focus {
-    border-color: #667eea;
-    outline: none;
-  }
-
-  /* Modal - Mobil */
-  .revision-modal {
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-    margin: 0;
-  }
-
-  .revision-modal-overlay {
-    padding: 0;
-  }
-
-  .revision-modal-header {
-    padding: 16px;
-    position: sticky;
-    top: 0;
-    background: white;
-    z-index: 100;
-  }
-
-  .revision-modal-header h3 {
-    font-size: 16px;
-  }
-
-  .revision-modal-body {
-    padding: 16px;
-  }
-
-  /* History Items - Mobil */
-  .history-item {
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .history-marker {
-    width: 24px;
-  }
-
-  .marker-dot {
-    width: 12px;
-    height: 12px;
-    border: 2px solid white;
-  }
-
-  .history-content {
-    padding: 12px;
-    border-radius: 10px;
-  }
-
-  .history-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .history-date {
-    font-size: 12px;
-  }
-
-  .revision-badge {
-    font-size: 11px;
-    padding: 3px 8px;
-  }
-
-  .detail-row {
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 0;
-  }
-
-  .detail-label {
-    font-size: 12px;
-    color: #999;
-  }
-
-  .detail-value {
-    font-size: 14px;
-  }
-
-  .change-detail {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .change-field {
-    min-width: auto;
-    font-size: 12px;
-  }
-
-  .change-from,
-  .change-to {
-    font-size: 12px;
-    padding: 3px 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-top: 15px;
   }
 }
 

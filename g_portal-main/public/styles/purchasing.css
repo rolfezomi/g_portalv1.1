@@ -1140,169 +1140,62 @@ body.admin-user #clear-purchasing-db-btn {
 }
 
 /* =====================================================
-   MOBİL OPTİMİZASYONU (PURCHASING)
+   MOBİL OPTİMİZASYONU (PURCHASING) - BASİT GÖRÜNÜM
    ===================================================== */
 
 @media (max-width: 768px) {
-  /* Mobil tabs aktifken */
+  /* Mobil content */
   body.mobile-tabs-active #purchasing-content {
     padding: 10px !important;
+    padding-top: 70px !important; /* Üst tab bar için */
   }
 
-  body.mobile-tabs-active .toolbar {
-    margin-top: 56px;
-    padding: 12px 10px;
-  }
-
-  body.mobile-tabs-active .toolbar h2 {
-    font-size: 16px;
-  }
-
-  /* Filtre alanı */
+  /* Filtre - Basit */
   body.mobile-tabs-active #purchasing-filters {
-    padding: 12px;
-    gap: 10px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    background: white !important;
+    border-radius: 8px !important;
+    margin-bottom: 10px !important;
   }
 
   body.mobile-tabs-active #purchasing-filters input,
   body.mobile-tabs-active #purchasing-filters select {
-    font-size: 14px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 2px solid #e0e0e0;
+    width: 100% !important;
+    font-size: 14px !important;
+    padding: 10px !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 6px !important;
   }
 
   body.mobile-tabs-active #purchasing-filters input:focus,
   body.mobile-tabs-active #purchasing-filters select:focus {
-    border-color: #667eea;
-    outline: none;
+    border-color: #667eea !important;
+    outline: none !important;
   }
 
-  /* Purchasing tablo - mobilde card layout */
+  /* Sadece özet bilgi göster */
+  body.mobile-tabs-active .table-controls {
+    display: none !important;
+  }
+
   body.mobile-tabs-active .table-wrapper {
-    overflow: visible;
-    border-radius: 0;
-    box-shadow: none;
+    display: none !important;
   }
 
-  body.mobile-tabs-active .purchasing-table {
-    display: none; /* Mobilde tablo gizle */
-  }
-
-  /* Card-based layout için placeholder (JavaScript ile doldurulacak) */
-  body.mobile-tabs-active .table-wrapper::after {
-    content: '';
+  /* Basit özet kartı */
+  body.mobile-tabs-active #purchasing-content::after {
+    content: 'Satın alma kayıtlarını görüntülemek için masaüstü sürümünü kullanın.';
     display: block;
-  }
-
-  /* Eğer tabloda tbody varsa, her row için card oluştur */
-  body.mobile-tabs-active .purchasing-table tbody tr {
-    display: block;
+    padding: 20px;
     background: white;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 8px;
     border-left: 4px solid #667eea;
-  }
-
-  body.mobile-tabs-active .purchasing-table tbody tr:hover {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-  }
-
-  body.mobile-tabs-active .purchasing-table thead {
-    display: none;
-  }
-
-  body.mobile-tabs-active .purchasing-table tbody td {
-    display: block;
-    text-align: left !important;
-    padding: 8px 0;
-    border: none;
-  }
-
-  body.mobile-tabs-active .purchasing-table tbody td::before {
-    content: attr(data-label);
-    font-weight: 600;
     color: #666;
-    display: block;
-    font-size: 11px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-    letter-spacing: 0.3px;
-  }
-
-  /* Modal optimizasyonu */
-  body.mobile-tabs-active .modal-content {
-    width: 95%;
-    max-width: 95%;
-    margin: 20px auto;
-    border-radius: 12px;
-  }
-
-  body.mobile-tabs-active .modal-header {
-    padding: 14px 16px;
-  }
-
-  body.mobile-tabs-active .modal-header h3 {
-    font-size: 16px;
-  }
-
-  body.mobile-tabs-active .modal-body {
-    padding: 16px;
-  }
-
-  body.mobile-tabs-active .modal-footer {
-    padding: 12px 16px;
-    gap: 8px;
-  }
-
-  body.mobile-tabs-active .modal-footer .btn {
-    padding: 10px 16px;
+    text-align: center;
     font-size: 14px;
-  }
-
-  /* Form elemanları */
-  body.mobile-tabs-active .form-group label {
-    font-size: 13px;
-  }
-
-  body.mobile-tabs-active .form-group input,
-  body.mobile-tabs-active .form-group select,
-  body.mobile-tabs-active .form-group textarea {
-    font-size: 14px;
-    padding: 10px 12px;
-    border-radius: 8px;
-  }
-
-  /* Touch-friendly butonlar */
-  body.mobile-tabs-active .btn {
-    min-height: 44px;
-    padding: 10px 16px;
-    font-size: 14px;
-    border-radius: 8px;
-    touch-action: manipulation;
-  }
-
-  body.mobile-tabs-active .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  }
-
-  body.mobile-tabs-active .btn-primary:active {
-    transform: scale(0.96);
-  }
-
-  body.mobile-tabs-active .btn-secondary {
-    background: white;
-    border: 2px solid #e0e0e0;
-    color: #666;
-  }
-
-  body.mobile-tabs-active .btn-secondary:active {
-    background: #f5f5f5;
-    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
 }

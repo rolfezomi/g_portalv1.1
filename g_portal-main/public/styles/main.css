@@ -5017,66 +5017,138 @@ body.mobile-tabs-active .toolbar {
     display: none;
   }
 
-  /* ===== DESKTOP ÖZELLİKLERİ MOBİLDE GİZLE ===== */
+  /* ===== RADKAL MOBİL SADELEŞTIRME ===== */
 
-  /* Dosya yükleme ve Excel işlemleri */
+  /* TOOLBAR - Sadece başlık ve yenile */
+  body.mobile-tabs-active .toolbar {
+    padding: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  body.mobile-tabs-active .toolbar h2 {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  body.mobile-tabs-active .toolbar .right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* TÜM BUTONLARI GİZLE - SADECE YENİLE KALSIN */
+  body.mobile-tabs-active .toolbar .btn:not([onclick*="refresh"]):not([onclick*="Refresh"]):not(.btn-secondary) {
+    display: none !important;
+  }
+
+  /* DOSYA YÜKLEME VE TABLO ÖZELLİKLERİ - TAMAMEN GİZLE */
   body.mobile-tabs-active button[onclick*="upload"],
   body.mobile-tabs-active button[onclick*="Upload"],
-  body.mobile-tabs-active button[onclick*="UPLOAD"],
   body.mobile-tabs-active button[onclick*="excel"],
   body.mobile-tabs-active button[onclick*="Excel"],
-  body.mobile-tabs-active button[onclick*="EXCEL"],
   body.mobile-tabs-active button[onclick*="import"],
   body.mobile-tabs-active button[onclick*="Import"],
   body.mobile-tabs-active button[onclick*="export"],
   body.mobile-tabs-active button[onclick*="Export"],
+  body.mobile-tabs-active button[onclick*="add"],
+  body.mobile-tabs-active button[onclick*="Add"],
+  body.mobile-tabs-active button[onclick*="ekle"],
+  body.mobile-tabs-active button[onclick*="Ekle"],
   body.mobile-tabs-active .upload-btn,
   body.mobile-tabs-active .btn-upload,
+  body.mobile-tabs-active .btn-import,
+  body.mobile-tabs-active .btn-export,
+  body.mobile-tabs-active .btn-add,
   body.mobile-tabs-active #upload-btn,
   body.mobile-tabs-active input[type="file"],
   body.mobile-tabs-active label[for*="upload"],
   body.mobile-tabs-active .file-upload,
-  body.mobile-tabs-active .btn-import,
-  body.mobile-tabs-active .btn-export {
-    display: none !important;
-  }
-
-  /* Kolon düzenleme ve tablo özellikleri */
   body.mobile-tabs-active .column-toggle-btn,
   body.mobile-tabs-active .column-toggle-panel,
   body.mobile-tabs-active .column-toggle-backdrop,
   body.mobile-tabs-active .column-resizer,
   body.mobile-tabs-active .top-scrollbar-container,
-  body.mobile-tabs-active .resize-tooltip {
+  body.mobile-tabs-active .resize-tooltip,
+  body.mobile-tabs-active .table-controls-right {
     display: none !important;
   }
 
-  /* Table controls sadece yenile butonu kalsın */
-  body.mobile-tabs-active .table-controls-right > *:not(button[onclick*="refresh"]):not(button[onclick*="Refresh"]) {
+  /* FİLTRELER - BASİTLEŞTİRİLMİŞ */
+  body.mobile-tabs-active .filters,
+  body.mobile-tabs-active #purchasing-filters,
+  body.mobile-tabs-active .revision-tabs {
+    padding: 10px !important;
+    gap: 8px !important;
+    background: white !important;
+    border-radius: 8px !important;
+    margin-bottom: 10px !important;
+  }
+
+  body.mobile-tabs-active .filters input,
+  body.mobile-tabs-active .filters select,
+  body.mobile-tabs-active #purchasing-filters input,
+  body.mobile-tabs-active #purchasing-filters select {
+    width: 100% !important;
+    font-size: 14px !important;
+    padding: 10px !important;
+    border-radius: 6px !important;
+    border: 2px solid #e0e0e0 !important;
+  }
+
+  /* REVİZYON ANALİZ - ALT TABLARI GİZLE, SADECE ÖZETİ GÖSTER */
+  body.mobile-tabs-active .revision-tabs {
+    display: none !important; /* Alt tab'ları tamamen gizle */
+  }
+
+  body.mobile-tabs-active #revision-tab-content {
+    padding: 10px !important;
+  }
+
+  /* Sadece KPI kartları göster, detay tabloları gizle */
+  body.mobile-tabs-active .changes-table-wrapper,
+  body.mobile-tabs-active .timeline-container,
+  body.mobile-tabs-active .time-travel-container,
+  body.mobile-tabs-active .top-revised-container,
+  body.mobile-tabs-active .payment-calendar-container {
     display: none !important;
   }
 
-  /* Mobil toolbar düzenlemeleri */
-  body.mobile-tabs-active .toolbar {
-    padding: 12px 10px;
-    flex-wrap: wrap;
+  /* KPI kartları basit görünüm */
+  body.mobile-tabs-active .revision-kpi-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 
-  body.mobile-tabs-active .toolbar h2 {
-    font-size: 16px;
-    flex: 1 1 100%;
-    margin-bottom: 8px;
+  body.mobile-tabs-active .kpi-card {
+    padding: 12px !important;
+    border-radius: 8px !important;
+    background: white !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+    border-left: 4px solid #667eea !important;
   }
 
-  body.mobile-tabs-active .toolbar .right {
-    gap: 6px;
-    flex: 1 1 100%;
-    justify-content: flex-start;
+  /* TABLOLAR - TAMAMEN GİZLE (card layout JavaScript ile yapılacak) */
+  body.mobile-tabs-active .table-wrapper,
+  body.mobile-tabs-active table,
+  body.mobile-tabs-active .purchasing-table,
+  body.mobile-tabs-active .changes-table {
+    display: none !important;
   }
 
-  body.mobile-tabs-active .toolbar .btn {
-    padding: 8px 12px;
+  /* Basit bilgi mesajı */
+  body.mobile-tabs-active #purchasing-content::before,
+  body.mobile-tabs-active #revision-analytics-content::before {
+    content: '📱 Mobil görünüm: Sadece özet bilgiler gösterilmektedir. Detaylı işlemler için masaüstü sürümünü kullanın.';
+    display: block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
     font-size: 13px;
-    flex: 0 0 auto;
+    text-align: center;
+    line-height: 1.4;
   }
 }
