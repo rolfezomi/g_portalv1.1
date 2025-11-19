@@ -1165,10 +1165,25 @@ function showMobileTabContent(sectionName) {
   const activeTab = document.querySelector(`.mobile-tab-item[data-section="${sectionName}"]`);
   if (activeTab) {
     activeTab.classList.add('active');
+
+    // Aktif tab'ı görünür yap (smooth scroll)
+    setTimeout(() => {
+      activeTab.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }, 100);
   }
 
   // İlgili section'ı göster
   showSection(sectionName);
+
+  // Sidebar menüde de ilgili linki aktif yap
+  const menuLink = document.querySelector(`.menu a[data-section-link="${sectionName}"]`);
+  if (menuLink) {
+    setActive(menuLink);
+  }
 
   // Log activity
   logActivity('mobile_tab_switch', 'navigation', { section: sectionName });
