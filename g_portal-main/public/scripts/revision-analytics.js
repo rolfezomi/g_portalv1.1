@@ -2010,7 +2010,8 @@ function renderSupplierBalanceTab() {
     if (!order.tedarikci_tanimi) return;
 
     const supplier = order.tedarikci_tanimi;
-    const tutar = parseFloat(order.tutar_tl) || 0;
+    const tutarTL = parseFloat(order.tutar_tl) || 0; // TL cinsinden (genel toplam için)
+    const tutarOriginal = parseFloat(order.para_birimi_tutar) || tutarTL; // Orijinal para biriminde
     const miktar = parseFloat(order.miktar) || 0;
     const gelenMiktar = parseFloat(order.gelen_miktar) || 0;
     const paraBirimi = order.para_birimi || 'TRY';
@@ -2028,9 +2029,9 @@ function renderSupplierBalanceTab() {
     }
 
     supplierBalances[supplier].totalOrders++;
-    supplierBalances[supplier].totalAmount += tutar;
+    supplierBalances[supplier].totalAmount += tutarTL;
 
-    // Para birimi bazında topla
+    // Para birimi bazında topla - ORİJİNAL PARA BİRİMİNDEKİ TUTARI KULLAN
     if (!supplierBalances[supplier].currencies[paraBirimi]) {
       supplierBalances[supplier].currencies[paraBirimi] = {
         total: 0,
@@ -2038,19 +2039,19 @@ function renderSupplierBalanceTab() {
         open: 0
       };
     }
-    supplierBalances[supplier].currencies[paraBirimi].total += tutar;
+    supplierBalances[supplier].currencies[paraBirimi].total += tutarOriginal;
 
     // Kapanan vs Açık sipariş kontrolü
     if (miktar > 0 && gelenMiktar >= miktar) {
       // Kapanan sipariş
       supplierBalances[supplier].closedOrders++;
-      supplierBalances[supplier].closedAmount += tutar;
-      supplierBalances[supplier].currencies[paraBirimi].closed += tutar;
+      supplierBalances[supplier].closedAmount += tutarTL;
+      supplierBalances[supplier].currencies[paraBirimi].closed += tutarOriginal;
     } else {
       // Açık sipariş
       supplierBalances[supplier].openOrders++;
-      supplierBalances[supplier].openAmount += tutar;
-      supplierBalances[supplier].currencies[paraBirimi].open += tutar;
+      supplierBalances[supplier].openAmount += tutarTL;
+      supplierBalances[supplier].currencies[paraBirimi].open += tutarOriginal;
     }
   });
 
