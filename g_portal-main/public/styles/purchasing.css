@@ -1140,33 +1140,35 @@ body.admin-user #clear-purchasing-db-btn {
 }
 
 /* =====================================================
-   MOBİL OPTİMİZASYONU (PURCHASING) - BASİT GÖRÜNÜM
+   MOBİL OPTİMİZASYONU (PURCHASING) - KULLANICI DOSTU
    ===================================================== */
 
 @media (max-width: 768px) {
-  /* Mobil content - main zaten tab bar için 56px padding'e sahip */
+  /* Mobil content */
   body.mobile-tabs-active #purchasing-content {
     padding: 10px !important;
   }
 
-  /* Filtre - Basit */
+  /* Filtre */
   body.mobile-tabs-active #purchasing-filters {
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
-    padding: 10px !important;
+    gap: 10px !important;
+    padding: 12px !important;
     background: white !important;
     border-radius: 8px !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 15px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
   }
 
   body.mobile-tabs-active #purchasing-filters input,
   body.mobile-tabs-active #purchasing-filters select {
     width: 100% !important;
     font-size: 14px !important;
-    padding: 10px !important;
+    padding: 12px !important;
     border: 2px solid #e0e0e0 !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
   }
 
   body.mobile-tabs-active #purchasing-filters input:focus,
@@ -1175,26 +1177,30 @@ body.admin-user #clear-purchasing-db-btn {
     outline: none !important;
   }
 
-  /* Sadece özet bilgi göster */
+  /* Tablo kontrolleri - sadece sol taraf göster */
+  body.mobile-tabs-active .table-controls-right {
+    display: none !important;
+  }
+
   body.mobile-tabs-active .table-controls {
-    display: none !important;
+    margin-bottom: 15px !important;
   }
 
+  /* Tablo - Horizontal scroll */
   body.mobile-tabs-active .table-wrapper {
-    display: none !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
   }
 
-  /* Basit özet kartı */
-  body.mobile-tabs-active #purchasing-content::after {
-    content: 'Satın alma kayıtlarını görüntülemek için masaüstü sürümünü kullanın.';
-    display: block;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    border-left: 4px solid #667eea;
-    color: #666;
-    text-align: center;
-    font-size: 14px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  body.mobile-tabs-active .purchasing-table {
+    font-size: 13px !important;
+  }
+
+  body.mobile-tabs-active .purchasing-table th,
+  body.mobile-tabs-active .purchasing-table td {
+    padding: 10px 8px !important;
+    white-space: nowrap !important;
   }
 }
