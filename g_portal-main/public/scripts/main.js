@@ -1010,13 +1010,32 @@ function initMobilePurchasingTabs() {
 
   console.log('📱 Mobil üst tab bar oluşturuluyor, rol:', currentUserRole);
 
-  // Mevcut tab bar'ı kaldır (varsa)
-  const existingTabBar = document.querySelector('.mobile-top-tabs');
+  // Mevcut tab bar'ı kontrol et (HTML'deki statik tab bar)
+  let existingTabBar = document.querySelector('.mobile-top-tabs');
   if (existingTabBar) {
-    existingTabBar.remove();
+    console.log('✅ Statik tab bar bulundu, kullanılıyor');
+    // Body'e mobil tabs aktif class'ı ekle
+    document.body.classList.add('mobile-tabs-active');
+
+    // İlk tab'ı aktif yap
+    const firstTab = existingTabBar.querySelector('.mobile-tab-item');
+    if (firstTab) {
+      const firstSection = firstTab.getAttribute('data-section');
+      showMobileTabContent(firstSection);
+    }
+
+    // Dosya yükleme butonunu gizle
+    const uploadButtons = document.querySelectorAll('#upload-btn, button[onclick*="openFileUpload"], .btn-upload');
+    uploadButtons.forEach(btn => {
+      btn.style.display = 'none';
+    });
+
+    console.log('✅ Statik mobil tab bar aktif edildi');
+    return;
   }
 
-  // Tab bar container oluştur
+  // Statik tab bar yoksa, yeni oluştur
+  console.log('⚠️ Statik tab bar bulunamadı, dinamik oluşturuluyor');
   const tabBar = document.createElement('div');
   tabBar.className = 'mobile-top-tabs';
 
