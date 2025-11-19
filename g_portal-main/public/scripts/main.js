@@ -981,9 +981,13 @@ window.addEventListener('resize', () => {
  * Purchasing kullanıcıları için 2 tab, Admin için genişletilmiş tab bar
  */
 function initMobilePurchasingTabs() {
+  console.log('🚀 initMobilePurchasingTabs fonksiyonu çağrıldı');
+
   const isMobile = isMobileDevice();
+  console.log('📱 isMobile:', isMobile, 'window.innerWidth:', window.innerWidth);
 
   if (!isMobile) {
+    console.log('⚠️ Mobil cihaz değil, tab bar kaldırılıyor');
     // Mobil değilse tab bar'ı kaldır
     const existingTabBar = document.querySelector('.mobile-top-tabs');
     if (existingTabBar) {
@@ -996,8 +1000,11 @@ function initMobilePurchasingTabs() {
   const isPurchasingUser = currentUserRole === 'purchasing';
   const isAdminUser = currentUserRole === 'admin';
 
+  console.log('👤 Kullanıcı rolleri:', { isPurchasingUser, isAdminUser, currentUserRole });
+
   // Sadece purchasing veya admin kullanıcıları için tab bar göster
   if (!isPurchasingUser && !isAdminUser) {
+    console.log('⚠️ Rol uygun değil (purchasing veya admin gerekli)');
     return;
   }
 
@@ -1624,12 +1631,25 @@ function refreshMenusBasedOnRole() {
   optimizeMobileMenuForRole();
 
   // Mobil üst tab bar sistemini başlat (purchasing ve admin için)
+  console.log('🔍 Mobil tespit:', {
+    isMobile: isMobileDevice(),
+    userAgent: navigator.userAgent,
+    windowWidth: window.innerWidth,
+    currentRole: currentUserRole
+  });
+
   if (isMobileDevice() && (currentUserRole === 'purchasing' || currentUserRole === 'admin')) {
+    console.log('📱 Mobil tab bar oluşturuluyor...');
     initMobilePurchasingTabs();
     initPullToRefresh();
     // Swipe özelliği kullanıcı talebi ile devre dışı
     // initSwipeGestures();
     console.log('✅ Mobil üst tab bar sistemi aktif');
+  } else {
+    console.log('⚠️ Mobil tab bar oluşturulmadı. Sebep:', {
+      isMobile: isMobileDevice(),
+      isPurchasingOrAdmin: currentUserRole === 'purchasing' || currentUserRole === 'admin'
+    });
   }
 }
 
