@@ -4679,9 +4679,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
    MOBİL ÜST TAB BAR SİSTEMİ (PURCHASING & ADMIN)
    ===================================================== */
 
-/* Mobil Tab Bar Container - MOBİLDE HER ZAMAN GÖSTER */
+/* Mobil Tab Bar Container - HER ZAMAN GÖSTER */
 .mobile-top-tabs {
-  display: none; /* Masaüstünde gizli */
+  display: block !important; /* HER ZAMAN GÖSTER */
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -4697,15 +4697,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   transform: translateZ(0);
 }
 
-/* MOBİLDE GÖSTER */
-@media (max-width: 768px) {
+/* Main content için padding */
+#portal-screen main {
+  padding-top: 56px !important;
+}
+
+/* Masaüstünde gizle */
+@media (min-width: 769px) {
   .mobile-top-tabs {
-    display: block !important;
+    display: none !important;
   }
 
-  /* Main content için padding ekle */
   #portal-screen main {
-    padding-top: 56px !important;
+    padding-top: 0 !important;
   }
 }
 
