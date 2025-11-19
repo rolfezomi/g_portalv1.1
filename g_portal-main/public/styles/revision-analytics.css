@@ -678,10 +678,9 @@
 
 /* Responsive - Mobil Optimizasyonu - BASİT GÖRÜNÜM */
 @media (max-width: 768px) {
-  /* Mobil content */
+  /* Mobil content - main zaten tab bar için 56px padding'e sahip */
   body.mobile-tabs-active #revision-analytics-content {
     padding: 10px !important;
-    padding-top: 70px !important; /* Üst tab bar için */
   }
 
   /* KPI Kartları - SADECE BUNLAR GÖSTER */
