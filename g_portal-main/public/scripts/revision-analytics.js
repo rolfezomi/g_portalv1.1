@@ -1396,6 +1396,30 @@ function clearPaymentFilters() {
 // =====================================================
 
 /**
+ * Akıllı fiyat formatlama - küçük değerler için daha fazla ondalık
+ */
+function formatPrice(price, locale = 'tr-TR') {
+  const absPrice = Math.abs(price);
+
+  // Fiyat büyüklüğüne göre ondalık basamak sayısı belirle
+  let fractionDigits;
+  if (absPrice >= 1) {
+    fractionDigits = 2; // 1.23, 123.45
+  } else if (absPrice >= 0.01) {
+    fractionDigits = 4; // 0.0123, 0.9876
+  } else if (absPrice >= 0.0001) {
+    fractionDigits = 6; // 0.001234, 0.009876
+  } else {
+    fractionDigits = 8; // Çok küçük değerler
+  }
+
+  return price.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: fractionDigits
+  });
+}
+
+/**
  * Fiyat Trend Tab
  */
 function renderPriceTrendTab() {
@@ -1428,27 +1452,43 @@ function renderPriceTrendTab() {
       }
 
       // Para birimi normalizasyonu - USD'ye çevir
-      const paraBirimi = o.para_birimi || 'TRY';
-      const kurDegeri = parseFloat(o.kur_degeri) || 1;
-      let normalizedFiyat = birimFiyat;
-      let displayCurrency = paraBirimi;
+      const paraBirimi = (o.para_birimi || 'TRY').toUpperCase();
+      // TL ve TRY aynı şey
+      const normalizedCurrency = paraBirimi === 'TL' ? 'TRY' : paraBirimi;
 
-      if (paraBirimi === 'USD') {
+      let kurDegeri = parseFloat(o.kur_degeri) || 1;
+
+      // TL/TRY için kur kontrolü: Eğer kur 1 ise veya çok düşükse, gerçekçi bir değer kullan
+      if ((normalizedCurrency === 'TRY') && kurDegeri < 10) {
+        // 2024-2025 için ortalama TL/USD kuru ~34
+        kurDegeri = 34;
+        console.warn(`⚠️ Sipariş ${o.siparis_no}: TL kur değeri düşük (${o.kur_degeri}), varsayılan 34 kullanılıyor`);
+      }
+
+      let normalizedFiyat = birimFiyat;
+      let displayCurrency = normalizedCurrency;
+      let conversionNote = '';
+
+      if (normalizedCurrency === 'USD') {
         // Zaten USD
         normalizedFiyat = birimFiyat;
         displayCurrency = 'USD';
-      } else if (paraBirimi === 'TRY' && kurDegeri > 1) {
+        conversionNote = 'Zaten USD';
+      } else if (normalizedCurrency === 'TRY') {
         // TRY → USD (kur ile)
         normalizedFiyat = birimFiyat / kurDegeri;
         displayCurrency = 'USD';
-      } else if (paraBirimi === 'EUR' && kurDegeri > 1) {
+        conversionNote = `TRY→USD: ${birimFiyat.toFixed(2)} / ${kurDegeri.toFixed(2)} = ${normalizedFiyat.toFixed(2)}`;
+      } else if (normalizedCurrency === 'EUR' && kurDegeri > 1) {
         // EUR → USD (EUR/USD ~ 1.1 yaklaşık)
         normalizedFiyat = (birimFiyat / kurDegeri) * 1.1;
         displayCurrency = 'USD';
+        conversionNote = `EUR→USD: (${birimFiyat.toFixed(2)} / ${kurDegeri.toFixed(2)}) * 1.1 = ${normalizedFiyat.toFixed(2)}`;
       } else {
-        // Kur yok, TRY olarak bırak
+        // Diğer para birimleri - olduğu gibi bırak
         normalizedFiyat = birimFiyat;
-        displayCurrency = 'TRY';
+        displayCurrency = normalizedCurrency;
+        conversionNote = `Dönüşüm yok (${normalizedCurrency})`;
       }
 
       return {
@@ -1456,6 +1496,11 @@ function renderPriceTrendTab() {
         birim_fiyat: birimFiyat,
         normalized_fiyat: normalizedFiyat,
         display_currency: displayCurrency,
+        conversion_note: conversionNote,
+        original_para_birimi: o.para_birimi, // Veritabanındaki orijinal para birimi
+        para_birimi: normalizedCurrency, // Normalize edilmiş para birimi (TL→TRY)
+        kur_degeri: kurDegeri, // Kullanılan kur (düzeltilmiş olabilir)
+        original_kur_degeri: o.kur_degeri, // Veritabanındaki orijinal kur
         tarih: new Date(o.siparis_tarihi || o.created_at)
       };
     })
@@ -1484,11 +1529,15 @@ function renderPriceTrendTab() {
     materialInfo[materialTanim].prices.push({
       tarih: order.tarih,
       fiyat: order.normalized_fiyat, // Normalized fiyat kullan
-      original_fiyat: order.birim_fiyat,
+      original_fiyat: order.birim_fiyat, // Orijinal birim fiyat
+      original_currency: order.original_para_birimi || order.para_birimi || 'TRY', // Veritabanındaki para birimi
+      kur_degeri: order.kur_degeri, // Kullanılan kur değeri (düzeltilmiş)
+      original_kur_degeri: order.original_kur_degeri, // Veritabanındaki kur
+      conversion_note: order.conversion_note, // Dönüşüm açıklaması
       siparis_no: order.siparis_no,
       tedarikci: order.tedarikci_tanimi,
-      odeme_kosulu: order.odeme_kosulu || 'Belirtilmemiş',
-      para_birimi: order.display_currency // Display currency
+      odeme_kosulu: order.odeme_kosulu_tanimi || order.odeme_kosulu || 'Belirtilmemiş',
+      para_birimi: order.display_currency // Display currency (normalized to USD)
     });
   });
 
@@ -1602,11 +1651,30 @@ function updatePriceTrendChart() {
   const labels = sortedPrices.map(p => p.tarih.toLocaleDateString('tr-TR'));
   const data = sortedPrices.map(p => p.fiyat);
 
+  // 🔍 DEBUG: Her fiyatın detayını göster
+  console.log('🔍 Fiyat Detayları:');
+  sortedPrices.forEach((p, idx) => {
+    const currSymbol = p.original_currency === 'USD' ? '$' : p.original_currency === 'EUR' ? '€' : '₺';
+    console.log(`  ${idx + 1}. ${p.tarih.toLocaleDateString('tr-TR')} | ${p.tedarikci || 'Bilinmiyor'}`);
+    console.log(`     Orijinal: ${currSymbol}${p.original_fiyat?.toFixed(2) || '?'} (${p.original_currency || '?'}) | Kur: ${p.kur_degeri || 'yok'}`);
+    console.log(`     Normalize: ${displayCurrency === 'USD' ? '$' : displayCurrency === 'EUR' ? '€' : '₺'}${p.fiyat.toFixed(2)} (${displayCurrency}) | ${p.conversion_note || 'Dönüşüm yok'}`);
+    console.log(`     Sipariş: ${p.siparis_no} | Ödeme: ${p.odeme_kosulu}`);
+  });
+
   // İstatistikleri hesapla
   const minPrice = Math.min(...data);
   const maxPrice = Math.max(...data);
   const avgPrice = data.reduce((a, b) => a + b, 0) / data.length;
   const priceChange = ((data[data.length - 1] - data[0]) / data[0]) * 100;
+
+  // 🔍 DEBUG: Hesaplama detayı
+  console.log(`\n📊 İstatistikler:`);
+  console.log(`  Min: ${currencySymbol}${minPrice.toFixed(2)}`);
+  console.log(`  Max: ${currencySymbol}${maxPrice.toFixed(2)}`);
+  console.log(`  Avg: ${currencySymbol}${avgPrice.toFixed(2)}`);
+  console.log(`  İlk Fiyat: ${currencySymbol}${data[0].toFixed(2)} (${sortedPrices[0].tarih.toLocaleDateString('tr-TR')})`);
+  console.log(`  Son Fiyat: ${currencySymbol}${data[data.length - 1].toFixed(2)} (${sortedPrices[sortedPrices.length - 1].tarih.toLocaleDateString('tr-TR')})`);
+  console.log(`  Değişim Hesabı: ((${data[data.length - 1].toFixed(2)} - ${data[0].toFixed(2)}) / ${data[0].toFixed(2)}) * 100 = ${priceChange.toFixed(1)}%`);
 
   // En düşük ve en yüksek fiyat bilgilerini bul (tedarikçi ve tarih ile)
   const minPriceEntry = sortedPrices.find(p => p.fiyat === minPrice);
@@ -1620,19 +1688,19 @@ function updatePriceTrendChart() {
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">En Düşük Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #4caf50; margin-bottom: 5px;">${currencySymbol}${minPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 20px; font-weight: 700; color: #4caf50; margin-bottom: 5px;">${currencySymbol}${formatPrice(minPrice)}</div>
         <div style="font-size: 11px; color: #999;">🏢 ${minPriceEntry.tedarikci || 'Bilinmiyor'}</div>
         <div style="font-size: 11px; color: #999;">📅 ${minPriceEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">En Yüksek Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #f44336; margin-bottom: 5px;">${currencySymbol}${maxPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 20px; font-weight: 700; color: #f44336; margin-bottom: 5px;">${currencySymbol}${formatPrice(maxPrice)}</div>
         <div style="font-size: 11px; color: #999;">🏢 ${maxPriceEntry.tedarikci || 'Bilinmiyor'}</div>
         <div style="font-size: 11px; color: #999;">📅 ${maxPriceEntry.tarih.toLocaleDateString('tr-TR')}</div>
       </div>
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Ortalama Fiyat</div>
-        <div style="font-size: 20px; font-weight: 700; color: #2196f3; margin-bottom: 5px;">${currencySymbol}${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div style="font-size: 20px; font-weight: 700; color: #2196f3; margin-bottom: 5px;">${currencySymbol}${formatPrice(avgPrice)}</div>
         <div style="font-size: 11px; color: #999;">📊 ${sortedPrices.length} sipariş ortalaması</div>
       </div>
       <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid ${priceChange >= 0 ? '#f44336' : '#4caf50'};">
@@ -1685,12 +1753,25 @@ function updatePriceTrendChart() {
               const pointData = sortedPrices[context.dataIndex];
               const currencySymbol = pointData.para_birimi === 'USD' ? '$' :
                                      pointData.para_birimi === 'EUR' ? '€' : '₺';
-              return [
-                `Fiyat: ${currencySymbol}${price.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (${pointData.para_birimi})`,
+              const originalSymbol = pointData.original_currency === 'USD' ? '$' :
+                                     pointData.original_currency === 'EUR' ? '€' : '₺';
+
+              const lines = [
+                `Fiyat: ${currencySymbol}${formatPrice(price)} (${pointData.para_birimi})`,
+              ];
+
+              // Eğer normalize edildiyse orijinal fiyatı da göster
+              if (pointData.original_currency !== pointData.para_birimi) {
+                lines.push(`Orijinal: ${originalSymbol}${formatPrice(pointData.original_fiyat)} (${pointData.original_currency})`);
+              }
+
+              lines.push(
                 `Sipariş: ${pointData.siparis_no}`,
                 `Tedarikçi: ${pointData.tedarikci || 'Bilinmiyor'}`,
                 `Ödeme: ${pointData.odeme_kosulu}`
-              ];
+              );
+
+              return lines;
             }
           }
         }
@@ -1700,7 +1781,7 @@ function updatePriceTrendChart() {
           beginAtZero: false,
           ticks: {
             callback: (value) => {
-              return currencySymbol + value.toLocaleString('tr-TR');
+              return currencySymbol + formatPrice(value);
             }
           }
         }
