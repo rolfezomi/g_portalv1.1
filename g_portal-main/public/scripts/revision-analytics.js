@@ -1807,22 +1807,55 @@ function renderPriceChangesTab() {
       return; // Fiyat hesaplanamıyor
     }
 
+    // Para birimi normalizasyonu (Fiyat Trend ile aynı mantık)
+    const paraBirimi = (order.para_birimi || 'TRY').toUpperCase();
+    const normalizedCurrency = paraBirimi === 'TL' ? 'TRY' : paraBirimi;
+    let kurDegeri = parseFloat(order.kur_degeri) || 1;
+
+    // TL/TRY için kur kontrolü
+    if ((normalizedCurrency === 'TRY') && kurDegeri < 10) {
+      kurDegeri = 34; // 2024-2025 için ortalama kur
+    }
+
+    let normalizedFiyat = birimFiyat;
+    let displayCurrency = normalizedCurrency;
+
+    if (normalizedCurrency === 'USD') {
+      normalizedFiyat = birimFiyat;
+      displayCurrency = 'USD';
+    } else if (normalizedCurrency === 'TRY') {
+      normalizedFiyat = birimFiyat / kurDegeri;
+      displayCurrency = 'USD';
+    } else if (normalizedCurrency === 'EUR' && kurDegeri > 1) {
+      normalizedFiyat = (birimFiyat / kurDegeri) * 1.1;
+      displayCurrency = 'USD';
+    }
+
     const tarih = order.siparis_tarihi || order.created_at;
     if (!tarih) return;
 
     const material = order.malzeme_tanimi || 'Bilinmeyen';
-    if (!materialGroups[material]) materialGroups[material] = [];
-    materialGroups[material].push({
-      fiyat: birimFiyat,
+    if (!materialGroups[material]) {
+      materialGroups[material] = {
+        records: [],
+        currency: displayCurrency // Malzeme için para birimi
+      };
+    }
+    materialGroups[material].records.push({
+      fiyat: normalizedFiyat,
       tarih: new Date(tarih),
       tedarikci: order.tedarikci_tanimi || 'Bilinmiyor'
     });
   });
-  Object.entries(materialGroups).forEach(([material, records]) => {
+  Object.entries(materialGroups).forEach(([material, data]) => {
+    const records = data.records;
+    const currency = data.currency;
+
     if (records.length < 2) return;
     const sorted = records.sort((a, b) => a.tarih - b.tarih);
     priceChanges.push({
       material,
+      currency, // Para birimi ekle
       ilkFiyat: sorted[0].fiyat,
       sonFiyat: sorted[sorted.length-1].fiyat,
       ilkTarih: sorted[0].tarih,
@@ -1844,11 +1877,15 @@ function renderPriceChangesTab() {
     const icon = item.degisim > 0 ? '↑' : '↓';
     const badge = Math.abs(item.degisim) > 50 ? '#f44336' : Math.abs(item.degisim) > 20 ? '#ff9800' : '#4caf50';
     const badgeText = Math.abs(item.degisim) > 50 ? '⚠️ Kritik' : Math.abs(item.degisim) > 20 ? '⚡ Yüksek' : '✓ Normal';
+
+    // Para birimi sembolü
+    const currencySymbol = item.currency === 'USD' ? '$' : item.currency === 'EUR' ? '€' : '₺';
+
     return '<tr style="background:'+bg+'">'+
       '<td style="padding:15px"><strong>'+item.material+'</strong></td>'+
-      '<td style="padding:15px">₺'+item.ilkFiyat.toFixed(2)+'<br><span style="font-size:11px;color:#999">📅 '+item.ilkTarih.toLocaleDateString('tr-TR')+'</span><br><span style="font-size:11px;color:#666">🏢 '+item.ilkTedarikci+'</span></td>'+
-      '<td style="padding:15px">₺'+item.sonFiyat.toFixed(2)+'<br><span style="font-size:11px;color:#999">📅 '+item.sonTarih.toLocaleDateString('tr-TR')+'</span><br><span style="font-size:11px;color:#666">🏢 '+item.sonTedarikci+'</span></td>'+
-      '<td style="padding:15px;color:'+color+';font-weight:600">'+(item.fark>=0?'+':'')+'₺'+item.fark.toFixed(2)+'</td>'+
+      '<td style="padding:15px">'+currencySymbol+formatPrice(item.ilkFiyat)+'<br><span style="font-size:11px;color:#999">📅 '+item.ilkTarih.toLocaleDateString('tr-TR')+'</span><br><span style="font-size:11px;color:#666">🏢 '+item.ilkTedarikci+'</span></td>'+
+      '<td style="padding:15px">'+currencySymbol+formatPrice(item.sonFiyat)+'<br><span style="font-size:11px;color:#999">📅 '+item.sonTarih.toLocaleDateString('tr-TR')+'</span><br><span style="font-size:11px;color:#666">🏢 '+item.sonTedarikci+'</span></td>'+
+      '<td style="padding:15px;color:'+color+';font-weight:600">'+(item.fark>=0?'+':'')+currencySymbol+formatPrice(Math.abs(item.fark))+'</td>'+
       '<td style="padding:15px;text-align:center;color:'+color+';font-weight:700;font-size:18px">'+icon+' %'+Math.abs(item.degisim).toFixed(1)+'</td>'+
       '<td style="padding:15px"><span style="background:'+badge+';color:white;padding:4px 12px;border-radius:12px;font-size:12px">'+badgeText+'</span></td>'+
       '</tr>';
