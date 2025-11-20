@@ -39,22 +39,50 @@ function setupMobileViewClass() {
 }
 
 function setupEventListeners() {
-    document.querySelectorAll('.nav-item').forEach(item => {
+    // Navigation items
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
         item.addEventListener('click', () => switchView(item.dataset.view));
     });
 
-    document.getElementById('logout-button').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = '/index.html';
-    });
-    
-    document.getElementById('filter-button').addEventListener('click', () => {
-        document.getElementById('filter-modal').style.display = 'flex';
-        populateFilterOptions();
-    });
-    document.getElementById('close-filter-modal').addEventListener('click', closeFilterModal);
-    document.getElementById('apply-filters-button').addEventListener('click', applyFilters);
-    document.getElementById('reset-filters-button').addEventListener('click', resetFilters);
+    // Logout button
+    const logoutBtn = document.getElementById('logout-button');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/index.html';
+        });
+    }
+
+    // Filter button (sadece orders view'da var)
+    const filterBtn = document.getElementById('filter-button');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', () => {
+            const filterModal = document.getElementById('filter-modal');
+            if (filterModal) {
+                filterModal.style.display = 'flex';
+                populateFilterOptions();
+            }
+        });
+    }
+
+    // Filter modal buttons
+    const closeFilterBtn = document.getElementById('close-filter-modal');
+    if (closeFilterBtn) {
+        closeFilterBtn.addEventListener('click', closeFilterModal);
+    }
+
+    const applyFiltersBtn = document.getElementById('apply-filters-button');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+
+    const resetFiltersBtn = document.getElementById('reset-filters-button');
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', resetFilters);
+    }
+
+    console.log('✅ Event listeners kuruldu');
 }
 
 function closeFilterModal() {
@@ -161,6 +189,8 @@ function switchView(viewName) {
 // --- Data Loading ---
 
 async function loadDashboardData() {
+    console.log('📊 Dashboard verileri yükleniyor...');
+
     const elements = {
         open: document.getElementById('kpi-open-orders'),
         partial: document.getElementById('kpi-partial-orders'),
@@ -170,14 +200,19 @@ async function loadDashboardData() {
     Object.values(elements).forEach(el => el && el.classList.add('skeleton'));
 
     try {
+        console.log('🔍 Supabase sorgusu başlatılıyor...');
         const { data, error } = await supabaseClient
             .from('purchasing_orders')
             .select('teslimat_durumu, tutar_tl, termin_farki')
             .eq('is_latest', true);
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Supabase hatası:', error);
+            throw error;
+        }
 
         const allOrders = data || [];
+        console.log(`✅ ${allOrders.length} sipariş yüklendi`);
         
         // KPI Hesaplamaları
         const openOrdersCount = allOrders.filter(o => o.teslimat_durumu === 'Açık').length;
@@ -205,23 +240,46 @@ async function loadDashboardData() {
 }
 
 async function fetchAllPurchasingOrders() {
-    if (allPurchasingOrders.length > 0) return allPurchasingOrders;
-    
-    const { data, error } = await supabaseClient.from('purchasing_orders').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
+    if (allPurchasingOrders.length > 0) {
+        console.log(`♻️ Cache'den ${allPurchasingOrders.length} sipariş döndürülüyor`);
+        return allPurchasingOrders;
+    }
+
+    console.log('🔍 Tüm siparişler yükleniyor...');
+    const { data, error } = await supabaseClient
+        .from('purchasing_orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('❌ Sipariş yükleme hatası:', error);
+        throw error;
+    }
+
     allPurchasingOrders = data || [];
+    console.log(`✅ ${allPurchasingOrders.length} sipariş cache'e alındı`);
     return allPurchasingOrders;
 }
 
 async function loadPurchasingOrders() {
+    console.log('📦 Sipariş listesi yükleniyor...');
     const listEl = document.getElementById('orders-list');
+
+    if (!listEl) {
+        console.error('❌ orders-list elementi bulunamadı!');
+        return;
+    }
+
     listEl.innerHTML = `<div class="skeleton-card"></div>`.repeat(3);
 
     try {
         const orders = await fetchAllPurchasingOrders();
-        renderOrderList(orders.filter(o => o.is_latest));
+        const latestOrders = orders.filter(o => o.is_latest);
+        console.log(`📋 ${latestOrders.length} güncel sipariş render ediliyor...`);
+        renderOrderList(latestOrders);
     } catch (error) {
-        listEl.innerHTML = `<p class="error">Siparişler yüklenemedi.</p>`;
+        console.error('❌ Sipariş listesi yüklenemedi:', error);
+        listEl.innerHTML = `<p class="error">❌ Siparişler yüklenemedi: ${error.message}</p>`;
     }
 }
 
