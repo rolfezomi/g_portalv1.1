@@ -769,6 +769,16 @@ if (loginForm) {
       // Kullanıcı rolünü al
       await loadUserRole(email);
 
+      // YENİ EKLENEN KOD: Satın alma yetkisi olan mobil kullanıcıları yeni dashboard'a yönlendir.
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+      const hasPurchasingAccess = currentUserRole === 'admin' || currentUserRole === 'purchasing';
+
+      if (isMobile && hasPurchasingAccess) {
+          window.location.href = 'purchasing_dashboard.html';
+          return; // Yönlendirme sonrası diğer kodların çalışmasını engelle
+      }
+      // YENİ KOD SONU
+
       // Rol bazlı menü gösterimi
       if (currentUserRole === 'admin') {
         showFullAccessMenu(); // Trend Analizi
