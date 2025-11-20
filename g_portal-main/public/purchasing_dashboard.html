@@ -2,54 +2,78 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Satın Alma Paneli - Glohe Portal</title>
     <link rel="stylesheet" href="styles/purchasing_dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d1b2a">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <div class="user-info">
-                <span id="user-email"></span>
-                <button id="logout-button">Çıkış</button>
-            </div>
-            <h1>Satın Alma Paneli</h1>
+    <div class="app-container">
+        <!-- App Header -->
+        <header class="app-header">
+            <h1 id="header-title">Panel</h1>
+            <button id="logout-button">Çıkış</button>
         </header>
 
-        <main>
-            <section class="kpi-cards">
-                <div class="card">
-                    <h2>Açık Siparişler</h2>
-                    <p id="open-orders-count">Yükleniyor...</p>
-                </div>
-                <div class="card">
-                    <h2>Onay Bekleyenler</h2>
-                    <p id="pending-approvals-count">Yükleniyor...</p>
-                </div>
-                <div class="card">
-                    <h2>Toplam Tedarikçi</h2>
-                    <p id="total-suppliers-count">Yükleniyor...</p>
-                </div>
-            </section>
+        <!-- App Main Content -->
+        <main class="app-main">
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="app-view active">
+                <section class="kpi-cards">
+                    <div class="card">
+                        <h2>Açık Siparişler</h2>
+                        <p id="open-orders-count">--</p>
+                    </div>
+                    <div class="card">
+                        <h2>Onay Bekleyenler</h2>
+                        <p id="pending-approvals-count">--</p>
+                    </div>
+                </section>
+                <section class="chart-container">
+                    <h2>Haftalık Sipariş Özeti</h2>
+                    <canvas id="weekly-orders-chart"></canvas>
+                </section>
+            </div>
 
-            <section class="chart-container">
-                <h2>Haftalık Sipariş Özeti</h2>
-                <canvas id="weekly-orders-chart"></canvas>
-            </section>
+            <!-- Orders View -->
+            <div id="view-orders" class="app-view">
+                <h2>Tüm Siparişler</h2>
+                <div id="orders-list">
+                    <!-- Siparişler buraya dinamik olarak yüklenecek -->
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text"></div>
+                </div>
+            </div>
 
-            <section class="quick-actions">
-                <h2>Hızlı İşlemler</h2>
-                <button id="new-order-button">Yeni Sipariş Oluştur</button>
-                <button id="search-supplier-button">Tedarikçi Ara</button>
-                <button id="view-reports-button">Raporları Görüntüle</button>
-            </section>
+            <!-- Reports View -->
+            <div id="view-reports" class="app-view">
+                <h2>Raporlar</h2>
+                <p>Raporlama özellikleri yakında burada olacak.</p>
+            </div>
         </main>
 
-        <footer class="footer">
-            <p>&copy; 2025 Glohe</p>
-        </footer>
+        <!-- Floating Action Button -->
+        <button class="fab" id="fab-add-order">+</button>
+
+        <!-- Bottom Navigation -->
+        <nav class="app-nav">
+            <button class="nav-item active" data-view="dashboard">
+                <span class="icon">📊</span>
+                <span class="label">Panel</span>
+            </button>
+            <button class="nav-item" data-view="orders">
+                <span class="icon">📦</span>
+                <span class="label">Siparişler</span>
+            </button>
+            <button class="nav-item" data-view="reports">
+                <span class="icon">📄</span>
+                <span class="label">Raporlar</span>
+            </button>
+        </nav>
     </div>
 
     <script type="module" src="scripts/purchasing_dashboard.js"></script>

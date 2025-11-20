@@ -5,65 +5,101 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Kullanıcı bilgilerini ve yetkileri kontrol et
-    const { data: { session }, error } = await supabase.auth.getSession();
-
-    if (error || !session) {
-        console.error('Oturum hatası veya oturum bulunamadı:', error);
-        // Oturum yoksa login sayfasına yönlendir
+    // Oturum kontrolü
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
         window.location.href = '/index.html';
         return;
     }
 
-    const user = session.user;
-    document.getElementById('user-email').textContent = user.email;
-
-    // Yetki kontrolü (opsiyonel, sayfa erişimi zaten login yönlendirmesi ile yapıldı)
-    // hasPurchasingAccess(); // Bu fonksiyonun tanımlanması gerekir
-
-    // Dashboard verilerini yükle
+    // Navigasyon ve diğer olayları bağla
+    setupEventListeners();
+    
+    // Başlangıç görünümünü ayarla
+    switchView('dashboard');
     loadDashboardData();
+});
+
+function setupEventListeners() {
+    // Alt navigasyon barı
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const viewName = item.getAttribute('data-view');
+            switchView(viewName);
+        });
+    });
 
     // Çıkış butonu
     document.getElementById('logout-button').addEventListener('click', async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            console.error('Çıkış yapılamadı:', error);
-        } else {
-            window.location.href = '/index.html';
-        }
+        await supabase.auth.signOut();
+        window.location.href = '/index.html';
     });
 
-    // Hızlı işlem butonları için event listener'lar
-    document.getElementById('new-order-button').addEventListener('click', () => {
+    // Floating Action Button
+    document.getElementById('fab-add-order').addEventListener('click', () => {
         alert('Yeni sipariş oluşturma formu burada açılacak.');
-        // window.location.href = '/new-order.html'; // Örnek yönlendirme
     });
+}
 
-    document.getElementById('search-supplier-button').addEventListener('click', () => {
-        alert('Tedarikçi arama ekranı burada açılacak.');
-    });
+function switchView(viewName) {
+    const views = document.querySelectorAll('.app-view');
+    const navItems = document.querySelectorAll('.nav-item');
+    const headerTitle = document.getElementById('header-title');
 
-    document.getElementById('view-reports-button').addEventListener('click', () => {
-        alert('Satın alma raporları ekranı burada açılacak.');
-    });
-});
+    // Tüm görünümleri ve aktif durumları sıfırla
+    views.forEach(view => view.classList.remove('active'));
+    navItems.forEach(item => item.classList.remove('active'));
+
+    // İlgili görünümü ve navigasyon butonunu aktif et
+    const activeView = document.getElementById(`view-${viewName}`);
+    const activeNavItem = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+
+    if (activeView) {
+        activeView.classList.add('active');
+    }
+    if (activeNavItem) {
+        activeNavItem.classList.add('active');
+    }
+
+    // Başlığı güncelle
+    headerTitle.textContent = activeNavItem.querySelector('.label').textContent;
+
+    // Eğer ilgili görünüm için bir yükleme fonksiyonu varsa çağır
+    if (viewName === 'orders') {
+        // loadOrders(); // Siparişleri yükleme fonksiyonu (henüz eklenmedi)
+    }
+}
 
 async function loadDashboardData() {
-    // Bu fonksiyonlar, Supabase'den gerçek verileri çekecek şekilde doldurulmalıdır.
+    // KPI verilerini yükle (örnek verilerle)
     loadKpiData();
+    // Haftalık sipariş özetini yükle
     loadWeeklyOrdersChart();
 }
 
 async function loadKpiData() {
-    // Örnek veriler - Gerçek uygulamada Supabase'den RPC veya view çağrıları ile doldurun.
-    document.getElementById('open-orders-count').textContent = '12';
-    document.getElementById('pending-approvals-count').textContent = '3';
-    document.getElementById('total-suppliers-count').textContent = '87';
+    // Gerçek uygulamada bu veriler Supabase'den çekilmelidir.
+    // Şimdilik iskelet yükleyiciyi simüle edip sonra veriyi gösterelim.
+    const openOrdersEl = document.getElementById('open-orders-count');
+    const pendingApprovalsEl = document.getElementById('pending-approvals-count');
+
+    // İskelet görünümü
+    openOrdersEl.classList.add('skeleton');
+    pendingApprovalsEl.classList.add('skeleton');
+
+    // Veri yükleniyormuş gibi yap
+    setTimeout(() => {
+        openOrdersEl.textContent = '12';
+        pendingApprovalsEl.textContent = '3';
+        openOrdersEl.classList.remove('skeleton');
+        pendingApprovalsEl.classList.remove('skeleton');
+    }, 1500);
 }
 
 async function loadWeeklyOrdersChart() {
     const ctx = document.getElementById('weekly-orders-chart').getContext('2d');
+    if (!ctx) return;
 
     // Örnek veriler
     const data = {
@@ -71,10 +107,11 @@ async function loadWeeklyOrdersChart() {
         datasets: [{
             label: 'Bu Hafta Gelen Siparişler',
             data: [5, 9, 7, 12, 8, 4, 2],
-            backgroundColor: 'rgba(10, 147, 150, 0.2)',
-            borderColor: 'rgba(10, 147, 150, 1)',
-            borderWidth: 2,
-            tension: 0.3
+            backgroundColor: 'rgba(13, 27, 42, 0.1)',
+            borderColor: 'rgba(13, 27, 42, 1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true
         }]
     };
 
@@ -83,10 +120,12 @@ async function loadWeeklyOrdersChart() {
         data: data,
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
             }
         }
     });
