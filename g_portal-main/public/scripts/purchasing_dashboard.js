@@ -231,7 +231,23 @@ async function loadDashboardData() {
         if(elements.open) elements.open.textContent = openOrdersCount;
         if(elements.partial) elements.partial.textContent = partialOrdersCount;
         if(elements.amount) elements.amount.textContent = formatCurrency(totalAmount);
-        if(elements.delivery) elements.delivery.textContent = `${avgTerminFarki.toFixed(1)} gün`;
+
+        // Termin Farkı - Dinamik renklendirme
+        if(elements.delivery) {
+            const terminText = avgTerminFarki > 0 ? '+' : '';
+            elements.delivery.textContent = `${terminText}${avgTerminFarki.toFixed(1)} gün`;
+            elements.delivery.style.color = avgTerminFarki > 0 ? '#c62828' : avgTerminFarki < 0 ? '#2e7d32' : '#f57c00';
+        }
+
+        // Termin Farkı ikonu - Dinamik arka plan ve stroke rengi
+        const deliveryIcon = document.getElementById('kpi-delivery-icon');
+        if (deliveryIcon) {
+            const iconBg = avgTerminFarki > 0 ? '#ffebee' : avgTerminFarki < 0 ? '#e8f5e9' : '#fff3e0';
+            const iconColor = avgTerminFarki > 0 ? '#c62828' : avgTerminFarki < 0 ? '#2e7d32' : '#f57c00';
+            deliveryIcon.style.background = iconBg;
+            const svg = deliveryIcon.querySelector('svg');
+            if (svg) svg.setAttribute('stroke', iconColor);
+        }
 
     } catch (error) {
         console.error('KPI verileri yüklenemedi:', error);

@@ -24,28 +24,67 @@
         <main class="app-main">
             <!-- Dashboard/Panel View -->
             <div id="view-dashboard" class="app-view active">
-                <section class="kpi-cards">
-                    <div class="card">
-                        <h2>Toplam Sipariş</h2>
-                        <p id="kpi-total-orders">--</p>
+                <div class="purchasing-stats-grid">
+                    <!-- Toplam Sipariş -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e3f2fd;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Toplam Sipariş</div>
+                            <div class="stat-value" id="kpi-total-orders">--</div>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h2>Açık Siparişler</h2>
-                        <p id="kpi-open-orders">--</p>
+
+                    <!-- Açık ve Kısmi Siparişler -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fff3e0;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f57c00" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Açık ve Kısmi Siparişler</div>
+                            <div class="stat-value" style="display: flex; align-items: center; gap: 8px; font-size: 20px; flex-wrap: wrap;">
+                                <span style="color: #f57c00;">Açık: <span id="kpi-open-orders">--</span></span>
+                                <span style="color: #999;">|</span>
+                                <span style="color: #ff9800;">Kısmi: <span id="kpi-partial-orders">--</span></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h2>Kısmi Siparişler</h2>
-                        <p id="kpi-partial-orders">--</p>
+
+                    <!-- Toplam Tutar -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e8f5e9;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Toplam Tutar (TL)</div>
+                            <div class="stat-value" id="kpi-total-amount">--</div>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h2>Toplam Tutar</h2>
-                        <p id="kpi-total-amount">--</p>
+
+                    <!-- Ortalama Termin Farkı -->
+                    <div class="stat-card">
+                        <div class="stat-icon" id="kpi-delivery-icon" style="background: #fff3e0;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f57c00" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Ort. Termin Farkı</div>
+                            <div class="stat-value" id="kpi-avg-delivery">--</div>
+                        </div>
                     </div>
-                     <div class="card">
-                        <h2>Ort. Termin Farkı</h2>
-                        <p id="kpi-avg-delivery">--</p>
-                    </div>
-                </section>
+                </div>
+
                 <section class="chart-container">
                     <h2>Haftalık Sipariş Özeti</h2>
                     <canvas id="weekly-orders-chart"></canvas>
