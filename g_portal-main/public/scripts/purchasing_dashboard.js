@@ -4,7 +4,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Global State ---
-let purchasingOrders = [];
+let allPurchasingOrders = [];
+let materialInfoData = {};
 window.appInitialized = false;
 
 // --- Main App Logic ---
@@ -17,19 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '/index.html';
         }
     });
-
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-            window.location.href = '/index.html';
-        } else if (!window.appInitialized) {
-            initializeApp(session);
-        }
-    });
 });
 
 function initializeApp(session) {
     window.appInitialized = true;
-    console.log('Uygulama başlatılıyor, kullanıcı:', session.user.email);
     setupEventListeners();
     switchView('dashboard');
     loadDashboardData();
@@ -41,22 +33,17 @@ function setupEventListeners() {
     });
 
     document.getElementById('logout-button').addEventListener('click', async () => {
-        console.log('Çıkış yapılıyor...');
-        try {
-            const { error } = await supabaseClient.auth.signOut();
-            if (error) console.error('Oturum sonlandırma hatası:', error);
-        } finally {
-            window.location.href = '/index.html';
-        }
+        await supabaseClient.auth.signOut();
+        window.location.href = '/index.html';
     });
-
-    document.getElementById('fab-add-order').addEventListener('click', () => alert('Yeni sipariş oluşturma formu burada açılacak.'));
+    
+    document.getElementById('fab-add-order').addEventListener('click', () => alert('Yeni sipariş formu burada açılacak.'));
     document.getElementById('filter-button').addEventListener('click', () => alert('Filtreleme seçenekleri burada açılacak.'));
 }
 
 function switchView(viewName) {
-    document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
     const activeView = document.getElementById(`view-${viewName}`);
     const activeNavItem = document.querySelector(`.nav-item[data-view="${viewName}"]`);
@@ -66,75 +53,92 @@ function switchView(viewName) {
 
     document.getElementById('header-title').textContent = activeNavItem.querySelector('.label').textContent;
 
-    if (viewName === 'orders' && !activeView.dataset.loaded) {
-        loadPurchasingOrders();
+    const loaderMap = {
+        'orders': loadPurchasingOrders,
+        'revision-analytics': loadRevisionAnalytics,
+    };
+
+    if (loaderMap[viewName] && !activeView.dataset.loaded) {
+        loaderMap[viewName]();
         activeView.dataset.loaded = 'true';
     }
 }
 
-async function loadDashboardData() {
-    loadKpiData();
-    loadWeeklyOrdersChart();
-}
+// --- Data Loading ---
 
-async function loadKpiData() {
+async function loadDashboardData() {
     const elements = {
-        open: document.getElementById('open-orders-count'),
-        pending: document.getElementById('pending-approvals-count'),
-        suppliers: document.getElementById('total-suppliers-count')
+        open: document.getElementById('kpi-open-orders'),
+        partial: document.getElementById('kpi-partial-orders'),
+        suppliers: document.getElementById('kpi-total-suppliers'),
+        revisions: document.getElementById('kpi-total-revisions'),
     };
     Object.values(elements).forEach(el => el && el.classList.add('skeleton'));
 
     try {
-        const [ordersResponse, suppliersResponse] = await Promise.all([
+        const [ordersRes, suppliersRes, revisionsRes] = await Promise.all([
             supabaseClient.from('purchasing_orders').select('teslimat_durumu').eq('is_latest', true),
-            supabaseClient.from('purchasing_suppliers').select('id', { count: 'exact', head: true })
+            supabaseClient.from('purchasing_suppliers').select('id', { count: 'exact', head: true }),
+            supabaseClient.from('purchasing_revision_stats').select('total_revisions')
         ]);
 
-        if (ordersResponse.error) throw ordersResponse.error;
-        if (suppliersResponse.error) throw suppliersResponse.error;
+        if (ordersRes.error) throw ordersRes.error;
+        if (suppliersRes.error) throw suppliersRes.error;
+        if (revisionsRes.error) throw revisionsRes.error;
 
-        const allOrders = ordersResponse.data || [];
-        if(elements.open) elements.open.textContent = allOrders.filter(o => o.teslimat_durumu === 'Açık').length;
-        if(elements.pending) elements.pending.textContent = allOrders.filter(o => o.teslimat_durumu === 'Kısmi').length;
-        if(elements.suppliers) elements.suppliers.textContent = suppliersResponse.count;
+        const allOrders = ordersRes.data || [];
+        elements.open.textContent = allOrders.filter(o => o.teslimat_durumu === 'Açık').length;
+        elements.partial.textContent = allOrders.filter(o => o.teslimat_durumu === 'Kısmi').length;
+        elements.suppliers.textContent = suppliersRes.count;
+        elements.revisions.textContent = revisionsRes.data.reduce((sum, item) => sum + item.total_revisions, 0);
+
     } catch (error) {
-        console.error('KPI verileri yüklenirken hata:', error);
-        Object.values(elements).forEach(el => { if(el) el.textContent = 'Hata' });
+        console.error('KPI verileri yüklenemedi:', error);
     } finally {
         Object.values(elements).forEach(el => el && el.classList.remove('skeleton'));
+        loadWeeklyOrdersChart();
     }
+}
+
+async function fetchAllPurchasingOrders() {
+    if (allPurchasingOrders.length > 0) return allPurchasingOrders;
+    
+    const { data, error } = await supabaseClient.from('purchasing_orders').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    allPurchasingOrders = data || [];
+    return allPurchasingOrders;
 }
 
 async function loadPurchasingOrders() {
     const listEl = document.getElementById('orders-list');
-    if (!listEl) return;
-    listEl.innerHTML = `
-        <div class="skeleton-card"><div class="skeleton-line" style="width: 60%;"></div><div class="skeleton-line" style="width: 90%;"></div></div>
-        <div class="skeleton-card"><div class="skeleton-line" style="width: 50%;"></div><div class="skeleton-line" style="width: 80%;"></div></div>
-        <div class="skeleton-card"><div class="skeleton-line" style="width: 70%;"></div><div class="skeleton-line" style="width: 100%;"></div></div>
-    `;
+    listEl.innerHTML = `<div class="skeleton-card"></div>`.repeat(3);
 
     try {
-        const { data, error } = await supabaseClient.from('purchasing_orders').select('*').eq('is_latest', true).order('created_at', { ascending: false });
-        if (error) throw error;
-        purchasingOrders = data || [];
-        renderOrderList(purchasingOrders);
+        const orders = await fetchAllPurchasingOrders();
+        renderOrderList(orders.filter(o => o.is_latest));
     } catch (error) {
-        console.error('Siparişler yüklenemedi:', error);
-        listEl.innerHTML = `<p style="text-align:center;color:red;">Siparişler yüklenirken bir hata oluştu.</p>`;
+        listEl.innerHTML = `<p class="error">Siparişler yüklenemedi.</p>`;
     }
 }
 
+async function loadRevisionAnalytics() {
+    const contentEl = document.getElementById('revision-analytics-content');
+    contentEl.innerHTML = `<div class="skeleton-card"></div>`;
+
+    try {
+        const orders = await fetchAllPurchasingOrders();
+        processRevisionData(orders);
+        renderRevisionAnalyticsUI();
+    } catch (error) {
+        contentEl.innerHTML = `<p class="error">Revizyon verileri yüklenemedi.</p>`;
+    }
+}
+
+// --- Rendering ---
+
 function renderOrderList(orders) {
     const listEl = document.getElementById('orders-list');
-    if (!listEl) return;
-    if (orders.length === 0) {
-        listEl.innerHTML = `<p style="text-align:center;">Gösterilecek sipariş bulunamadı.</p>`;
-        return;
-    }
-
-    listEl.innerHTML = orders.map(order => `
+    listEl.innerHTML = orders.length > 0 ? orders.map(order => `
         <div class="order-card" data-order-id="${order.id}">
             <div class="order-card-header">
                 <span class="order-no">#${order.siparis_no || 'N/A'}</span>
@@ -153,7 +157,7 @@ function renderOrderList(orders) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `).join('') : `<p>Sipariş bulunamadı.</p>`;
 
     listEl.querySelectorAll('.order-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -163,40 +167,103 @@ function renderOrderList(orders) {
     });
 }
 
+function processRevisionData(orders) {
+    materialInfoData = {};
+    orders.forEach(order => {
+        let birimFiyat = parseFloat(order.birim_fiyat) || 0;
+        if (birimFiyat === 0 && order.tutar_tl && order.miktar) {
+            birimFiyat = parseFloat(order.tutar_tl) / parseFloat(order.miktar);
+        }
+        if (!birimFiyat || !order.siparis_tarihi || !order.malzeme_tanimi) return;
+
+        if (!materialInfoData[order.malzeme_tanimi]) {
+            materialInfoData[order.malzeme_tanimi] = {
+                kod: order.malzeme, tanim: order.malzeme_tanimi, prices: []
+            };
+        }
+        materialInfoData[order.malzeme_tanimi].prices.push({
+            tarih: new Date(order.siparis_tarihi), fiyat: birimFiyat
+        });
+    });
+}
+
+function renderRevisionAnalyticsUI() {
+    const contentEl = document.getElementById('revision-analytics-content');
+    const materialsWithMultiplePrices = Object.values(materialInfoData)
+        .filter(m => m.prices.length > 1)
+        .sort((a, b) => b.prices.length - a.prices.length);
+
+    if (materialsWithMultiplePrices.length === 0) {
+        contentEl.innerHTML = `<p>Fiyat trendi analizi için yeterli veri yok.</p>`;
+        return;
+    }
+
+    contentEl.innerHTML = `
+        <div class="material-selector-container">
+            <label for="material-selector">Malzeme Seçin</label>
+            <select id="material-selector">
+                ${materialsWithMultiplePrices.map(m => `<option value="${m.tanim}">${m.tanim}</option>`).join('')}
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="price-trend-chart"></canvas>
+        </div>
+        <div class="price-stats-grid" id="price-stats"></div>
+    `;
+
+    document.getElementById('material-selector').addEventListener('change', (e) => {
+        updatePriceTrendChart(e.target.value);
+    });
+
+    updatePriceTrendChart(materialsWithMultiplePrices[0].tanim);
+}
+
+function updatePriceTrendChart(materialName) {
+    const material = materialInfoData[materialName];
+    if (!material) return;
+
+    const sortedPrices = material.prices.sort((a, b) => a.tarih - b.tarih);
+    const labels = sortedPrices.map(p => formatDate(p.tarih));
+    const data = sortedPrices.map(p => p.fiyat);
+
+    const statsEl = document.getElementById('price-stats');
+    const minPrice = Math.min(...data);
+    const maxPrice = Math.max(...data);
+    statsEl.innerHTML = `
+        <div class="stat-card">
+            <div class="label">En Düşük Fiyat</div><div class="value">${formatCurrency(minPrice)}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">En Yüksek Fiyat</div><div class="value">${formatCurrency(maxPrice)}</div>
+        </div>
+    `;
+    
+    const ctx = document.getElementById('price-trend-chart').getContext('2d');
+    if (window.priceTrendChart) window.priceTrendChart.destroy();
+    
+    window.priceTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Birim Fiyat (TL)', data,
+                borderColor: '#2196f3', backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                borderWidth: 2, tension: 0.1, fill: true
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+}
+
+// --- Formatters & Helpers ---
+
 function formatCurrency(value) {
-    if (value === null || isNaN(value)) return '0,00 TL';
-    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
+    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value || 0);
 }
 
 function formatDate(dateStr) {
     if (!dateStr) return '-';
-    try {
-        return new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(dateStr));
-    } catch {
-        return '-';
-    }
+    return new Intl.DateTimeFormat('tr-TR').format(new Date(dateStr));
 }
 
-function loadWeeklyOrdersChart() {
-    const ctx = document.getElementById('weekly-orders-chart')?.getContext('2d');
-    if (!ctx) return;
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
-            datasets: [{
-                label: 'Siparişler',
-                data: [5, 9, 7, 12, 8, 4, 2],
-                backgroundColor: 'rgba(13, 27, 42, 0.1)',
-                borderColor: 'rgba(13, 27, 42, 1)',
-                borderWidth: 3, tension: 0.4, fill: true
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
+function loadWeeklyOrdersChart(){/* Placeholder */ }
