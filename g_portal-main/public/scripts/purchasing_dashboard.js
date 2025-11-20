@@ -1,7 +1,7 @@
 // Supabase İstemcisini Ayarla
 const SUPABASE_URL = 'https://mignlffeyougoefuyayr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ25sZmZleW91Z29lZnV5YXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTc0NzA3ODcsImV4cCI6MjAxMzA0Njc4N30.0_5s2d3mF4m5mH-t2W_4P_4tJ_4m_5t3t_5d_3j2w_8';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Global State ---
 let purchasingOrders = [];
@@ -10,7 +10,7 @@ window.appInitialized = false;
 // --- Main App Logic ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
         if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session) {
             if (!window.appInitialized) initializeApp(session);
         } else if (event === 'SIGNED_OUT') {
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
             window.location.href = '/index.html';
         } else if (!window.appInitialized) {
@@ -43,7 +43,7 @@ function setupEventListeners() {
     document.getElementById('logout-button').addEventListener('click', async () => {
         console.log('Çıkış yapılıyor...');
         try {
-            const { error } = await supabase.auth.signOut();
+            const { error } = await supabaseClient.auth.signOut();
             if (error) console.error('Oturum sonlandırma hatası:', error);
         } finally {
             window.location.href = '/index.html';
@@ -87,8 +87,8 @@ async function loadKpiData() {
 
     try {
         const [ordersResponse, suppliersResponse] = await Promise.all([
-            supabase.from('purchasing_orders').select('teslimat_durumu').eq('is_latest', true),
-            supabase.from('purchasing_suppliers').select('id', { count: 'exact', head: true })
+            supabaseClient.from('purchasing_orders').select('teslimat_durumu').eq('is_latest', true),
+            supabaseClient.from('purchasing_suppliers').select('id', { count: 'exact', head: true })
         ]);
 
         if (ordersResponse.error) throw ordersResponse.error;
@@ -116,7 +116,7 @@ async function loadPurchasingOrders() {
     `;
 
     try {
-        const { data, error } = await supabase.from('purchasing_orders').select('*').eq('is_latest', true).order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient.from('purchasing_orders').select('*').eq('is_latest', true).order('created_at', { ascending: false });
         if (error) throw error;
         purchasingOrders = data || [];
         renderOrderList(purchasingOrders);
