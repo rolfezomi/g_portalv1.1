@@ -192,6 +192,7 @@ async function loadDashboardData() {
     console.log('📊 Dashboard verileri yükleniyor...');
 
     const elements = {
+        total: document.getElementById('kpi-total-orders'),
         open: document.getElementById('kpi-open-orders'),
         partial: document.getElementById('kpi-partial-orders'),
         amount: document.getElementById('kpi-total-amount'),
@@ -213,18 +214,20 @@ async function loadDashboardData() {
 
         const allOrders = data || [];
         console.log(`✅ ${allOrders.length} sipariş yüklendi`);
-        
+
         // KPI Hesaplamaları
+        const totalOrdersCount = allOrders.length;
         const openOrdersCount = allOrders.filter(o => o.teslimat_durumu === 'Açık').length;
         const partialOrdersCount = allOrders.filter(o => o.teslimat_durumu === 'Kısmi').length;
         const totalAmount = allOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
-        
+
         const completedOrders = allOrders.filter(o => o.termin_farki !== null);
         const avgTerminFarki = completedOrders.length > 0
             ? completedOrders.reduce((sum, o) => sum + (parseFloat(o.termin_farki) || 0), 0) / completedOrders.length
             : 0;
 
         // UI Güncelleme
+        if(elements.total) elements.total.textContent = totalOrdersCount;
         if(elements.open) elements.open.textContent = openOrdersCount;
         if(elements.partial) elements.partial.textContent = partialOrdersCount;
         if(elements.amount) elements.amount.textContent = formatCurrency(totalAmount);
