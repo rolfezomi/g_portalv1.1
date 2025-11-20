@@ -44,12 +44,18 @@
 
             <!-- Orders View -->
             <div id="view-orders" class="app-view">
-                <h2>Tüm Siparişler</h2>
+                <div class="view-header">
+                    <h2>Tüm Siparişler</h2>
+                    <button id="filter-button" class="icon-button">
+                        <span class="icon">🔍</span>
+                        <span class="label">Filtrele</span>
+                    </button>
+                </div>
                 <div id="orders-list">
                     <!-- Siparişler buraya dinamik olarak yüklenecek -->
-                    <div class="skeleton-text"></div>
-                    <div class="skeleton-text"></div>
-                    <div class="skeleton-text"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
                 </div>
             </div>
 
