@@ -201,19 +201,45 @@ async function loadDashboardData() {
     Object.values(elements).forEach(el => el && el.classList.add('skeleton'));
 
     try {
-        console.log('🔍 Supabase sorgusu başlatılıyor...');
-        const { data, error } = await supabaseClient
-            .from('purchasing_orders')
-            .select('teslimat_durumu, tutar_tl, termin_farki')
-            .eq('is_latest', true);
+        console.log('🔍 Supabase sorgusu başlatılıyor (paginated - masaüstü ile aynı)...');
 
-        if (error) {
-            console.error('❌ Supabase hatası:', error);
-            throw error;
+        // Masaüstü gibi sayfa sayfa yükle - TÜM VERİYİ ÇEK
+        let allOrders = [];
+        let page = 0;
+        let hasMore = true;
+        const pageSize = 1000;
+
+        while (hasMore) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+
+            const { data, error: pageError } = await supabaseClient
+                .from('purchasing_orders')
+                .select('teslimat_durumu, tutar_tl, termin_farki')
+                .eq('is_latest', true)
+                .order('created_at', { ascending: false })
+                .range(from, to);
+
+            if (pageError) {
+                console.error(`❌ Sayfa ${page + 1} hatası:`, pageError);
+                throw pageError;
+            }
+
+            if (!data || data.length === 0) {
+                hasMore = false;
+            } else {
+                allOrders = [...allOrders, ...data];
+                console.log(`📄 Sayfa ${page + 1}: ${data.length} kayıt (Toplam: ${allOrders.length})`);
+
+                if (data.length < pageSize) {
+                    hasMore = false;
+                } else {
+                    page++;
+                }
+            }
         }
 
-        const allOrders = data || [];
-        console.log(`✅ ${allOrders.length} sipariş yüklendi`);
+        console.log(`✅ TOPLAM ${allOrders.length} sipariş yüklendi (${page + 1} sayfa) - Masaüstü ile aynı!`);
 
         // KPI Hesaplamaları
         const totalOrdersCount = allOrders.length;
@@ -254,7 +280,88 @@ async function loadDashboardData() {
         Object.values(elements).forEach(el => { if(el) el.textContent = 'Hata' });
     } finally {
         Object.values(elements).forEach(el => el && el.classList.remove('skeleton'));
-        loadWeeklyOrdersChart(); // Keep the chart loading here
+        loadRevisionSummary(); // Revizyon analizi özeti yükle
+    }
+}
+
+// Dashboard için Revizyon Analizi Özeti
+async function loadRevisionSummary() {
+    console.log('📊 Revizyon analizi özeti yükleniyor...');
+    const contentEl = document.getElementById('revision-summary-content');
+
+    if (!contentEl) {
+        console.warn('⚠️ revision-summary-content elementi bulunamadı');
+        return;
+    }
+
+    try {
+        // Revizyon istatistiklerini çek (en çok revize edilen malzemeler)
+        const { data, error } = await supabaseClient
+            .from('purchasing_revision_stats')
+            .select('*')
+            .order('total_revisions', { ascending: false })
+            .limit(5); // İlk 5 malzeme
+
+        if (error) {
+            console.error('❌ Revizyon istatistik hatası:', error);
+            contentEl.innerHTML = '<p style="text-align: center; color: #f44336;">Veriler yüklenemedi</p>';
+            return;
+        }
+
+        const revisionStats = data || [];
+        console.log(`✅ ${revisionStats.length} malzeme revizyon istatistiği yüklendi`);
+
+        if (revisionStats.length === 0) {
+            contentEl.innerHTML = '<p style="text-align: center; color: #999;">Henüz revizyon verisi yok</p>';
+            return;
+        }
+
+        // Özet tablo oluştur
+        const tableHTML = `
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e9ecef;">
+                            <th style="text-align: left; padding: 10px 8px; color: #666; font-weight: 600;">Malzeme</th>
+                            <th style="text-align: center; padding: 10px 8px; color: #666; font-weight: 600;">Revizyon</th>
+                            <th style="text-align: right; padding: 10px 8px; color: #666; font-weight: 600;">Ort. Fiyat Değişimi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${revisionStats.map((item) => {
+                            const priceChange = item.avg_price_change || 0;
+                            const changeColor = priceChange > 0 ? '#c62828' : priceChange < 0 ? '#2e7d32' : '#666';
+                            const changeSign = priceChange > 0 ? '+' : '';
+
+                            return `
+                                <tr style="border-bottom: 1px solid #f5f5f5;">
+                                    <td style="padding: 12px 8px;">
+                                        <div style="font-weight: 600; color: #333; margin-bottom: 2px; font-size: 0.9rem;">${item.malzeme_tanimi || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: #999;">${item.malzeme_kodu || ''}</div>
+                                    </td>
+                                    <td style="text-align: center; padding: 12px 8px;">
+                                        <span style="background: #e3f2fd; color: #1976d2; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;">
+                                            ${item.total_revisions || 0}
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right; padding: 12px 8px;">
+                                        <span style="color: ${changeColor}; font-weight: 600; font-size: 0.9rem;">
+                                            ${changeSign}${priceChange.toFixed(1)}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        contentEl.innerHTML = tableHTML;
+
+    } catch (error) {
+        console.error('❌ Revizyon özeti yüklenemedi:', error);
+        contentEl.innerHTML = '<p style="text-align: center; color: #f44336;">Bir hata oluştu</p>';
     }
 }
 
@@ -264,18 +371,45 @@ async function fetchAllPurchasingOrders() {
         return allPurchasingOrders;
     }
 
-    console.log('🔍 Tüm siparişler yükleniyor...');
-    const { data, error } = await supabaseClient
-        .from('purchasing_orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+    console.log('🔍 Tüm siparişler yükleniyor (paginated)...');
 
-    if (error) {
-        console.error('❌ Sipariş yükleme hatası:', error);
-        throw error;
+    // Sayfa sayfa yükle - masaüstü gibi
+    let allOrders = [];
+    let page = 0;
+    let hasMore = true;
+    const pageSize = 1000;
+
+    while (hasMore) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data, error: pageError } = await supabaseClient
+            .from('purchasing_orders')
+            .select('*')
+            .eq('is_latest', true)
+            .order('created_at', { ascending: false })
+            .range(from, to);
+
+        if (pageError) {
+            console.error(`❌ Sayfa ${page + 1} hatası:`, pageError);
+            throw pageError;
+        }
+
+        if (!data || data.length === 0) {
+            hasMore = false;
+        } else {
+            allOrders = [...allOrders, ...data];
+            console.log(`📄 Sayfa ${page + 1}: ${data.length} kayıt (Toplam: ${allOrders.length})`);
+
+            if (data.length < pageSize) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        }
     }
 
-    allPurchasingOrders = data || [];
+    allPurchasingOrders = allOrders;
     console.log(`✅ ${allPurchasingOrders.length} sipariş cache'e alındı`);
     return allPurchasingOrders;
 }
