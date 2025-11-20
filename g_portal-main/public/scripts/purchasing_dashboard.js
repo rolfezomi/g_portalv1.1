@@ -23,8 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeApp(session) {
     window.appInitialized = true;
     setupEventListeners();
+    setupMobileViewClass(); // New function call
+    window.addEventListener('resize', setupMobileViewClass); // Listen for resize to adjust
     switchView('dashboard');
     loadDashboardData();
+}
+
+// Function to add/remove mobile-purchasing-view class
+function setupMobileViewClass() {
+    if (window.innerWidth <= 768) {
+        document.body.classList.add('mobile-purchasing-view');
+    } else {
+        document.body.classList.remove('mobile-purchasing-view');
+    }
 }
 
 function setupEventListeners() {
@@ -37,8 +48,91 @@ function setupEventListeners() {
         window.location.href = '/index.html';
     });
     
-    document.getElementById('fab-add-order').addEventListener('click', () => alert('Yeni sipariş formu burada açılacak.'));
-    document.getElementById('filter-button').addEventListener('click', () => alert('Filtreleme seçenekleri burada açılacak.'));
+    document.getElementById('filter-button').addEventListener('click', () => {
+        document.getElementById('filter-modal').style.display = 'flex';
+        populateFilterOptions();
+    });
+    document.getElementById('close-filter-modal').addEventListener('click', closeFilterModal);
+    document.getElementById('apply-filters-button').addEventListener('click', applyFilters);
+    document.getElementById('reset-filters-button').addEventListener('click', resetFilters);
+}
+
+function closeFilterModal() {
+    document.getElementById('filter-modal').style.display = 'none';
+}
+
+function populateFilterOptions() {
+    const filterStatus = document.getElementById('filter-status');
+    const filterSupplier = document.getElementById('filter-supplier');
+
+    // Clear previous options
+    filterStatus.innerHTML = '<option value="">Tümü</option>';
+    filterSupplier.innerHTML = '<option value="">Tümü</option>';
+
+    const uniqueStatuses = [...new Set(allPurchasingOrders.map(order => order.teslimat_durumu))].filter(Boolean);
+    uniqueStatuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        filterStatus.appendChild(option);
+    });
+
+    const uniqueSuppliers = [...new Set(allPurchasingOrders.map(order => order.tedarikci_tanimi))].filter(Boolean);
+    uniqueSuppliers.forEach(supplier => {
+        const option = document.createElement('option');
+        option.value = supplier;
+        option.textContent = supplier;
+        filterSupplier.appendChild(option);
+    });
+}
+
+function applyFilters() {
+    const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+    const filterStatus = document.getElementById('filter-status').value;
+    const filterSupplier = document.getElementById('filter-supplier').value;
+    const filterStartDate = document.getElementById('filter-start-date').value;
+    const filterEndDate = document.getElementById('filter-end-date').value;
+
+    let filteredOrders = allPurchasingOrders.filter(order => order.is_latest);
+
+    if (filterSearch) {
+        filteredOrders = filteredOrders.filter(order =>
+            (order.siparis_no && order.siparis_no.toLowerCase().includes(filterSearch)) ||
+            (order.tedarikci_tanimi && order.tedarikci_tanimi.toLowerCase().includes(filterSearch)) ||
+            (order.malzeme_tanimi && order.malzeme_tanimi.toLowerCase().includes(filterSearch))
+        );
+    }
+
+    if (filterStatus) {
+        filteredOrders = filteredOrders.filter(order => order.teslimat_durumu === filterStatus);
+    }
+
+    if (filterSupplier) {
+        filteredOrders = filteredOrders.filter(order => order.tedarikci_tanimi === filterSupplier);
+    }
+
+    if (filterStartDate) {
+        const start = new Date(filterStartDate);
+        filteredOrders = filteredOrders.filter(order => new Date(order.siparis_tarihi) >= start);
+    }
+
+    if (filterEndDate) {
+        const end = new Date(filterEndDate);
+        end.setDate(end.getDate() + 1); // Include the end date
+        filteredOrders = filteredOrders.filter(order => new Date(order.siparis_tarihi) <= end);
+    }
+
+    renderOrderList(filteredOrders);
+    closeFilterModal();
+}
+
+function resetFilters() {
+    document.getElementById('filter-search').value = '';
+    document.getElementById('filter-status').value = '';
+    document.getElementById('filter-supplier').value = '';
+    document.getElementById('filter-start-date').value = '';
+    document.getElementById('filter-end-date').value = '';
+    applyFilters(); // Re-apply with empty filters
 }
 
 function switchView(viewName) {
@@ -70,33 +164,43 @@ async function loadDashboardData() {
     const elements = {
         open: document.getElementById('kpi-open-orders'),
         partial: document.getElementById('kpi-partial-orders'),
-        suppliers: document.getElementById('kpi-total-suppliers'),
-        revisions: document.getElementById('kpi-total-revisions'),
+        amount: document.getElementById('kpi-total-amount'),
+        delivery: document.getElementById('kpi-avg-delivery'),
     };
     Object.values(elements).forEach(el => el && el.classList.add('skeleton'));
 
     try {
-        const [ordersRes, suppliersRes, revisionsRes] = await Promise.all([
-            supabaseClient.from('purchasing_orders').select('teslimat_durumu').eq('is_latest', true),
-            supabaseClient.from('purchasing_suppliers').select('id', { count: 'exact', head: true }),
-            supabaseClient.from('purchasing_revision_stats').select('total_revisions')
-        ]);
+        const { data, error } = await supabaseClient
+            .from('purchasing_orders')
+            .select('teslimat_durumu, tutar_tl, termin_farki')
+            .eq('is_latest', true);
 
-        if (ordersRes.error) throw ordersRes.error;
-        if (suppliersRes.error) throw suppliersRes.error;
-        if (revisionsRes.error) throw revisionsRes.error;
+        if (error) throw error;
 
-        const allOrders = ordersRes.data || [];
-        elements.open.textContent = allOrders.filter(o => o.teslimat_durumu === 'Açık').length;
-        elements.partial.textContent = allOrders.filter(o => o.teslimat_durumu === 'Kısmi').length;
-        elements.suppliers.textContent = suppliersRes.count;
-        elements.revisions.textContent = revisionsRes.data.reduce((sum, item) => sum + item.total_revisions, 0);
+        const allOrders = data || [];
+        
+        // KPI Hesaplamaları
+        const openOrdersCount = allOrders.filter(o => o.teslimat_durumu === 'Açık').length;
+        const partialOrdersCount = allOrders.filter(o => o.teslimat_durumu === 'Kısmi').length;
+        const totalAmount = allOrders.reduce((sum, o) => sum + (parseFloat(o.tutar_tl) || 0), 0);
+        
+        const completedOrders = allOrders.filter(o => o.termin_farki !== null);
+        const avgTerminFarki = completedOrders.length > 0
+            ? completedOrders.reduce((sum, o) => sum + (parseFloat(o.termin_farki) || 0), 0) / completedOrders.length
+            : 0;
+
+        // UI Güncelleme
+        if(elements.open) elements.open.textContent = openOrdersCount;
+        if(elements.partial) elements.partial.textContent = partialOrdersCount;
+        if(elements.amount) elements.amount.textContent = formatCurrency(totalAmount);
+        if(elements.delivery) elements.delivery.textContent = `${avgTerminFarki.toFixed(1)} gün`;
 
     } catch (error) {
         console.error('KPI verileri yüklenemedi:', error);
+        Object.values(elements).forEach(el => { if(el) el.textContent = 'Hata' });
     } finally {
         Object.values(elements).forEach(el => el && el.classList.remove('skeleton'));
-        loadWeeklyOrdersChart();
+        loadWeeklyOrdersChart(); // Keep the chart loading here
     }
 }
 
@@ -138,33 +242,207 @@ async function loadRevisionAnalytics() {
 
 function renderOrderList(orders) {
     const listEl = document.getElementById('orders-list');
-    listEl.innerHTML = orders.length > 0 ? orders.map(order => `
+    listEl.innerHTML = orders.length > 0 ? orders.map((order, index) => `
         <div class="order-card" data-order-id="${order.id}">
-            <div class="order-card-header">
-                <span class="order-no">#${order.siparis_no || 'N/A'}</span>
-                <span class="status ${order.teslimat_durumu || ''}">${order.teslimat_durumu || 'Bilinmiyor'}</span>
-            </div>
-            <div class="order-card-body">
-                <div class="supplier">${order.tedarikci_tanimi || 'Tedarikçi Bilgisi Yok'}</div>
-                <div class="amount">${formatCurrency(order.tutar_tl)}</div>
-            </div>
-            <div class="order-card-details">
-                <div class="detail-grid">
-                    <span><strong>Malzeme:</strong> ${order.malzeme_tanimi || '-'}</span>
-                    <span><strong>Miktar:</strong> ${order.miktar || 0} ${order.birim || ''}</span>
-                    <span><strong>Sipariş Tarihi:</strong> ${formatDate(order.siparis_tarihi)}</span>
-                    <span><strong>Teslim Tarihi:</strong> ${formatDate(order.siparis_teslim_tarihi)}</span>
+            <!-- Ana Özet Bölümü (Her Zaman Görünür) -->
+            <div class="order-card-header" onclick="toggleOrderDetails(${index})">
+                <div class="header-row">
+                    <span class="order-no">📦 ${order.siparis_no || 'N/A'}</span>
+                    <span class="status status-${order.teslimat_durumu || 'Bilinmiyor'}">${order.teslimat_durumu || 'Bilinmiyor'}</span>
+                </div>
+                <div class="header-row secondary">
+                    <span class="firma">🏢 ${order.firma || '-'}</span>
+                    <span class="toggle-icon" id="toggle-icon-${index}">▼</span>
                 </div>
             </div>
-        </div>
-    `).join('') : `<p>Sipariş bulunamadı.</p>`;
 
-    listEl.querySelectorAll('.order-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const details = card.querySelector('.order-card-details');
-            details.style.display = details.style.display === 'block' ? 'none' : 'block';
-        });
-    });
+            <div class="order-card-summary">
+                <div class="summary-item">
+                    <span class="label">🏭 Tedarikçi</span>
+                    <span class="value">${order.tedarikci_tanimi || 'Belirtilmemiş'}</span>
+                </div>
+                <div class="summary-item highlight">
+                    <span class="label">💰 Toplam Tutar</span>
+                    <span class="value price">${formatCurrency(order.tutar_tl || 0)} ₺</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">📅 Sipariş Tarihi</span>
+                    <span class="value">${formatDate(order.siparis_tarihi)}</span>
+                </div>
+            </div>
+
+            <!-- Detay Bölümü (Açılır-Kapanır) -->
+            <div class="order-card-details" id="details-${index}" style="display: none;">
+
+                <!-- Talep Bilgileri -->
+                <div class="detail-section">
+                    <div class="section-title" onclick="toggleSection('request-${index}')">
+                        <span>📋 TALEP BİLGİLERİ</span>
+                        <span class="section-toggle" id="section-toggle-request-${index}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-request-${index}">
+                        <div class="detail-row">
+                            <span class="key">Talep Tipi:</span>
+                            <span class="val">${order.siparis_tip || '-'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Talep No:</span>
+                            <span class="val">${order.talep_no || '-'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Talep Oluşturma:</span>
+                            <span class="val">${formatDate(order.talep_olusturma_tarihi)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Siparişe Dönüşüm:</span>
+                            <span class="val">${formatDate(order.siparis_olusturma_tarihi)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">İstenen Teslim:</span>
+                            <span class="val">${formatDate(order.ihtiyac_tarihi)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Malzeme Bilgileri -->
+                <div class="detail-section">
+                    <div class="section-title" onclick="toggleSection('material-${index}')">
+                        <span>🔧 MALZEME BİLGİLERİ</span>
+                        <span class="section-toggle" id="section-toggle-material-${index}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-material-${index}">
+                        <div class="detail-row">
+                            <span class="key">Malzeme Kodu:</span>
+                            <span class="val">${order.malzeme || '-'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Malzeme Tanımı:</span>
+                            <span class="val">${order.malzeme_tanimi || '-'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Sipariş Miktarı:</span>
+                            <span class="val highlight">${order.miktar || 0} ${order.birim || ''}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Gelen Miktar:</span>
+                            <span class="val ${(order.toplam_gelen_miktar >= order.miktar) ? 'success' : 'warning'}">${order.toplam_gelen_miktar || 0} ${order.birim || ''}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Kalan Miktar:</span>
+                            <span class="val ${(order.kalan_miktar > 0) ? 'warning' : 'success'}">${order.kalan_miktar || 0} ${order.birim || ''}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Termin ve Planlama -->
+                <div class="detail-section">
+                    <div class="section-title" onclick="toggleSection('schedule-${index}')">
+                        <span>⏱️ TERMİN & PLANLAMA</span>
+                        <span class="section-toggle" id="section-toggle-schedule-${index}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-schedule-${index}">
+                        <div class="detail-row">
+                            <span class="key">Standart Termin:</span>
+                            <span class="val">${order.standart_termin_suresi || 0} gün</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Std. Termin Tarihi:</span>
+                            <span class="val">${formatDate(order.standart_termin_tarihi)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Mal Kabul Tarihi:</span>
+                            <span class="val">${formatDate(order.mal_kabul_tarihi)}</span>
+                        </div>
+                        <div class="detail-row ${Math.abs(order.planlama_sapmasi || 0) > 3 ? 'warning' : ''}">
+                            <span class="key">Planlama Sapması:</span>
+                            <span class="val">${order.planlama_sapmasi ? (order.planlama_sapmasi > 0 ? '+' : '') + order.planlama_sapmasi + ' gün' : '-'}</span>
+                        </div>
+                        <div class="detail-row ${Math.abs(order.termin_farki || 0) > 3 ? 'warning' : ''}">
+                            <span class="key">Termin Farkı:</span>
+                            <span class="val">${order.termin_farki ? (order.termin_farki > 0 ? '+' : '') + order.termin_farki + ' gün' : '-'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fiyat Bilgileri -->
+                <div class="detail-section">
+                    <div class="section-title" onclick="toggleSection('price-${index}')">
+                        <span>💵 FİYAT BİLGİLERİ</span>
+                        <span class="section-toggle" id="section-toggle-price-${index}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-price-${index}">
+                        <div class="detail-row">
+                            <span class="key">Birim Fiyat:</span>
+                            <span class="val">${formatCurrency(order.birim_fiyat || 0)} ${order.para_birimi || ''}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Tutar:</span>
+                            <span class="val">${formatCurrency(order.para_birimi_tutar || 0)} ${order.para_birimi || ''}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Para Birimi:</span>
+                            <span class="val">${order.para_birimi || 'TRY'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Kur Değeri:</span>
+                            <span class="val">${order.kur_degeri ? order.kur_degeri.toFixed(4) : '-'}</span>
+                        </div>
+                        <div class="detail-row highlight">
+                            <span class="key">Toplam TL:</span>
+                            <span class="val price">${formatCurrency(order.tutar_tl || 0)} ₺</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ödeme Bilgileri -->
+                <div class="detail-section">
+                    <div class="section-title" onclick="toggleSection('payment-${index}')">
+                        <span>💳 ÖDEME BİLGİLERİ</span>
+                        <span class="section-toggle" id="section-toggle-payment-${index}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-payment-${index}">
+                        <div class="detail-row">
+                            <span class="key">Ödeme Koşulu:</span>
+                            <span class="val">${order.odeme_kosulu_tanimi || '-'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="key">Ödeme Tarihi:</span>
+                            <span class="val">${formatDate(order.siparis_teslim_odeme_vadesi)}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `).join('') : `<p class="no-data">📦 Sipariş bulunamadı.</p>`;
+}
+
+// Sipariş kartını açıp kapatma
+function toggleOrderDetails(index) {
+    const details = document.getElementById(`details-${index}`);
+    const icon = document.getElementById(`toggle-icon-${index}`);
+
+    if (details.style.display === 'none' || !details.style.display) {
+        details.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        details.style.display = 'none';
+        icon.textContent = '▼';
+    }
+}
+
+// Bölüm açıp kapatma
+function toggleSection(sectionId) {
+    const section = document.getElementById(`section-${sectionId}`);
+    const toggle = document.getElementById(`section-toggle-${sectionId}`);
+
+    if (section.style.display === 'none' || !section.style.display) {
+        section.style.display = 'block';
+        toggle.textContent = '▲';
+    } else {
+        section.style.display = 'none';
+        toggle.textContent = '▼';
+    }
 }
 
 function processRevisionData(orders) {
