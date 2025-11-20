@@ -706,14 +706,25 @@ async function handleCSVFile(file) {
 
     console.log(`📦 ${orders.length} sipariş parse edildi`);
 
-    // Kullanıcı email'ini al
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const userEmail = user?.email;
+    // Kullanıcı email'ini al - önce localStorage, sonra Supabase
+    let userEmail = localStorage.getItem('username') || window.currentUserEmail;
 
     if (!userEmail) {
-      showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
+      // Son çare olarak Supabase'den dene
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        userEmail = user?.email;
+      } catch (error) {
+        console.error('Supabase auth hatası:', error);
+      }
+    }
+
+    if (!userEmail) {
+      showToast('❌ Kullanıcı bilgisi alınamadı. Lütfen tekrar giriş yapın.', 'error');
       return;
     }
+
+    console.log('✅ Kullanıcı email:', userEmail);
 
     // REVIZYON MANTIĞI: Her sipariş için kontrol et ve işle
     const results = await processOrdersWithRevision(orders, userEmail);
@@ -1447,16 +1458,27 @@ async function handleXLSXFile(file) {
 
     console.log(`📦 ${orders.length} sipariş parse edildi`);
 
-    // Kullanıcı email'ini al
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const userEmail = user?.email;
+    // Kullanıcı email'ini al - önce localStorage, sonra Supabase
+    let userEmail = localStorage.getItem('username') || window.currentUserEmail;
 
     if (!userEmail) {
-      showToast('❌ Kullanıcı bilgisi alınamadı', 'error');
+      // Son çare olarak Supabase'den dene
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        userEmail = user?.email;
+      } catch (error) {
+        console.error('Supabase auth hatası:', error);
+      }
+    }
+
+    if (!userEmail) {
+      showToast('❌ Kullanıcı bilgisi alınamadı. Lütfen tekrar giriş yapın.', 'error');
       uploadStatus = 'failed';
       errorMessage = 'Kullanıcı bilgisi alınamadı';
       return;
     }
+
+    console.log('✅ Kullanıcı email:', userEmail);
 
     // REVIZYON MANTIĞI: Her sipariş için kontrol et ve işle
     results = await processOrdersWithRevision(orders, userEmail);
