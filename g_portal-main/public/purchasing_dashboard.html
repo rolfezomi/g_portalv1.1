@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Satın Alma Paneli - Glohe Portal</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/purchasing.css">
     <link rel="stylesheet" href="styles/purchasing_dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -32,12 +34,12 @@
                         <p id="kpi-partial-orders">--</p>
                     </div>
                     <div class="card">
-                        <h2>Toplam Tedarikçi</h2>
-                        <p id="kpi-total-suppliers">--</p>
+                        <h2>Toplam Tutar</h2>
+                        <p id="kpi-total-amount">--</p>
                     </div>
                      <div class="card">
-                        <h2>Toplam Revizyon</h2>
-                        <p id="kpi-total-revisions">--</p>
+                        <h2>Ort. Termin Farkı</h2>
+                        <p id="kpi-avg-delivery">--</p>
                     </div>
                 </section>
                 <section class="chart-container">
@@ -49,12 +51,24 @@
             <!-- Orders View -->
             <div id="view-orders" class="app-view">
                 <div class="view-header">
-                    <h2>Tüm Siparişler</h2>
-                    <button id="filter-button" class="icon-button">
-                        <span class="icon">🔍</span>
-                        <span class="label">Filtrele</span>
+                    <h2>Sipariş Raporu</h2>
+                </div>
+
+                <!-- Hızlı Arama -->
+                <div class="quick-search-container">
+                    <input
+                        type="text"
+                        id="quick-search-orders"
+                        class="quick-search-input"
+                        placeholder="🔍 Sipariş No, Tedarikçi, Malzeme ara..."
+                        oninput="quickSearchOrders(this.value)"
+                    />
+                    <button id="advanced-filter-button" class="icon-button-small" onclick="openAdvancedFilter()">
+                        <span>⚙️ Gelişmiş Filtre</span>
                     </button>
                 </div>
+
+                <!-- Sipariş Listesi -->
                 <div id="orders-list">
                     <div class="skeleton-card"></div>
                     <div class="skeleton-card"></div>
@@ -63,27 +77,39 @@
 
             <!-- Revision Analysis View -->
             <div id="view-revision-analytics" class="app-view">
-                 <div class="view-header">
+                <div class="view-header">
                     <h2>Revizyon Analizi</h2>
                 </div>
+
+                <!-- Hızlı Arama -->
+                <div class="quick-search-container">
+                    <input
+                        type="text"
+                        id="quick-search-revision"
+                        class="quick-search-input"
+                        placeholder="🔍 Malzeme ara..."
+                        oninput="quickSearchRevision(this.value)"
+                    />
+                </div>
+
+                <!-- Revizyon İçerik -->
                 <div id="revision-analytics-content">
                     <p>Revizyon analizi verileri buraya yüklenecek.</p>
                 </div>
             </div>
         </main>
 
-        <!-- Floating Action Button -->
-        <button class="fab" id="fab-add-order">+</button>
+        <!-- Floating Action Button REMOVED -->
 
         <!-- Bottom Navigation -->
         <nav class="app-nav">
             <button class="nav-item active" data-view="dashboard">
                 <span class="icon">📊</span>
-                <span class="label">Panel</span>
+                <span class="label">Özet</span>
             </button>
             <button class="nav-item" data-view="orders">
                 <span class="icon">📦</span>
-                <span class="label">Siparişler</span>
+                <span class="label">Sipariş Raporu</span>
             </button>
             <button class="nav-item" data-view="revision-analytics">
                 <span class="icon">🔄</span>
@@ -93,5 +119,46 @@
     </div>
 
     <script type="module" src="scripts/purchasing_dashboard.js"></script>
+    <script type="module" src="scripts/revision-analytics.js"></script>
+
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Filtrele & Sırala</h2>
+                <button id="close-filter-modal" class="icon-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="filter-group">
+                    <label for="filter-search">Genel Arama</label>
+                    <input type="text" id="filter-search" placeholder="Sipariş No, Tedarikçi, Malzeme...">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-status">Teslimat Durumu</label>
+                    <select id="filter-status">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-supplier">Tedarikçi</label>
+                    <select id="filter-supplier">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+                 <div class="filter-group">
+                    <label for="filter-start-date">Başlangıç Tarihi</label>
+                    <input type="date" id="filter-start-date">
+                </div>
+                 <div class="filter-group">
+                    <label for="filter-end-date">Bitiş Tarihi</label>
+                    <input type="date" id="filter-end-date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="reset-filters-button" class="btn-secondary">Filtreleri Temizle</button>
+                <button id="apply-filters-button" class="btn-primary">Uygula</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

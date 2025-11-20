@@ -603,3 +603,107 @@ function formatDate(dateStr) {
 }
 
 function loadWeeklyOrdersChart(){/* Placeholder */ }
+
+// --- Hızlı Arama Fonksiyonları ---
+
+// Sipariş listesinde hızlı arama
+function quickSearchOrders(searchTerm) {
+    console.log('🔍 Sipariş araması yapılıyor:', searchTerm);
+
+    if (!searchTerm || searchTerm.trim() === '') {
+        // Arama terimi boşsa tüm siparişleri göster
+        const latestOrders = allPurchasingOrders.filter(o => o.is_latest);
+        renderOrderList(latestOrders);
+        return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = allPurchasingOrders.filter(order => {
+        if (!order.is_latest) return false;
+
+        return (
+            (order.siparis_no && order.siparis_no.toLowerCase().includes(term)) ||
+            (order.tedarikci_tanimi && order.tedarikci_tanimi.toLowerCase().includes(term)) ||
+            (order.malzeme_tanimi && order.malzeme_tanimi.toLowerCase().includes(term)) ||
+            (order.malzeme && order.malzeme.toLowerCase().includes(term)) ||
+            (order.firma && order.firma.toLowerCase().includes(term)) ||
+            (order.siparis_tip && order.siparis_tip.toLowerCase().includes(term))
+        );
+    });
+
+    console.log(`✅ ${filtered.length} sipariş bulundu`);
+    renderOrderList(filtered);
+}
+
+// Revizyon analizinde hızlı arama
+function quickSearchRevision(searchTerm) {
+    console.log('🔍 Revizyon araması yapılıyor:', searchTerm);
+
+    if (!searchTerm || searchTerm.trim() === '') {
+        // Arama terimi boşsa tüm malzemeleri göster
+        renderRevisionAnalyticsUI();
+        return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const filteredMaterialData = {};
+
+    // materialInfoData içinde arama yap
+    for (const [materialName, materialData] of Object.entries(materialInfoData)) {
+        if (materialName.toLowerCase().includes(term) ||
+            (materialData.kod && materialData.kod.toLowerCase().includes(term))) {
+            filteredMaterialData[materialName] = materialData;
+        }
+    }
+
+    console.log(`✅ ${Object.keys(filteredMaterialData).length} malzeme bulundu`);
+
+    // Filtrelenmiş sonuçları göster
+    const contentEl = document.getElementById('revision-analytics-content');
+    const materialsWithMultiplePrices = Object.values(filteredMaterialData)
+        .filter(m => m.prices.length > 1)
+        .sort((a, b) => b.prices.length - a.prices.length);
+
+    if (materialsWithMultiplePrices.length === 0) {
+        contentEl.innerHTML = `<p class="no-data">🔍 "${searchTerm}" için sonuç bulunamadı.</p>`;
+        return;
+    }
+
+    contentEl.innerHTML = `
+        <div class="material-selector-container">
+            <label for="material-selector">Malzeme Seçin (${materialsWithMultiplePrices.length} sonuç)</label>
+            <select id="material-selector">
+                ${materialsWithMultiplePrices.map(m => `<option value="${m.tanim}">${m.tanim}</option>`).join('')}
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="price-trend-chart"></canvas>
+        </div>
+        <div class="price-stats-grid" id="price-stats"></div>
+    `;
+
+    document.getElementById('material-selector').addEventListener('change', (e) => {
+        updatePriceTrendChart(e.target.value);
+    });
+
+    updatePriceTrendChart(materialsWithMultiplePrices[0].tanim);
+}
+
+// Gelişmiş filtre modalını aç
+function openAdvancedFilter() {
+    console.log('⚙️ Gelişmiş filtre açılıyor...');
+    const filterModal = document.getElementById('filter-modal');
+    if (filterModal) {
+        filterModal.style.display = 'flex';
+        populateFilterOptions();
+    } else {
+        console.warn('⚠️ Filtre modalı bulunamadı');
+    }
+}
+
+// Fonksiyonları global scope'a ekle
+window.quickSearchOrders = quickSearchOrders;
+window.quickSearchRevision = quickSearchRevision;
+window.openAdvancedFilter = openAdvancedFilter;
+window.toggleOrderDetails = toggleOrderDetails;
+window.toggleSection = toggleSection;
